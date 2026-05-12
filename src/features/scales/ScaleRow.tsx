@@ -1,3 +1,4 @@
+import PianoKeyboard from '../../components/PianoKeyboard'
 import type { ScaleDefinition } from './data/curated'
 import { formatRoot } from './logic/spelling'
 import ScaleScore from './ScaleScore'
@@ -8,7 +9,7 @@ type Props = {
   notes: string[]
 }
 
-export default function ScaleRow({ scale, notes }: Props) {
+export default function ScaleRow({ scale, root, notes }: Props) {
   return (
     <article className="scale-row rounded-lg border border-stone-200 p-4 dark:border-stone-700">
       <header className="mb-2">
@@ -21,6 +22,7 @@ export default function ScaleRow({ scale, notes }: Props) {
         {scale.intervalDisplay.join(' ')}
       </p>
       <ScaleScore notes={notes} />
+      <PianoKeyboard scaleNotes={notes} root={root} startOctave={4} />
       <p className="scale-notes mt-2 font-mono text-sm text-stone-700 dark:text-stone-200">
         {notes.map(formatRoot).join(' ')}
       </p>

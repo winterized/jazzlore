@@ -39,4 +39,12 @@ describe('ScaleRow', () => {
     render(<ScaleRow scale={ionian} root="Bb" notes={['Bb', 'C', 'D', 'Eb', 'F', 'G', 'A']} />)
     expect(screen.getByText('B♭ C D E♭ F G A')).toBeInTheDocument()
   })
+
+  it('renders the piano keyboard', () => {
+    const { container } = render(
+      <ScaleRow scale={ionian} root="C" notes={['C', 'D', 'E', 'F', 'G', 'A', 'B']} />,
+    )
+    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container -- SVG primitives have no roles
+    expect(container.querySelectorAll('[data-role="white-key"]')).toHaveLength(14)
+  })
 })
