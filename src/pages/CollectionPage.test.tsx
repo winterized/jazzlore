@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { save } from '../features/collection/collectionStore'
@@ -27,5 +28,28 @@ describe('CollectionPage', () => {
     )
     expect(screen.getByRole('heading', { name: /^Dorian$/ })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /^Altered$/ })).toBeInTheDocument()
+  })
+
+  it('every saved scale has an "Include in print" checkbox, default checked', () => {
+    save({ rootNote: 'C', scaleId: 'dorian' })
+    render(
+      <MemoryRouter>
+        <CollectionPage />
+      </MemoryRouter>,
+    )
+    const cb = screen.getByRole('checkbox', { name: /include.*dorian.*in print/i })
+    expect(cb).toBeChecked()
+  })
+
+  it('unchecking a row marks its wrapper data-print-include="false"', async () => {
+    save({ rootNote: 'C', scaleId: 'dorian' })
+    const { container } = render(
+      <MemoryRouter>
+        <CollectionPage />
+      </MemoryRouter>,
+    )
+    await userEvent.click(screen.getByRole('checkbox', { name: /include.*dorian.*in print/i }))
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- need to query our wrapping data attribute
+    expect(container.querySelector('[data-print-include="false"]')).not.toBeNull()
   })
 })

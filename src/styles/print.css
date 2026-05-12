@@ -1,0 +1,39 @@
+:root { --print-columns: 2; }
+
+@media print {
+  /* Force light, regardless of screen theme */
+  html, body { background: white !important; color: black !important; }
+
+  /* Strip UI chrome */
+  header, nav, button, [role="radiogroup"], [role="radio"], .no-print { display: none !important; }
+
+  /* Grid */
+  .print-grid {
+    display: grid !important;
+    grid-template-columns: repeat(var(--print-columns), 1fr);
+    gap: 16px;
+  }
+  .print-grid > article {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Density-aware per-scale content */
+  /* 1 per row: full content (default) — alias shown */
+  /* 2 per row: hide alias */
+  :root[data-density="2"] .scale-alias { display: none !important; }
+  /* 3 per row: hide alias, intervals, and note names — only name + score */
+  :root[data-density="3"] .scale-alias,
+  :root[data-density="3"] .scale-intervals,
+  :root[data-density="3"] .scale-notes { display: none !important; }
+
+  /* Exclude unselected scales from print */
+  .scale-row[data-print-include="false"] { display: none !important; }
+
+  /* Page header / footer (Chrome supports; Safari/Firefox partial) */
+  @page {
+    margin: 12mm;
+    @top-left { content: "Jazzlore — My scales"; font: 9pt/1.2 sans-serif; color: #999; }
+    @bottom-right { content: counter(page); font: 9pt sans-serif; color: #999; }
+  }
+}
