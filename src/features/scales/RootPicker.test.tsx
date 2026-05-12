@@ -25,3 +25,25 @@ describe('RootPicker', () => {
     expect(onSelect).toHaveBeenCalledWith('Eb')
   })
 })
+
+describe('RootPicker enharmonic toggle', () => {
+  it('renders a toggle sub-button on ambiguous notes only', () => {
+    render(<RootPicker selected="C" onSelect={() => {}} />)
+    expect(screen.getAllByRole('button', { name: /Switch .+ to .+/ })).toHaveLength(5)
+    expect(screen.queryByRole('button', { name: /Switch C to/ })).toBeNull()
+  })
+
+  it('clicking the toggle flips the spelling in place', async () => {
+    const onSelect = vi.fn()
+    let spelling: Record<string, string> = {}
+    const onSpellingChange = (s: Record<string, string>) => { spelling = s }
+    render(
+      <RootPicker selected="C" onSelect={onSelect} onSpellingChange={onSpellingChange} />,
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Switch D-flat to C-sharp' }))
+    expect(spelling).toEqual({ Db: 'C#' })
+    // After flipping, the rendered label reflects the new spelling
+    expect(screen.getByRole('radio', { name: 'C♯' })).toBeInTheDocument()
+    expect(screen.queryByRole('radio', { name: 'D♭' })).toBeNull()
+  })
+})
