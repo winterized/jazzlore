@@ -2,10 +2,10 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import ScaleScore from './ScaleScore'
 
-// abcjs renders an <svg> with no accessible role, so the wrapper exposes
-// aria-label="score" and we then look up the SVG that abcjs injected into it.
-const findSvg = (label: string): SVGElement | null => {
-  const host = screen.getByLabelText(label)
+// abcjs injects its <svg> into the wrapper. The wrapper exposes role="img"
+// with a descriptive aria-label, which we use as the entry point.
+const findSvg = (): SVGElement | null => {
+  const host = screen.getByRole('img', { name: /Scale notation/ })
   // eslint-disable-next-line testing-library/no-node-access
   return host.querySelector('svg')
 }
@@ -13,11 +13,11 @@ const findSvg = (label: string): SVGElement | null => {
 describe('ScaleScore', () => {
   it('renders an svg from the given notes (no crash)', () => {
     render(<ScaleScore notes={['C', 'D', 'E', 'F', 'G', 'A', 'B']} />)
-    expect(findSvg('score')).not.toBeNull()
+    expect(findSvg()).not.toBeNull()
   })
 
   it('renders for a scale starting on B♭', () => {
     render(<ScaleScore notes={['Bb', 'C', 'Db', 'Eb', 'F', 'G', 'Ab']} />)
-    expect(findSvg('score')).not.toBeNull()
+    expect(findSvg()).not.toBeNull()
   })
 })
