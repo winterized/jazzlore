@@ -1,4 +1,5 @@
 import { Navigate, useNavigate, useParams } from 'react-router'
+import ThemeToggle from '../components/ThemeToggle'
 import RootPicker from '../features/scales/RootPicker'
 import ScaleList from '../features/scales/ScaleList'
 import { formatRoot } from '../features/scales/logic/spelling'
@@ -13,9 +14,12 @@ export default function ScalesPage() {
 
   return (
     <main className="min-h-screen bg-stone-50 p-4 text-stone-900 dark:bg-stone-950 dark:text-stone-100 md:p-8">
-      <h1 className="mb-6 text-3xl font-bold tracking-tight md:text-4xl">
-        {formatRoot(root)} scales
-      </h1>
+      <div className="mb-6 flex items-center justify-between gap-4">
+        <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
+          {formatRoot(root)} scales
+        </h1>
+        <ThemeToggle />
+      </div>
       <RootPicker
         selected={root}
         onSelect={(next) => navigate(`/scales/${slugFromRoot(next)}`)}

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import ThemeToggle from '../components/ThemeToggle'
 import { listSaved } from '../features/collection/collectionStore'
 import PrintDensity from '../features/collection/PrintDensity'
 import ScaleRow from '../features/scales/ScaleRow'
@@ -16,7 +17,10 @@ export default function CollectionPage() {
 
   return (
     <main className="min-h-screen bg-stone-50 p-4 text-stone-900 dark:bg-stone-950 dark:text-stone-100 md:p-8">
-      <h1 className="mb-6 text-3xl font-bold tracking-tight md:text-4xl">My scales</h1>
+      <div className="mb-6 flex items-center justify-between gap-4">
+        <h1 className="text-3xl font-bold tracking-tight md:text-4xl">My scales</h1>
+        <ThemeToggle />
+      </div>
 
       {saved.length === 0 ? (
         <p className="text-stone-500 dark:text-stone-400">
