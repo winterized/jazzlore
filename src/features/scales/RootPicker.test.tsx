@@ -26,6 +26,49 @@ describe('RootPicker', () => {
   })
 })
 
+describe('RootPicker keyboard navigation', () => {
+  it('ArrowRight moves selection to the next root and wraps at the end', async () => {
+    const onSelect = vi.fn()
+    render(<RootPicker selected="C" onSelect={onSelect} />)
+    const c = screen.getByRole('radio', { name: 'C' })
+    c.focus()
+    await userEvent.keyboard('{ArrowRight}')
+    expect(onSelect).toHaveBeenLastCalledWith('Db')
+  })
+
+  it('ArrowLeft from C wraps to B', async () => {
+    const onSelect = vi.fn()
+    render(<RootPicker selected="C" onSelect={onSelect} />)
+    const c = screen.getByRole('radio', { name: 'C' })
+    c.focus()
+    await userEvent.keyboard('{ArrowLeft}')
+    expect(onSelect).toHaveBeenLastCalledWith('B')
+  })
+
+  it('Home jumps to C, End jumps to B', async () => {
+    const onSelect = vi.fn()
+    render(<RootPicker selected="F" onSelect={onSelect} />)
+    const f = screen.getByRole('radio', { name: 'F' })
+    f.focus()
+    await userEvent.keyboard('{Home}')
+    expect(onSelect).toHaveBeenLastCalledWith('C')
+    await userEvent.keyboard('{End}')
+    expect(onSelect).toHaveBeenLastCalledWith('B')
+  })
+
+  it('only the selected radio is in the tab order', () => {
+    render(<RootPicker selected="E" onSelect={() => {}} />)
+    const e = screen.getByRole('radio', { name: 'E' })
+    expect(e.getAttribute('tabindex')).toBe('0')
+    // All other radios should have tabindex="-1"
+    const allRadios = screen.getAllByRole('radio')
+    const notInTabOrder = allRadios.filter((r) => r !== e)
+    for (const r of notInTabOrder) {
+      expect(r.getAttribute('tabindex')).toBe('-1')
+    }
+  })
+})
+
 describe('RootPicker enharmonic toggle', () => {
   it('renders a toggle sub-button on ambiguous notes only', () => {
     render(<RootPicker selected="C" onSelect={() => {}} />)
