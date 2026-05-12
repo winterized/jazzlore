@@ -52,4 +52,9 @@ describe('ScaleRow', () => {
     render(<ScaleRow scale={ionian} root="Bb" notes={['Bb', 'C', 'D', 'Eb', 'F', 'G', 'A']} />)
     expect(screen.getByRole('button', { name: /Play Ionian on B♭/ })).toBeInTheDocument()
   })
+
+  it('renders a star button for saving the scale', () => {
+    render(<ScaleRow scale={ionian} root="C" notes={['C', 'D', 'E', 'F', 'G', 'A', 'B']} />)
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument()
+  })
 })

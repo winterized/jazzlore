@@ -4,6 +4,7 @@ import PlayButton from '../audio/PlayButton'
 import type { ScaleDefinition } from './data/curated'
 import { formatRoot } from './logic/spelling'
 import ScaleScore from './ScaleScore'
+import StarButton from './StarButton'
 
 type Props = {
   scale: ScaleDefinition
@@ -23,12 +24,15 @@ export default function ScaleRow({ scale, root, notes }: Props) {
             <p className="scale-alias text-sm text-stone-500 dark:text-stone-400">{scale.alias}</p>
           )}
         </div>
-        {playbackNotes.length > 0 && (
-          <PlayButton
-            notes={playbackNotes}
-            ariaLabel={`Play ${scale.name} on ${formatRoot(root)}`}
-          />
-        )}
+        <div className="flex items-center gap-2">
+          <StarButton rootNote={root} scaleId={scale.id} />
+          {playbackNotes.length > 0 && (
+            <PlayButton
+              notes={playbackNotes}
+              ariaLabel={`Play ${scale.name} on ${formatRoot(root)}`}
+            />
+          )}
+        </div>
       </header>
       <p className="scale-intervals mb-2 font-mono text-sm text-stone-500 dark:text-stone-400">
         {scale.intervalDisplay.join(' ')}
