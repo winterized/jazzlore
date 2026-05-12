@@ -35,3 +35,8 @@ export function normalizeRoot(value: string): string | null {
 export function formatRoot(root: string): string {
   return root.replace('b', '♭').replace('#', '♯')
 }
+
+/** Convert a display-form root like 'B♭' / 'F♯' to the internal form 'Bb' / 'F#'. Pass-through for naturals or already-internal input. */
+export function toInternal(root: string): string {
+  return root.replace('♭', 'b').replace('♯', '#')
+}

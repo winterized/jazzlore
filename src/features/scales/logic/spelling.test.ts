@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ALL_ROOTS, DEFAULT_ROOTS, alternateSpelling, formatRoot, isAmbiguous, normalizeRoot } from './spelling'
+import { ALL_ROOTS, DEFAULT_ROOTS, alternateSpelling, formatRoot, isAmbiguous, normalizeRoot, toInternal } from './spelling'
 
 describe('DEFAULT_ROOTS', () => {
   it('has 12 entries in chromatic order, jazz-default spellings', () => {
@@ -84,5 +84,40 @@ describe('formatRoot', () => {
     expect(formatRoot('D#')).toBe('D♯')
     expect(formatRoot('G#')).toBe('G♯')
     expect(formatRoot('A#')).toBe('A♯')
+  })
+})
+
+describe('toInternal', () => {
+  it('passes naturals through unchanged', () => {
+    for (const r of ['C', 'D', 'E', 'F', 'G', 'A', 'B']) {
+      expect(toInternal(r)).toBe(r)
+    }
+  })
+
+  it('converts display flats to internal: B♭ → Bb, D♭ → Db, E♭ → Eb, A♭ → Ab, G♭ → Gb', () => {
+    expect(toInternal('B♭')).toBe('Bb')
+    expect(toInternal('D♭')).toBe('Db')
+    expect(toInternal('E♭')).toBe('Eb')
+    expect(toInternal('A♭')).toBe('Ab')
+    expect(toInternal('G♭')).toBe('Gb')
+  })
+
+  it('converts display sharps to internal: F♯ → F#, C♯ → C#, D♯ → D#, G♯ → G#, A♯ → A#', () => {
+    expect(toInternal('F♯')).toBe('F#')
+    expect(toInternal('C♯')).toBe('C#')
+    expect(toInternal('D♯')).toBe('D#')
+    expect(toInternal('G♯')).toBe('G#')
+    expect(toInternal('A♯')).toBe('A#')
+  })
+
+  it('passes already-internal input through unchanged (idempotent)', () => {
+    expect(toInternal('Bb')).toBe('Bb')
+    expect(toInternal('F#')).toBe('F#')
+  })
+
+  it('formatRoot ∘ toInternal is identity for the 12 default roots', () => {
+    for (const r of DEFAULT_ROOTS) {
+      expect(toInternal(formatRoot(r))).toBe(r)
+    }
   })
 })

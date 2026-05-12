@@ -1,11 +1,9 @@
-import { DEFAULT_ROOTS, formatRoot } from './logic/spelling'
+import { DEFAULT_ROOTS, formatRoot, toInternal } from './logic/spelling'
 
 type Props = {
   selected: string
   onSelect: (root: string) => void
 }
-
-const toInternal = (r: string) => r.replace('♭', 'b').replace('♯', '#')
 
 export default function RootPicker({ selected, onSelect }: Props) {
   const selectedInternal = toInternal(selected)
