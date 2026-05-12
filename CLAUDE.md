@@ -13,7 +13,7 @@ The site must feel public-ready from v1: clean design, fast, accessible, mobile-
 - **Build**: Vite
 - **Framework**: React 19 + TypeScript (strict mode)
 - **Package manager**: pnpm
-- **Music theory**: Tonal (`@tonaljs/tonal`)
+- **Music theory**: Tonal — modular `@tonaljs/note` (only `Note.transpose` is used; the umbrella `@tonaljs/tonal` was swapped out during v1 to drop ~20 KB gz of unused dictionaries)
 - **Score rendering**: abcjs
 - **Piano keyboard rendering**: custom SVG component (no dependency) — small, focused, fully testable
 - **Audio**: Tone.js
@@ -22,7 +22,7 @@ The site must feel public-ready from v1: clean design, fast, accessible, mobile-
 - **Routing**: React Router
 - **Testing**: Vitest + React Testing Library + Playwright for e2e
 - **Linting / formatting**: ESLint + Prettier
-- **Deployment**: Cloudflare Pages (connected to GitHub `main`). Part of the Jazzlore portfolio. No backend needed for this project — pure static + localStorage. The sibling `musicians.jazzlore.com` project will use Cloudflare Pages Functions + Neo4j AuraDB's HTTP Query API.
+- **Deployment**: Live at <https://scales.jazzlore.com>. Cloudflare Workers Static Assets (Cloudflare unified Workers and Pages in late 2025 — the new wizard creates Workers projects by default even via the Pages entry point), configured via `wrangler.jsonc` at the repo root. Every push to `main` auto-deploys via Cloudflare's GitHub integration. `not_found_handling: "single-page-application"` is set so React Router owns client-side paths. No backend — pure static + localStorage. The sibling `musicians.jazzlore.com` project will likely use Cloudflare Pages Functions + Neo4j AuraDB's HTTP Query API.
 
 ## Agent tooling (installed in Claude Code)
 
