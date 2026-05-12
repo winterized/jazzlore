@@ -61,6 +61,8 @@ The corner sub-button is visually small (~14 px) but has invisible padding exten
 - Flats (defaults for ambiguous pitches): `/scales/D-flat`, `/scales/E-flat`, `/scales/A-flat`, `/scales/B-flat`
 - Sharps (defaults + alternates): `/scales/F-sharp` (default), `/scales/C-sharp`, `/scales/D-sharp`, `/scales/G-sharp`, `/scales/A-sharp`, `/scales/G-flat`
 
+**Invalid root paths** (e.g. `/scales/H`, `/scales/c-flat`, `/scales/foo`) redirect to `/scales/C`. The URL is treated as user-provided input — never crashes on unknown roots, never throws.
+
 ### Scale list
 
 - Source of truth: Tonal's scale dictionary, supplemented with manually-defined scales where Tonal doesn't expose them under the intended name
@@ -154,7 +156,14 @@ The corner sub-button is visually small (~14 px) but has invisible padding exten
 
 **Implementation:** custom SVG component (no library) — small surface, easy to TDD, full styling control. Hand-built with `<rect>` elements.
 
-**Range: always 2 octaves, C-to-C.** Start at the C at or below the scale root, span exactly two octaves up. The scale notes light up across this range; for non-C roots the root sits inside the keyboard rather than at the edge. Keeping the keyboard outline fixed (always starts at a C, always 24 keys total: 14 white + 10 black) makes the visual consistent across all 12 roots.
+**Range: always 2 octaves, C-to-C.** Start at the C at or below the scale root, span exactly two octaves up. Keeping the keyboard outline fixed (always starts at a C, always 24 keys total: 14 white + 10 black) makes the visual consistent across all 12 roots.
+
+**Scale notes highlight in both octaves** of the displayed range — the scale pattern visually repeats across the keyboard. This serves two purposes:
+
+1. The pattern intuition ("ah, it loops every octave") is the whole reason to show two octaves.
+2. For high roots (e.g. B, B♭), the scale's own octave sits near the top of the display; without highlighting the second instance, the bottom half of the keyboard would be entirely inert. Filling both octaves keeps the visual balanced across all roots.
+
+For a root like B Mixolydian on a C4–C6 keyboard: the scale notes (B, C♯, D♯, E, F♯, G♯, A) appear highlighted at every occurrence — both at B4 → A5 and at B5 → A6 (and B4/B5 as roots; C♯5/C♯6 as scale tones; etc.). The root is rendered in solid accent at every occurrence in the displayed range.
 
 **Visual treatment of the keys (v1 baseline — subject to visual validation at implementation):**
 
@@ -208,9 +217,11 @@ Per CLAUDE.md, domain logic stays in `lib/music.ts` — the component takes pre-
 ### Save / collection
 - "Star" button on each scale row
 - Saved scales: `{ rootNote, scaleName, savedAt }`
-- Stored in `localStorage` under key `jazz-reference:scales:v1`
+- Stored in `localStorage` under key `jazzlore:scales:v1`
 - Versioned key so we can migrate cleanly later
 - "My Collection" route at `/collection/scales`
+
+**Storage key namespace:** every key written by this app uses the prefix `jazzlore:<feature>:v<n>`. Other keys used in v1: `jazzlore:scales-print:v1` (print density preference), `jazzlore:theme:v1` (theme override). The `lib/storage.ts` wrapper enforces the prefix so no caller can write a bare key. Renames after ship require a migration step in the wrapper.
 
 ### Print
 
@@ -223,7 +234,7 @@ Layout: ( ) 1 per row    (•) 2 per row    ( ) 3 per row
         bigger notation   default          dense reference
 ```
 
-Choice persists in `localStorage` (same store as saved scales, scoped key).
+Choice persists in `localStorage` under `jazzlore:scales-print:v1`.
 
 | Mode | Per row | Per A4 | Per-scale content |
 |---|---|---|---|
@@ -249,6 +260,17 @@ Choice persists in `localStorage` (same store as saved scales, scoped key).
 - abcjs renders SVG, so the music scales cleanly at print DPI; column width drives the music scale factor
 
 **Keyboard is intentionally not included on print.** Printed sheets are for reading and playing — the keyboard is a screen learning aid.
+
+### Theming
+
+Light and dark modes are both supported in v1.
+
+- **Default:** follows the user's system preference via `prefers-color-scheme`.
+- **Manual override:** a small toggle in the menu (sun/moon icon), persisted in `localStorage` under `jazzlore:theme:v1`. When set, overrides the system preference until cleared.
+- **Coverage:** every view renders cleanly in both themes — root picker, scale list, score notation, piano keyboard, audio loading indicators, collection view, modals/toasts.
+- **Score notation (abcjs):** inverted in dark mode — light staff lines and noteheads on a dark background. Implementation: abcjs honors CSS overrides; we drive its colors via CSS custom properties that flip on `[data-theme="dark"]`.
+- **Print mode:** always light, regardless of the current screen theme. The `@media print` stylesheet overrides theme tokens (toner-friendly is non-negotiable).
+- **Implementation strategy:** Tailwind `dark:` variants, driven by a `data-theme="dark"` attribute on `<html>`. We don't rely on `prefers-color-scheme` queries alone — the manual override has to be programmatic.
 
 ## UI sketch (text)
 
@@ -307,11 +329,14 @@ One item remains *provisional pending visual validation at implementation time*:
 
 - [ ] All 12 roots selectable
 - [ ] Curated scale list (final list documented in this spec)
+- [ ] Enharmonic toggle on D♭/E♭/F♯/A♭/B♭ flips spelling in place and is reflected in the URL
+- [ ] Invalid root paths redirect to `/scales/C` (no crashes on `/scales/H`, `/scales/foo`, etc.)
 - [ ] Notation renders for every scale on every root, no errors
-- [ ] Piano keyboard renders for every scale on every root, with the root visually distinguished
+- [ ] Piano keyboard renders for every scale on every root, with the root visually distinguished, scale notes filling both displayed octaves
 - [ ] Audio playback works on Chrome desktop, Safari iOS, Chrome Android
 - [ ] Save / unsave persists across page reloads
-- [ ] Print preview produces a clean sheet on A4
+- [ ] Print preview produces a clean sheet on A4 in light theme regardless of current screen theme
+- [ ] Light and dark themes both render cleanly across all views; theme override persists in `localStorage`
 - [ ] All unit tests green; one Playwright e2e covering "pick C → save Dorian → see it in collection → print preview"
 - [ ] Lighthouse thresholds met
 - [ ] No `any`, no `console.log`, no unaddressed TODOs
