@@ -28,8 +28,9 @@ The site must feel public-ready from v1: clean design, fast, accessible, mobile-
 
 - **Superpowers** plugin — planning gate, TDD discipline, two-stage review
 - **Context7** plugin — fresh library docs injected on demand (Tonal, abcjs, Tone.js, React Router)
+Always use Context7 when generating code that imports an external library (Tonal, abcjs, Tone.js, React Router, Tailwind, Vitest, Playwright) — resolve the library id, fetch the docs, then write the code.
 - **Playwright MCP server** — lets Claude drive a real browser to validate UI changes and run e2e tests itself
-- **Claude in Chrome** (optional) — Chrome extension for driving an authenticated browser session, useful when poking at deployed previews
+- **Claude in Chrome** — Chrome extension for driving an authenticated browser session, useful when poking at deployed previews
 
 ## Commands
 
