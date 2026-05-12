@@ -11,7 +11,7 @@ The site must feel public-ready from v1: clean design, fast, accessible, mobile-
 ## Tech stack
 
 - **Build**: Vite
-- **Framework**: React 18 + TypeScript (strict mode)
+- **Framework**: React 19 + TypeScript (strict mode)
 - **Package manager**: pnpm
 - **Music theory**: Tonal (`@tonaljs/tonal`)
 - **Score rendering**: abcjs
