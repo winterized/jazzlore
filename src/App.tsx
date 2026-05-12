@@ -1,7 +1,16 @@
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
+import CollectionPage from './pages/CollectionPage'
+import ScalesPage from './pages/ScalesPage'
+
 export default function App() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-stone-50 p-8">
-      <h1 className="text-4xl font-bold tracking-tight text-stone-900">Jazzlore</h1>
-    </main>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/scales/C" replace />} />
+        <Route path="/scales/:root" element={<ScalesPage />} />
+        <Route path="/collection/scales" element={<CollectionPage />} />
+        <Route path="*" element={<Navigate to="/scales/C" replace />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
