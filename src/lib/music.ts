@@ -63,3 +63,26 @@ export function pitchClass(note: string): number {
   }
   return pc
 }
+
+/**
+ * Tag each canonical note in a one-octave-ascending scale with its octave number.
+ * Octave bumps when the letter order wraps (e.g. B → C, or A → C, or A → Bb).
+ * We use letter-position ordering (C=0..B=6), not pitch-class — sharps and
+ * flats stay in the same letter slot, so 'B' → 'C' is a wrap but 'B' → 'C#'
+ * is also a wrap, while 'C' → 'C#' is not.
+ *
+ *   withOctaves(['Bb','C','Db','Eb','F','G','Ab'], 4)
+ *     // ['Bb4','C5','Db5','Eb5','F5','G5','Ab5']
+ */
+export function withOctaves(notes: string[], startOctave: number): string[] {
+  const letterOrder: Record<string, number> = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6 }
+  let oct = startOctave
+  let prev = -1
+  return notes.map((n) => {
+    const head = n[0]
+    const order = head !== undefined && letterOrder[head] !== undefined ? letterOrder[head]! : 0
+    if (prev !== -1 && order < prev) oct += 1
+    prev = order
+    return `${n}${oct}`
+  })
+}

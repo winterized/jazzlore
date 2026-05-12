@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { CURATED_SCALES } from '../features/scales/data/curated'
-import { notesForScale, pitchClass } from './music'
+import { notesForScale, pitchClass, withOctaves } from './music'
 
 const findScale = (id: string) => {
   const s = CURATED_SCALES.find((x) => x.id === id)
@@ -78,5 +78,27 @@ describe('pitchClass', () => {
   it('throws on unknown letter', () => {
     expect(() => pitchClass('H')).toThrow(/unknown note letter/)
     expect(() => pitchClass('Xb')).toThrow(/unknown note letter/)
+  })
+})
+
+describe('withOctaves', () => {
+  it('C major: octave 4 throughout, no internal bump (closing is the caller’s problem)', () => {
+    expect(withOctaves(['C', 'D', 'E', 'F', 'G', 'A', 'B'], 4))
+      .toEqual(['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4'])
+  })
+
+  it('Bb Dorian: bump at C (second note)', () => {
+    expect(withOctaves(['Bb', 'C', 'Db', 'Eb', 'F', 'G', 'Ab'], 4))
+      .toEqual(['Bb4', 'C5', 'Db5', 'Eb5', 'F5', 'G5', 'Ab5'])
+  })
+
+  it('F# Phrygian: bump at C# (5th note)', () => {
+    expect(withOctaves(['F#', 'G', 'A', 'B', 'C#', 'D', 'E'], 4))
+      .toEqual(['F#4', 'G4', 'A4', 'B4', 'C#5', 'D5', 'E5'])
+  })
+
+  it('honors startOctave parameter', () => {
+    expect(withOctaves(['C', 'D'], 3))
+      .toEqual(['C3', 'D3'])
   })
 })

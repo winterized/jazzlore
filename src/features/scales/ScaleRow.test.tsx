@@ -47,4 +47,9 @@ describe('ScaleRow', () => {
     // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container -- SVG primitives have no roles
     expect(container.querySelectorAll('[data-role="white-key"]')).toHaveLength(14)
   })
+
+  it('renders a play button labelled with scale + root', () => {
+    render(<ScaleRow scale={ionian} root="Bb" notes={['Bb', 'C', 'D', 'Eb', 'F', 'G', 'A']} />)
+    expect(screen.getByRole('button', { name: /Play Ionian on B♭/ })).toBeInTheDocument()
+  })
 })
