@@ -30,3 +30,8 @@ export function alternateSpelling(root: string): string | null {
 export function normalizeRoot(value: string): string | null {
   return ALL_ROOTS.includes(value) ? value : null
 }
+
+/** Convert an internal root like 'Bb' / 'F#' to display form 'B♭' / 'F♯'. */
+export function formatRoot(root: string): string {
+  return root.replace('b', '♭').replace('#', '♯')
+}

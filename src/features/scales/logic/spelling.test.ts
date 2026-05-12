@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ALL_ROOTS, DEFAULT_ROOTS, alternateSpelling, isAmbiguous, normalizeRoot } from './spelling'
+import { ALL_ROOTS, DEFAULT_ROOTS, alternateSpelling, formatRoot, isAmbiguous, normalizeRoot } from './spelling'
 
 describe('DEFAULT_ROOTS', () => {
   it('has 12 entries in chromatic order, jazz-default spellings', () => {
@@ -60,5 +60,29 @@ describe('normalizeRoot', () => {
     expect(normalizeRoot('Cb')).toBeNull()
     expect(normalizeRoot('foo')).toBeNull()
     expect(normalizeRoot('')).toBeNull()
+  })
+})
+
+describe('formatRoot', () => {
+  it('passes naturals through unchanged', () => {
+    for (const r of ['C', 'D', 'E', 'F', 'G', 'A', 'B']) {
+      expect(formatRoot(r)).toBe(r)
+    }
+  })
+
+  it('converts flats: Bb → B♭, Db → D♭, Eb → E♭, Ab → A♭, Gb → G♭', () => {
+    expect(formatRoot('Bb')).toBe('B♭')
+    expect(formatRoot('Db')).toBe('D♭')
+    expect(formatRoot('Eb')).toBe('E♭')
+    expect(formatRoot('Ab')).toBe('A♭')
+    expect(formatRoot('Gb')).toBe('G♭')
+  })
+
+  it('converts sharps: F# → F♯, C# → C♯, D# → D♯, G# → G♯, A# → A♯', () => {
+    expect(formatRoot('F#')).toBe('F♯')
+    expect(formatRoot('C#')).toBe('C♯')
+    expect(formatRoot('D#')).toBe('D♯')
+    expect(formatRoot('G#')).toBe('G♯')
+    expect(formatRoot('A#')).toBe('A♯')
   })
 })
