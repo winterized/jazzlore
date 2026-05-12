@@ -28,15 +28,9 @@ const BLACK_KEYS: ReadonlyArray<{ afterWhite: number; name: string }> = [
   { afterWhite: 5, name: 'A#' },
 ]
 
-const classFor = (state: KeyState, kind: 'white' | 'black'): string => {
-  if (kind === 'white') {
-    if (state === 'root') return 'fill-amber-500'
-    if (state === 'scale') return 'fill-amber-200'
-    return 'fill-stone-50 dark:fill-stone-200'
-  }
-  if (state === 'root') return 'fill-amber-700'
-  if (state === 'scale') return 'fill-amber-500'
-  return 'fill-stone-800 dark:fill-stone-900'
+const classFor = (kind: 'white' | 'black'): string => {
+  if (kind === 'white') return 'fill-white dark:fill-stone-100'
+  return 'fill-stone-900 dark:fill-stone-950'
 }
 
 export default function PianoKeyboard({
@@ -53,7 +47,38 @@ export default function PianoKeyboard({
 
   const whites: ReactNode[] = []
   const blacks: ReactNode[] = []
+  const markers: ReactNode[] = []
   const labels: ReactNode[] = []
+
+  const pushMarker = (key: string, cx: number, cy: number, state: Exclude<KeyState, 'off'>) => {
+    if (state === 'root') {
+      markers.push(
+        <circle
+          key={key}
+          data-role="marker"
+          data-marker-for={state}
+          cx={cx}
+          cy={cy}
+          r={6}
+          className="fill-amber-500 stroke-white dark:stroke-stone-900"
+          strokeWidth={1.5}
+        />,
+      )
+    } else {
+      markers.push(
+        <circle
+          key={key}
+          data-role="marker"
+          data-marker-for={state}
+          cx={cx}
+          cy={cy}
+          r={3.5}
+          className="fill-stone-600 stroke-white dark:stroke-stone-900"
+          strokeWidth={1}
+        />,
+      )
+    }
+  }
 
   // 2 octaves of white keys (14 total)
   for (let i = 0; i < 14; i++) {
@@ -72,17 +97,20 @@ export default function PianoKeyboard({
         y={0}
         width={WHITE}
         height={HEIGHT}
-        className={`${classFor(state, 'white')} stroke-stone-400`}
+        className={`${classFor('white')} stroke-stone-400`}
         strokeWidth={1}
       />,
     )
+    if (state !== 'off') {
+      pushMarker(`wm-${i}`, i * WHITE + WHITE / 2, HEIGHT - 14, state)
+    }
     if (showNoteNames && state !== 'off') {
       labels.push(
         <text
           key={`l-${i}`}
           data-role="note-label"
           x={i * WHITE + WHITE / 2}
-          y={HEIGHT - 8}
+          y={HEIGHT - 28}
           textAnchor="middle"
           fontSize={10}
           className="fill-stone-900"
@@ -111,10 +139,13 @@ export default function PianoKeyboard({
           y={0}
           width={BLACK_W}
           height={BLACK_H}
-          className={`${classFor(state, 'black')} stroke-stone-900`}
+          className={`${classFor('black')} stroke-stone-900`}
           strokeWidth={1}
         />,
       )
+      if (state !== 'off') {
+        pushMarker(`bm-${octIdx}-${i}`, x + BLACK_W / 2, BLACK_H - 10, state)
+      }
     }
   }
 
@@ -129,6 +160,7 @@ export default function PianoKeyboard({
     >
       {whites}
       {blacks}
+      {markers}
       {labels}
     </svg>
   )
