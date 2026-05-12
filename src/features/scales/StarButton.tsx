@@ -22,7 +22,7 @@ export default function StarButton({ rootNote, scaleId }: Props) {
       onClick={toggle}
       className="rounded-md px-2 py-1 text-lg leading-none hover:bg-stone-100 dark:hover:bg-stone-800"
     >
-      {pressed ? '★' : '☆'}
+      <span aria-hidden="true">{pressed ? '★' : '☆'}</span>
     </button>
   )
 }
