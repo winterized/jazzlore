@@ -18,7 +18,7 @@
     "test:e2e:install": "PLAYWRIGHT_BROWSERS_PATH=0 playwright install chromium webkit"
   },
   "dependencies": {
-    "@tonaljs/tonal": "^4.10.0",
+    "@tonaljs/note": "^4.12.1",
     "abcjs": "^6.6.3",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
