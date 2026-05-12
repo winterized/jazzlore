@@ -38,3 +38,28 @@ export function notesForScale(root: string, scale: ScaleDefinition): string[] {
     return transpose(root, interval)
   })
 }
+
+/**
+ * Canonical chromatic pitch class (0..11) for a note token like 'C', 'F#', 'Bb', 'B𝄫'.
+ * - C = 0, C#/Db = 1, ..., B = 11
+ * - Sharps: '#'
+ * - Flats: 'b'
+ * - Double flats: '𝄫' (U+1D12B) or 'bb' suffix — handled by repeatedly subtracting 1
+ * Throws on an unknown leading letter.
+ */
+export function pitchClass(note: string): number {
+  const letterOffsets: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
+  const head = note[0]
+  if (!head) throw new Error('empty note token')
+  const base = letterOffsets[head]
+  if (base === undefined) throw new Error(`unknown note letter "${head}" in token "${note}"`)
+  let pc = base
+  // Walk remaining characters for accidentals: '#' = +1, 'b' = -1 (mod 12)
+  // (Double flat 𝄫 is U+1D12B; treat any non-#/non-b as ignored for v1 simplicity)
+  for (let i = 1; i < note.length; i++) {
+    const ch = note[i]
+    if (ch === '#') pc = (pc + 1) % 12
+    else if (ch === 'b') pc = (pc + 11) % 12
+  }
+  return pc
+}

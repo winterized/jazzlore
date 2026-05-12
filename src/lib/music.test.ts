@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { CURATED_SCALES } from '../features/scales/data/curated'
-import { notesForScale } from './music'
+import { notesForScale, pitchClass } from './music'
 
 const findScale = (id: string) => {
   const s = CURATED_SCALES.find((x) => x.id === id)
@@ -38,5 +38,45 @@ describe('notesForScale', () => {
       const notes = notesForScale('C', scale)
       expect(notes).toHaveLength(scale.semitones.length)
     }
+  })
+})
+
+describe('pitchClass', () => {
+  it('C = 0, D = 2, ..., B = 11', () => {
+    expect(pitchClass('C')).toBe(0)
+    expect(pitchClass('D')).toBe(2)
+    expect(pitchClass('E')).toBe(4)
+    expect(pitchClass('F')).toBe(5)
+    expect(pitchClass('G')).toBe(7)
+    expect(pitchClass('A')).toBe(9)
+    expect(pitchClass('B')).toBe(11)
+  })
+
+  it('sharps add 1', () => {
+    expect(pitchClass('C#')).toBe(1)
+    expect(pitchClass('F#')).toBe(6)
+    expect(pitchClass('A#')).toBe(10)
+  })
+
+  it('flats subtract 1', () => {
+    expect(pitchClass('Db')).toBe(1)
+    expect(pitchClass('Eb')).toBe(3)
+    expect(pitchClass('Gb')).toBe(6)
+    expect(pitchClass('Ab')).toBe(8)
+    expect(pitchClass('Bb')).toBe(10)
+  })
+
+  it('double flats subtract 2', () => {
+    expect(pitchClass('Bbb')).toBe(9)  // A
+    expect(pitchClass('Ebb')).toBe(2)  // D
+  })
+
+  it('throws on empty input', () => {
+    expect(() => pitchClass('')).toThrow(/empty note/)
+  })
+
+  it('throws on unknown letter', () => {
+    expect(() => pitchClass('H')).toThrow(/unknown note letter/)
+    expect(() => pitchClass('Xb')).toThrow(/unknown note letter/)
   })
 })

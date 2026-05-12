@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { pitchClass } from '../lib/music'
 
 type Props = {
   scaleNotes: string[] // canonical, e.g. ['Bb','C','Db','Eb','F','G','Ab']
@@ -10,29 +11,6 @@ type Props = {
 type KeyState = 'root' | 'scale' | 'off'
 
 const WHITE_KEYS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as const
-
-// Pitch classes (0..11) — letter-based with optional sharp/flat suffix.
-// We keep this local + tiny rather than reaching into Tonal, because the
-// PianoKeyboard's contract is "give me canonical note strings" and we want
-// the pure render to stay dependency-free and easy to reason about.
-const PC = (note: string): number => {
-  const letterOffsets: Record<string, number> = {
-    C: 0,
-    D: 2,
-    E: 4,
-    F: 5,
-    G: 7,
-    A: 9,
-    B: 11,
-  }
-  const head = note[0]
-  if (!head) return 0
-  const base = letterOffsets[head]
-  if (base === undefined) return 0
-  if (note.endsWith('#')) return (base + 1) % 12
-  if (note.endsWith('b')) return (base + 11) % 12
-  return base
-}
 
 const WHITE = 32
 const BLACK_W = 20
@@ -67,8 +45,8 @@ export default function PianoKeyboard({
   startOctave,
   showNoteNames = false,
 }: Props) {
-  const rootPc = PC(root)
-  const scalePcs = new Set(scaleNotes.map(PC))
+  const rootPc = pitchClass(root)
+  const scalePcs = new Set(scaleNotes.map(pitchClass))
 
   const stateFor = (pc: number): KeyState =>
     pc === rootPc ? 'root' : scalePcs.has(pc) ? 'scale' : 'off'
@@ -82,7 +60,7 @@ export default function PianoKeyboard({
     const letter = WHITE_KEYS[i % 7]
     if (!letter) continue
     const oct = startOctave + Math.floor(i / 7)
-    const pc = PC(letter)
+    const pc = pitchClass(letter)
     const state = stateFor(pc)
     whites.push(
       <rect
@@ -120,7 +98,7 @@ export default function PianoKeyboard({
     for (let i = 0; i < BLACK_KEYS.length; i++) {
       const spec = BLACK_KEYS[i]
       if (!spec) continue
-      const pc = PC(spec.name)
+      const pc = pitchClass(spec.name)
       const state = stateFor(pc)
       const x = (octIdx * 7 + spec.afterWhite + 1) * WHITE - BLACK_W / 2
       blacks.push(
