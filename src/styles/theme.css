@@ -1,1 +1,12 @@
-/* Populated in Task 23 (abcjs dark-mode color overrides). */
+/* abcjs renders SVG with inline fill/stroke attributes; CSS overrides them in
+   dark mode so notation reads as light strokes on the dark background. The
+   wrapper carries className="abcjs-container" (see src/features/scales/ScaleScore.tsx)
+   so we scope the override to that subtree only. */
+[data-theme='dark'] .abcjs-container svg * {
+  stroke: #e7e5e4 !important;
+  fill: #e7e5e4 !important;
+}
+[data-theme='dark'] .abcjs-container svg .abcjs-staff,
+[data-theme='dark'] .abcjs-container svg .abcjs-bar {
+  stroke: #57534e !important;
+}
