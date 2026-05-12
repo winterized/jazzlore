@@ -80,7 +80,11 @@ export function withOctaves(notes: string[], startOctave: number): string[] {
   let prev = -1
   return notes.map((n) => {
     const head = n[0]
-    const order = head !== undefined && letterOrder[head] !== undefined ? letterOrder[head]! : 0
+    if (!head) throw new Error('empty note token')
+    const order = letterOrder[head]
+    if (order === undefined) {
+      throw new Error(`unknown note letter "${head}" in token "${n}"`)
+    }
     if (prev !== -1 && order < prev) oct += 1
     prev = order
     return `${n}${oct}`

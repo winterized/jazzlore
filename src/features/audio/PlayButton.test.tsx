@@ -2,14 +2,20 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
-const { playScale, stopAll, unlockAudio, ensureEngine } = vi.hoisted(() => ({
+const { playScale, stopAll, unlockAudio } = vi.hoisted(() => ({
   playScale: vi.fn().mockResolvedValue(undefined),
   stopAll: vi.fn(),
   unlockAudio: vi.fn().mockResolvedValue(undefined),
-  ensureEngine: vi.fn().mockResolvedValue('sampler'),
 }))
 
-vi.mock('./audioEngine', () => ({ playScale, stopAll, unlockAudio, ensureEngine }))
+vi.mock('./audioEngine', () => ({
+  playScale,
+  stopAll,
+  unlockAudio,
+  // ensureEngine is called internally by playScale, not by the component.
+  // Stub it so the module shape is complete.
+  ensureEngine: vi.fn().mockResolvedValue('sampler'),
+}))
 
 import PlayButton from './PlayButton'
 
