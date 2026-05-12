@@ -50,7 +50,13 @@ export default function PianoKeyboard({
   const markers: ReactNode[] = []
   const labels: ReactNode[] = []
 
-  const pushMarker = (key: string, cx: number, cy: number, state: Exclude<KeyState, 'off'>) => {
+  const pushMarker = (
+    key: string,
+    cx: number,
+    cy: number,
+    state: Exclude<KeyState, 'off'>,
+    kind: 'white' | 'black',
+  ) => {
     if (state === 'root') {
       markers.push(
         <circle
@@ -64,20 +70,24 @@ export default function PianoKeyboard({
           strokeWidth={1.5}
         />,
       )
-    } else {
-      markers.push(
-        <circle
-          key={key}
-          data-role="marker"
-          data-marker-for={state}
-          cx={cx}
-          cy={cy}
-          r={3.5}
-          className="fill-stone-600 stroke-white dark:stroke-stone-900"
-          strokeWidth={1}
-        />,
-      )
+      return
     }
+    // Scale-tone marker: use a fill that contrasts with the key's background.
+    // White keys → dark fill; black keys → light fill. Both meet WCAG 1.4.11
+    // non-text contrast (≥ 3:1) comfortably.
+    const scaleFill =
+      kind === 'white' ? 'fill-stone-700' : 'fill-stone-200'
+    markers.push(
+      <circle
+        key={key}
+        data-role="marker"
+        data-marker-for={state}
+        cx={cx}
+        cy={cy}
+        r={4.5}
+        className={scaleFill}
+      />,
+    )
   }
 
   // 2 octaves of white keys (14 total)
@@ -102,7 +112,7 @@ export default function PianoKeyboard({
       />,
     )
     if (state !== 'off') {
-      pushMarker(`wm-${i}`, i * WHITE + WHITE / 2, HEIGHT - 14, state)
+      pushMarker(`wm-${i}`, i * WHITE + WHITE / 2, HEIGHT - 14, state, 'white')
     }
     if (showNoteNames && state !== 'off') {
       labels.push(
@@ -144,7 +154,7 @@ export default function PianoKeyboard({
         />,
       )
       if (state !== 'off') {
-        pushMarker(`bm-${octIdx}-${i}`, x + BLACK_W / 2, BLACK_H - 10, state)
+        pushMarker(`bm-${octIdx}-${i}`, x + BLACK_W / 2, BLACK_H - 10, state, 'black')
       }
     }
   }
