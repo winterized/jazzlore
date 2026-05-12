@@ -1,5 +1,3 @@
-import * as Tone from 'tone'
-
 export type EngineKind = 'sampler' | 'synth' | null
 
 const SAMPLE_BASE = '/audio/piano/'
@@ -30,46 +28,58 @@ let engine: EngineInstance | null = null
 let kind: EngineKind = null
 let loadPromise: Promise<EngineKind> | null = null
 
+// Lazy-load Tone.js: ~75 KB gz that we only need after a user gesture.
+// Caching the in-flight promise ensures concurrent callers share one fetch.
+let tonePromise: Promise<typeof import('tone')> | null = null
+function loadTone(): Promise<typeof import('tone')> {
+  if (!tonePromise) tonePromise = import('tone')
+  return tonePromise
+}
+
 export async function ensureEngine(): Promise<EngineKind> {
   if (engine) return kind
   if (loadPromise) return loadPromise
 
-  loadPromise = new Promise<EngineKind>((resolve) => {
-    let resolved = false
-    const finish = (k: EngineKind, instance: EngineInstance): void => {
-      if (resolved) return
-      resolved = true
-      engine = instance
-      kind = k
-      resolve(k)
-    }
-    const fallbackToSynth = (): void => {
-      const synth = new Tone.PolySynth().toDestination()
-      finish('synth', synth as unknown as EngineInstance)
-    }
-    const timeout = setTimeout(fallbackToSynth, SAMPLER_LOAD_TIMEOUT_MS)
+  loadPromise = (async (): Promise<EngineKind> => {
+    const Tone = await loadTone()
+    return new Promise<EngineKind>((resolve) => {
+      let resolved = false
+      const finish = (k: EngineKind, instance: EngineInstance): void => {
+        if (resolved) return
+        resolved = true
+        engine = instance
+        kind = k
+        resolve(k)
+      }
+      const fallbackToSynth = (): void => {
+        const synth = new Tone.PolySynth().toDestination()
+        finish('synth', synth as unknown as EngineInstance)
+      }
+      const timeout = setTimeout(fallbackToSynth, SAMPLER_LOAD_TIMEOUT_MS)
 
-    const ext = preferredSampleExtension()
-    const urls = Object.fromEntries(SAMPLE_PITCHES.map((p) => [p, `${p}.${ext}`]))
-    const sampler = new Tone.Sampler({
-      urls,
-      baseUrl: SAMPLE_BASE,
-      onload: () => {
-        clearTimeout(timeout)
-        finish('sampler', sampler as unknown as EngineInstance)
-      },
-      onerror: () => {
-        clearTimeout(timeout)
-        fallbackToSynth()
-      },
-    }).toDestination()
-  })
+      const ext = preferredSampleExtension()
+      const urls = Object.fromEntries(SAMPLE_PITCHES.map((p) => [p, `${p}.${ext}`]))
+      const sampler = new Tone.Sampler({
+        urls,
+        baseUrl: SAMPLE_BASE,
+        onload: () => {
+          clearTimeout(timeout)
+          finish('sampler', sampler as unknown as EngineInstance)
+        },
+        onerror: () => {
+          clearTimeout(timeout)
+          fallbackToSynth()
+        },
+      }).toDestination()
+    })
+  })()
 
   return loadPromise
 }
 
 /** Must be called inside a user-gesture handler on iOS Safari. */
 export async function unlockAudio(): Promise<void> {
+  const Tone = await loadTone()
   await Tone.start()
 }
 
@@ -78,6 +88,7 @@ export async function playScale(noteNames: string[]): Promise<void> {
   stopAll()
   await ensureEngine()
   if (!engine) return
+  const Tone = await loadTone()
   const now = Tone.now()
   const active = engine
   noteNames.forEach((note, i) => {
@@ -95,4 +106,5 @@ export function __resetForTests(): void {
   engine = null
   kind = null
   loadPromise = null
+  tonePromise = null
 }

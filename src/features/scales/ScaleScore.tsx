@@ -1,4 +1,3 @@
-import * as abcjs from 'abcjs'
 import { useEffect, useMemo, useRef } from 'react'
 import { notesToAbcVoice } from './logic/abc'
 
@@ -25,13 +24,24 @@ export default function ScaleScore({ notes, octave = 4 }: Props) {
   useEffect(() => {
     const host = ref.current
     if (!host || !tune) return
-    abcjs.renderAbc(host, tune, {
-      scale: 1,
-      staffwidth: 320,
-      paddingtop: 0,
-      paddingbottom: 0,
-    })
+
+    // Lazy-load abcjs: it's only needed once a scale is rendered.
+    // First mount fetches the chunk (~50 KB gz); subsequent mounts hit the module cache.
+    // The `active` flag guards against the component unmounting before the import resolves.
+    let active = true
+    void (async () => {
+      const abcjs = await import('abcjs')
+      if (!active) return
+      abcjs.renderAbc(host, tune, {
+        scale: 1,
+        staffwidth: 320,
+        paddingtop: 0,
+        paddingbottom: 0,
+      })
+    })()
+
     return () => {
+      active = false
       host.innerHTML = ''
     }
   }, [tune])
