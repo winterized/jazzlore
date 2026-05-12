@@ -1,5 +1,6 @@
 import { Navigate, useNavigate, useParams } from 'react-router'
 import RootPicker from '../features/scales/RootPicker'
+import ScaleList from '../features/scales/ScaleList'
 import { formatRoot } from '../features/scales/logic/spelling'
 import { rootFromSlug, slugFromRoot } from '../features/scales/logic/url'
 
@@ -19,6 +20,9 @@ export default function ScalesPage() {
         selected={root}
         onSelect={(next) => navigate(`/scales/${slugFromRoot(next)}`)}
       />
+      <div className="mt-8">
+        <ScaleList root={root} />
+      </div>
     </main>
   )
 }
