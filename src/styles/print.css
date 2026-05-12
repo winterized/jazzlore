@@ -13,7 +13,7 @@
     grid-template-columns: repeat(var(--print-columns), 1fr);
     gap: 16px;
   }
-  .print-grid > article {
+  .print-grid > * {
     break-inside: avoid;
     page-break-inside: avoid;
   }
@@ -28,7 +28,7 @@
   :root[data-density="3"] .scale-notes { display: none !important; }
 
   /* Exclude unselected scales from print */
-  .scale-row[data-print-include="false"] { display: none !important; }
+  [data-print-include="false"] { display: none !important; }
 
   /* Page header / footer (Chrome supports; Safari/Firefox partial) */
   @page {

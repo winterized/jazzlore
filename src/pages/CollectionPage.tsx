@@ -42,7 +42,7 @@ export default function CollectionPage() {
               if (!scale) return null
               const isIncluded = included[key] ?? true
               return (
-                <div key={key} className="scale-row" data-print-include={String(isIncluded)}>
+                <div key={key} className="print-row" data-print-include={String(isIncluded)}>
                   <label className="no-print mb-2 flex items-center gap-2 text-sm">
                     <input
                       type="checkbox"
