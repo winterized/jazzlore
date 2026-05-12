@@ -5,6 +5,16 @@ export type EngineKind = 'sampler' | 'synth' | null
 const SAMPLE_BASE = '/audio/piano/'
 const SAMPLE_PITCHES = ['C2', 'A2', 'C3', 'A3', 'C4', 'A4', 'C5', 'A5', 'C6', 'A6'] as const
 
+/**
+ * Prefer OGG (better compression, comparable quality) where supported.
+ * Safari (desktop + iOS) falls back to MP3. Detection runs once at module load.
+ */
+function preferredSampleExtension(): 'ogg' | 'mp3' {
+  if (typeof document === 'undefined') return 'mp3'
+  const audio = document.createElement('audio')
+  return audio.canPlayType('audio/ogg') !== '' ? 'ogg' : 'mp3'
+}
+
 const SAMPLER_LOAD_TIMEOUT_MS = 5000
 const BPM = 120
 const BEAT_S = 60 / BPM // 0.5s — quarter note duration
@@ -39,7 +49,8 @@ export async function ensureEngine(): Promise<EngineKind> {
     }
     const timeout = setTimeout(fallbackToSynth, SAMPLER_LOAD_TIMEOUT_MS)
 
-    const urls = Object.fromEntries(SAMPLE_PITCHES.map((p) => [p, `${p}.mp3`]))
+    const ext = preferredSampleExtension()
+    const urls = Object.fromEntries(SAMPLE_PITCHES.map((p) => [p, `${p}.${ext}`]))
     const sampler = new Tone.Sampler({
       urls,
       baseUrl: SAMPLE_BASE,
@@ -75,7 +86,6 @@ export async function playScale(noteNames: string[]): Promise<void> {
 }
 
 export function stopAll(): void {
-  Tone.Transport.stop()
   engine?.releaseAll?.()
 }
 
