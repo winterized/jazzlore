@@ -21,7 +21,7 @@ export default function ScaleRow({ scale, root, notes }: Props) {
         <div>
           <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100">{scale.name}</h3>
           {scale.alias && (
-            <p className="scale-alias text-sm text-stone-500 dark:text-stone-400">{scale.alias}</p>
+            <p className="scale-alias text-sm text-stone-600 dark:text-stone-400">{scale.alias}</p>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -37,7 +37,7 @@ export default function ScaleRow({ scale, root, notes }: Props) {
       <p className="scale-notes font-mono text-sm text-stone-700 dark:text-stone-200">
         {notes.map(formatRoot).join(' ')}
       </p>
-      <p className="scale-intervals mb-2 font-mono text-sm text-stone-500 dark:text-stone-400">
+      <p className="scale-intervals mb-2 font-mono text-sm text-stone-600 dark:text-stone-400">
         {scale.intervalDisplay.join(' ')}
       </p>
       <ScaleScore notes={notes} />

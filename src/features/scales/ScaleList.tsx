@@ -41,7 +41,7 @@ export default function ScaleList({ root }: Props) {
                 }
                 aria-expanded={isOpen}
                 aria-controls={panelId}
-                className="flex w-full items-center justify-between rounded-md bg-stone-100 px-4 py-2 text-left font-medium hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700"
+                className="flex w-full items-center justify-between rounded-md bg-stone-200 px-4 py-2 text-left font-medium hover:bg-stone-300 dark:bg-stone-800 dark:hover:bg-stone-700"
               >
                 <span>
                   {family.label}{' '}

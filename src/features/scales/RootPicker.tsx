@@ -110,7 +110,7 @@ export default function RootPicker({ selected, onSelect, spelling, onSpellingCha
                 type="button"
                 onClick={(e) => { e.stopPropagation(); flip(defaultRoot) }}
                 aria-label={`Switch ${slugFromRoot(shown)} to ${slugFromRoot(alt)}`}
-                className="absolute -right-1 -top-1 grid h-6 min-w-6 place-items-center rounded-md border border-stone-300 bg-white px-1 text-xs font-medium text-stone-700 shadow hover:bg-stone-100 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-200"
+                className="absolute -right-1 -top-1 grid h-6 min-w-6 place-items-center rounded-md border border-stone-300 bg-white px-1 text-xs font-medium text-stone-700 shadow hover:bg-stone-200 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-200"
               >
                 {formatRoot(alt)}
               </button>

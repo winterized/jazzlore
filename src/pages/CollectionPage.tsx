@@ -17,13 +17,13 @@ export default function CollectionPage() {
     setIncluded((prev) => ({ ...prev, [key]: !(prev[key] ?? true) }))
 
   return (
-    <main className="min-h-screen bg-stone-50 p-4 text-stone-900 dark:bg-stone-950 dark:text-stone-100 md:p-8">
+    <main className="min-h-screen bg-stone-100 p-4 text-stone-900 dark:bg-stone-950 dark:text-stone-100 md:p-8">
       <div className="mb-6 flex items-center justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight md:text-4xl">My scales</h1>
         <div className="no-print flex items-center gap-3">
           <Link
             to="/scales/C"
-            className="rounded-md border border-stone-300 px-3 py-1 text-sm hover:bg-stone-100 dark:border-stone-700 dark:hover:bg-stone-800"
+            className="rounded-md border border-stone-300 px-3 py-1 text-sm hover:bg-stone-200 dark:border-stone-700 dark:hover:bg-stone-800"
           >
             ← Scales
           </Link>
@@ -32,7 +32,7 @@ export default function CollectionPage() {
       </div>
 
       {saved.length === 0 ? (
-        <p className="text-stone-500 dark:text-stone-400">
+        <p className="text-stone-600 dark:text-stone-400">
           No saved scales yet — star a scale from the scales page to save it here.
         </p>
       ) : (

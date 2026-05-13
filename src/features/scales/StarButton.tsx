@@ -20,7 +20,7 @@ export default function StarButton({ rootNote, scaleId }: Props) {
       aria-pressed={pressed}
       aria-label={pressed ? 'Remove from My scales' : 'Save to My scales'}
       onClick={toggle}
-      className="rounded-md px-2 py-1 text-lg leading-none hover:bg-stone-100 dark:hover:bg-stone-800"
+      className="rounded-md px-2 py-1 text-lg leading-none hover:bg-stone-200 dark:hover:bg-stone-800"
     >
       <span aria-hidden="true">{pressed ? '★' : '☆'}</span>
     </button>
