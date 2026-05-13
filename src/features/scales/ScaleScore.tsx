@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react'
-import { notesToAbcVoice } from './logic/abc'
+import { buildAbcTune } from './logic/abc'
 
 type Props = {
   notes: string[] // e.g. ['Bb','C','Db','Eb','F','G','Ab']
@@ -10,16 +10,10 @@ export default function ScaleScore({ notes, octave = 4 }: Props) {
   const ref = useRef<HTMLDivElement>(null)
   const notesKey = notes.join(',')
 
-  // Derive abc voice once per change; useMemo keeps it stable for the effect dep
-  // so we don't re-render whenever the parent passes a fresh `notes` array identity.
-  const tune = useMemo(() => {
-    const voice = notesToAbcVoice(notes, octave)
-    if (!voice) return null
-    return `X:1\nM:none\nK:C\n${voice}|`
-    // notesKey is the stable serialization of `notes`; depending on the array
-    // identity would re-derive needlessly on every parent render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [notesKey, octave])
+  // notesKey is the stable serialization of `notes`; depending on the array
+  // identity would re-derive needlessly on every parent render.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const tune = useMemo(() => buildAbcTune(notes, octave), [notesKey, octave])
 
   useEffect(() => {
     const host = ref.current
@@ -51,7 +45,7 @@ export default function ScaleScore({ notes, octave = 4 }: Props) {
       ref={ref}
       role="img"
       aria-label={`Scale notation: ${notes.join(', ')}`}
-      className="abcjs-container"
+      className="abcjs-container flex justify-center py-3"
     />
   )
 }

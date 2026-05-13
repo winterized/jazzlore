@@ -52,4 +52,13 @@ describe('CollectionPage', () => {
     // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- need to query our wrapping data attribute
     expect(container.querySelector('[data-print-include="false"]')).not.toBeNull()
   })
+
+  it('exposes a back link to the scales page', () => {
+    render(
+      <MemoryRouter>
+        <CollectionPage />
+      </MemoryRouter>,
+    )
+    expect(screen.getByRole('link', { name: /scales/i })).toHaveAttribute('href', '/scales/C')
+  })
 })

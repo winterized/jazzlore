@@ -19,4 +19,8 @@ test('pick C, save Dorian, see it in collection, print preview', async ({ page }
   // Print preview: emulate print media
   await page.emulateMedia({ media: 'print' })
   await expect(page.locator('.print-grid')).toBeVisible()
+  // Regression: print.css used to strip every <header> element, which silently
+  // swallowed each scale's name (it lives inside an <article><header>...). The
+  // strip rule must keep article headers visible.
+  await expect(page.getByRole('heading', { name: /^Dorian$/ })).toBeVisible()
 })

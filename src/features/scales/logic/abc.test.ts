@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { noteToAbc, notesToAbcVoice } from './abc'
+import { buildAbcTune, noteToAbc, notesToAbcVoice } from './abc'
 
 describe('noteToAbc', () => {
   it('uppercase letter for octave 4', () => {
@@ -69,5 +69,23 @@ describe('notesToAbcVoice', () => {
 
   it('throws on unknown letter', () => {
     expect(() => notesToAbcVoice(['H'], 4)).toThrow(/unknown note letter/)
+  })
+})
+
+describe('buildAbcTune', () => {
+  it('renders as quarter notes (L:1/4 — no flags, no beams)', () => {
+    // L:1/4 is what makes abcjs draw solid noteheads with bare stems.
+    // Defaulting to L:1/8 would beam runs of notes and visually imply a rhythm.
+    const tune = buildAbcTune(['C', 'D', 'E', 'F', 'G', 'A', 'B'], 4)
+    expect(tune).toMatch(/^X:1\nM:none\nL:1\/4\nK:C\n/)
+  })
+
+  it('embeds the voice produced by notesToAbcVoice and closes with a bar', () => {
+    const tune = buildAbcTune(['C', 'D', 'E', 'F', 'G', 'A', 'B'], 4)
+    expect(tune).toContain('\nCDEFGABc|')
+  })
+
+  it('returns null for empty input (component skips rendering)', () => {
+    expect(buildAbcTune([], 4)).toBeNull()
   })
 })

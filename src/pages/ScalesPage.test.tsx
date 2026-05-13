@@ -29,4 +29,14 @@ describe('ScalesPage routing', () => {
     await userEvent.click(screen.getByRole('radio', { name: 'F♯' }))
     expect(screen.getByTestId('loc').textContent).toBe('/scales/F-sharp')
   })
+
+  it('exposes a "My scales" link to the collection page', () => {
+    // Without this entry point the saved-scales / print flow is unreachable
+    // from the UI even though the route exists.
+    renderAt('/scales/C')
+    expect(screen.getByRole('link', { name: /my scales/i })).toHaveAttribute(
+      'href',
+      '/collection/scales',
+    )
+  })
 })

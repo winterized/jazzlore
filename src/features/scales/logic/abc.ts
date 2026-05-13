@@ -51,3 +51,22 @@ export function notesToAbcVoice(notes: string[], startOctave: number): string {
   tokens.push(noteToAbc(tonic, closingOct))
   return tokens.join('')
 }
+
+/**
+ * Build the full abc tune string for a scale, ready to pass to abcjs.renderAbc.
+ *
+ * Headers:
+ *   X:1     reference number
+ *   M:none  no meter / no bar lines (scales aren't metrical)
+ *   L:1/4   note length = quarter (renders solid noteheads with stems, no flags
+ *           and no beams — the right read for a scale; eighths would default
+ *           to beaming and visually imply a rhythmic group)
+ *   K:C     key = C (we encode accidentals on every note via _ and ^)
+ *
+ * Returns null when there are no notes to render.
+ */
+export function buildAbcTune(notes: string[], startOctave: number): string | null {
+  const voice = notesToAbcVoice(notes, startOctave)
+  if (!voice) return null
+  return `X:1\nM:none\nL:1/4\nK:C\n${voice}|`
+}

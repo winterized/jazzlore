@@ -57,4 +57,22 @@ describe('ScaleRow', () => {
     render(<ScaleRow scale={ionian} root="C" notes={['C', 'D', 'E', 'F', 'G', 'A', 'B']} />)
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument()
   })
+
+  it('renders note names visually above interval numbers', () => {
+    // The note-name row anchors the scale to its current root and reads
+    // first; intervals are the abstract structure underneath.
+    const { container } = render(
+      <ScaleRow scale={ionian} root="Bb" notes={['Bb', 'C', 'D', 'Eb', 'F', 'G', 'A']} />,
+    )
+    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container -- DOM order check
+    const notes = container.querySelector('.scale-notes')
+    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container -- DOM order check
+    const intervals = container.querySelector('.scale-intervals')
+    expect(notes).not.toBeNull()
+    expect(intervals).not.toBeNull()
+    // compareDocumentPosition: bit 4 = "follows"
+    expect(notes!.compareDocumentPosition(intervals!) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    )
+  })
 })

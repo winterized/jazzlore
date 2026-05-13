@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router'
 import ThemeToggle from '../components/ThemeToggle'
 import { listSaved } from '../features/collection/collectionStore'
 import PrintDensity from '../features/collection/PrintDensity'
@@ -19,7 +20,15 @@ export default function CollectionPage() {
     <main className="min-h-screen bg-stone-50 p-4 text-stone-900 dark:bg-stone-950 dark:text-stone-100 md:p-8">
       <div className="mb-6 flex items-center justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight md:text-4xl">My scales</h1>
-        <ThemeToggle />
+        <div className="no-print flex items-center gap-3">
+          <Link
+            to="/scales/C"
+            className="rounded-md border border-stone-300 px-3 py-1 text-sm hover:bg-stone-100 dark:border-stone-700 dark:hover:bg-stone-800"
+          >
+            ← Scales
+          </Link>
+          <ThemeToggle />
+        </div>
       </div>
 
       {saved.length === 0 ? (

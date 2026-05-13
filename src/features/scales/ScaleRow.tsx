@@ -34,14 +34,14 @@ export default function ScaleRow({ scale, root, notes }: Props) {
           )}
         </div>
       </header>
+      <p className="scale-notes font-mono text-sm text-stone-700 dark:text-stone-200">
+        {notes.map(formatRoot).join(' ')}
+      </p>
       <p className="scale-intervals mb-2 font-mono text-sm text-stone-500 dark:text-stone-400">
         {scale.intervalDisplay.join(' ')}
       </p>
       <ScaleScore notes={notes} />
       <PianoKeyboard scaleNotes={notes} root={root} startOctave={4} />
-      <p className="scale-notes mt-2 font-mono text-sm text-stone-700 dark:text-stone-200">
-        {notes.map(formatRoot).join(' ')}
-      </p>
     </article>
   )
 }
