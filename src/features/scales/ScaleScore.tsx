@@ -29,8 +29,12 @@ export default function ScaleScore({ notes, octave = 4 }: Props) {
       abcjs.renderAbc(host, tune, {
         scale: 1,
         staffwidth: 320,
-        paddingtop: 0,
-        paddingbottom: 0,
+        // abcjs writes inline `height` + `overflow: hidden` on the host, which
+        // defeats container padding (py-*). Use abcjs's own padding so the
+        // SVG height includes breathing room and noteheads/stems aren't clipped
+        // into the keyboard below.
+        paddingtop: 8,
+        paddingbottom: 14,
       })
     })()
 
@@ -45,7 +49,7 @@ export default function ScaleScore({ notes, octave = 4 }: Props) {
       ref={ref}
       role="img"
       aria-label={`Scale notation: ${notes.join(', ')}`}
-      className="abcjs-container flex justify-center py-3"
+      className="abcjs-container flex justify-center"
     />
   )
 }
