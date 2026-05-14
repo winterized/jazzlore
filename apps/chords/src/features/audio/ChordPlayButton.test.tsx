@@ -53,15 +53,15 @@ describe('ChordPlayButton — rendering', () => {
     expect(screen.getByRole('button', { name: /Play Cmaj7/i })).toBeInTheDocument()
   })
 
-  it('is not disabled when idle', () => {
+  it('is never disabled — tap-to-restart relies on playChord.stopAll semantics', () => {
     renderCmaj7()
     expect(screen.getByRole('button', { name: /Play Cmaj7/i })).not.toBeDisabled()
   })
 
-  it('has aria-pressed="false" when idle', () => {
+  it('has aria-busy="false" when idle', () => {
     renderCmaj7()
     expect(screen.getByRole('button', { name: /Play Cmaj7/i })).toHaveAttribute(
-      'aria-pressed',
+      'aria-busy',
       'false',
     )
   })
@@ -111,7 +111,7 @@ describe('ChordPlayButton — in-flight state', () => {
     vi.useRealTimers()
   })
 
-  it('disables the button while playChord is resolving', async () => {
+  it('flags aria-busy=true while playChord is resolving, false after auto-release', async () => {
     // playChord stays pending until we manually resolve it
     let resolvePlay!: () => void
     mockPlayChord.mockReturnValueOnce(
@@ -125,7 +125,7 @@ describe('ChordPlayButton — in-flight state', () => {
     renderCmaj7()
     const btn = screen.getByRole('button', { name: /Play Cmaj7/i })
 
-    // Click fires async handler; the button should be disabled before playChord resolves
+    // Click fires async handler
     fireEvent.click(btn)
 
     // Flush microtasks up to (but not past) the pending playChord promise
@@ -133,8 +133,9 @@ describe('ChordPlayButton — in-flight state', () => {
       await Promise.resolve()
     })
 
-    expect(btn).toBeDisabled()
-    expect(btn).toHaveAttribute('aria-pressed', 'true')
+    // Button stays clickable (tap-to-restart) but signals in-flight via aria-busy
+    expect(btn).not.toBeDisabled()
+    expect(btn).toHaveAttribute('aria-busy', 'true')
 
     // Resolve playChord, let the finally block run, then advance the auto-release timer
     await act(async () => {
@@ -144,8 +145,7 @@ describe('ChordPlayButton — in-flight state', () => {
       vi.advanceTimersByTime(2500)
     })
 
-    expect(btn).not.toBeDisabled()
-    expect(btn).toHaveAttribute('aria-pressed', 'false')
+    expect(btn).toHaveAttribute('aria-busy', 'false')
   })
 
   it('shows "…" icon while playing and "♪" icon when idle', async () => {
@@ -218,15 +218,14 @@ describe('ChordPlayButton — auto-release timer', () => {
     })
 
     // Scheduling is done; the auto-release timer has been set but not fired.
-    expect(btn).toBeDisabled()
+    expect(btn).toHaveAttribute('aria-busy', 'true')
 
     // Advance past the 2000 ms auto-release
     await act(async () => {
       vi.advanceTimersByTime(2100)
     })
 
-    expect(btn).not.toBeDisabled()
-    expect(btn).toHaveAttribute('aria-pressed', 'false')
+    expect(btn).toHaveAttribute('aria-busy', 'false')
   })
 })
 
@@ -236,25 +235,30 @@ describe('ChordPlayButton — re-entrancy', () => {
     mockUnlockAudio.mockClear()
   })
 
-  it('is disabled mid-play so rapid clicks do not trigger a second call', async () => {
-    // First call stays in flight
-    mockPlayChord.mockReturnValueOnce(new Promise<void>(() => undefined))
+  it('a rapid second click triggers a second playChord (tap-to-restart, playChord handles stopAll)', async () => {
+    // First call stays in flight; second will be triggered before first resolves
+    mockPlayChord.mockReturnValue(new Promise<void>(() => undefined))
     mockUnlockAudio.mockResolvedValue(undefined)
 
     renderCmaj7()
     const btn = screen.getByRole('button', { name: /Play Cmaj7/i })
 
-    // First click — fires async handler
+    // First click
     fireEvent.click(btn)
-
     await act(async () => {
       await Promise.resolve()
     })
 
-    // Button is now disabled — userEvent.click on a disabled button is a no-op
-    expect(btn).toBeDisabled()
+    // Button is NOT disabled — re-clickable. playChord's internal stopAll cuts the
+    // first chord off when the second one schedules.
+    expect(btn).not.toBeDisabled()
 
-    // Confirm only one playChord call happened
-    expect(mockPlayChord).toHaveBeenCalledOnce()
+    // Second click while first is still in flight
+    fireEvent.click(btn)
+    await act(async () => {
+      await Promise.resolve()
+    })
+
+    expect(mockPlayChord).toHaveBeenCalledTimes(2)
   })
 })

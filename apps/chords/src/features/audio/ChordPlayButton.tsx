@@ -2,17 +2,19 @@
  * ChordPlayButton — play a chord via audioEngine.playChord.
  *
  * Mirrors scales' PlayButton pattern with these additions:
- * - `aria-pressed` toggle (idle / playing) instead of only `aria-busy`
+ * - `aria-busy` reflects in-flight state (this is a momentary action, not a
+ *   toggle — aria-pressed would be misleading semantics).
  * - Auto-release timer: the button returns to idle ~2 s after scheduling
- *   finishes, matching the audible duration of an arp-then-block 4-note chord.
- *   Formula: (n-1) * 150 + 600 ms. We use a fixed 2 s ceiling so the idle
- *   state returns even if notes.length varies.
+ *   finishes, matching the audible duration of an arp-then-block 7-note chord.
+ *   Formula: (n-1) * 150 + 600 ms ≤ 1500 ms. We use a fixed 2 s ceiling so the
+ *   idle state returns even if notes.length varies.
+ * - Tap-to-restart: the button is NOT disabled while playing. A second click
+ *   interrupts the current chord and starts the new one — playChord internally
+ *   calls stopAll, so re-entrancy is correct by construction.
  *
  * Note-format pipeline:
  *   notes (Unicode, no octave) → withOctaves → Unicode octaved → toAsciiNotes → ASCII octaved
  *   e.g. ['B♭','D♭','F','A♭'] → ['B♭4','D♭5','F5','A♭5'] → ['Bb4','Db5','F5','Ab5']
- *
- * playChord handles stopAll on entry — re-entrancy is not a caller concern.
  */
 
 import { useEffect, useRef, useState } from 'react'
@@ -82,11 +84,9 @@ export default function ChordPlayButton({ primary, notes }: Props) {
     <button
       type="button"
       onClick={onClick}
-      disabled={playing}
       aria-label={`Play ${primary}`}
-      aria-pressed={playing}
       aria-busy={playing}
-      className={`rounded-md border border-stone-300 bg-white px-3 py-1 text-sm hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-70 dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800 ${FOCUS_RING}`}
+      className={`rounded-md border border-stone-300 bg-white px-3 py-1 text-sm hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800 ${FOCUS_RING}`}
     >
       <span aria-hidden="true">{playing ? '…' : '♪'}</span>
     </button>
