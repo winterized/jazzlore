@@ -78,8 +78,12 @@ describe('ChordRow — C major (no alternate)', () => {
 
   it('still renders vertical placeholder for layout consistency', () => {
     const { container } = render(<ChordRow rootNote="C" definition={cmaj} />)
+    // Scope to the placeholder div specifically. The play/star buttons also
+    // carry aria-hidden on their decorative spans, so a bare query would pass
+    // even if the placeholder was deleted. Match on the explicit `h-4` class
+    // to confirm the vertical-rhythm reservation is present.
     // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container -- structural check
-    const placeholder = container.querySelector('[aria-hidden="true"]')
+    const placeholder = container.querySelector('div.h-4[aria-hidden="true"]')
     expect(placeholder).not.toBeNull()
   })
 })

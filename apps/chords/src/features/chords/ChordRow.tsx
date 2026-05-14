@@ -7,6 +7,7 @@
  * Phase 6 — they gain handlers in Phase 8 (audio) and Phase 9 (collection).
  */
 
+import { useMemo } from 'react'
 import { AbcScore, PianoKeyboard } from '@jazzlore/ui'
 import {
   buildChordAbc,
@@ -20,6 +21,11 @@ import { formatIntervals } from '../../lib/formatIntervals'
 import { rootToStartPc } from '../../lib/rootToStartPc'
 import ChordSymbolDisplay from './ChordSymbolDisplay'
 
+/** Tailwind class shared by both placeholder buttons so focus is keyboard-visible
+ *  in both themes and meets WCAG 1.4.11 non-text contrast against the stone palette. */
+const FOCUS_RING =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-stone-950'
+
 type Props = {
   /** Root note in display form, e.g. 'C', 'F♯', 'B♭'. */
   rootNote: string
@@ -28,18 +34,25 @@ type Props = {
 }
 
 export default function ChordRow({ rootNote, definition }: Props) {
-  const voicing = chordNotes(rootNote, definition)
-  const primary = formatPrimarySymbol(rootNote, definition.primarySuffix)
-  const alternateOrNull = formatAlternateSymbol(rootNote, definition.alternateSuffix)
-  const alternate = alternateOrNull ?? undefined
+  // Memoise the music-core round-trip so changing the root in Phase 7 doesn't
+  // re-derive 27 chords on every render. Helpers are pure; the cache key is
+  // exactly (rootNote, definition).
+  const derived = useMemo(() => {
+    const voicing = chordNotes(rootNote, definition)
+    const rootPc = pitchClass(rootNote)
+    return {
+      primary: formatPrimarySymbol(rootNote, definition.primarySuffix),
+      alternate: formatAlternateSymbol(rootNote, definition.alternateSuffix) ?? undefined,
+      rootPc,
+      scalePcs: voicing.notes.map(pitchClass),
+      startPc: rootToStartPc(rootPc),
+      intervalsLabel: formatIntervals(definition.tonalIntervals),
+      notesLabel: voicing.notes.join(' '),
+      abc: buildChordAbc([...voicing.notes]),
+    }
+  }, [rootNote, definition])
 
-  const rootPc = pitchClass(rootNote)
-  const scalePcs = voicing.notes.map(pitchClass)
-  const startPc = rootToStartPc(rootPc)
-
-  const intervalsLabel = formatIntervals(definition.tonalIntervals)
-  const notesLabel = voicing.notes.join(' ')
-  const abc = buildChordAbc([...voicing.notes])
+  const { primary, alternate, rootPc, scalePcs, startPc, intervalsLabel, notesLabel, abc } = derived
 
   return (
     <article className="chord-row rounded-lg border border-stone-200 p-4 dark:border-stone-700">
@@ -63,7 +76,7 @@ export default function ChordRow({ rootNote, definition }: Props) {
           <button
             type="button"
             aria-label={`Play ${primary}`}
-            className="rounded-md border border-stone-300 bg-white px-3 py-1 text-sm hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800"
+            className={`rounded-md border border-stone-300 bg-white px-3 py-1 text-sm hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800 ${FOCUS_RING}`}
           >
             <span aria-hidden="true">♪</span>
           </button>
@@ -72,7 +85,7 @@ export default function ChordRow({ rootNote, definition }: Props) {
             type="button"
             aria-label={`Save ${primary} to my collection`}
             aria-pressed={false}
-            className="rounded-md px-2 py-1 text-lg leading-none hover:bg-stone-200 dark:hover:bg-stone-800"
+            className={`rounded-md px-2 py-1 text-lg leading-none hover:bg-stone-200 dark:hover:bg-stone-800 ${FOCUS_RING}`}
           >
             <span aria-hidden="true">☆</span>
           </button>
