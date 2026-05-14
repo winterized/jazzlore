@@ -33,18 +33,21 @@ export default function ChordsPage() {
   )
 
   useEffect(() => {
-    if (root) {
-      document.title = `Chords on ${formatRoot(root)} — Jazzlore`
+    if (!root) return
+    // Restore the previous title on unmount so a future ChordCollectionPage
+    // (Phase 9) doesn't inherit the per-root title. Habit before scope.
+    const previous = document.title
+    document.title = `Chords on ${formatRoot(root)} — Jazzlore`
+    return () => {
+      document.title = previous
     }
   }, [root])
 
   if (!root) return <Navigate to="/chords/C" replace />
 
   return (
-    <main
-      lang="en"
-      className="min-h-screen bg-stone-100 p-4 text-stone-900 dark:bg-stone-950 dark:text-stone-100 md:p-8"
-    >
+    <main className="min-h-screen bg-stone-100 p-4 text-stone-900 dark:bg-stone-950 dark:text-stone-100 md:p-8">
+
       <div className="mb-6 flex items-center justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
           {formatRoot(root)} chords

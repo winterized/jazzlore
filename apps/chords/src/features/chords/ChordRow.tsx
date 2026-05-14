@@ -54,6 +54,8 @@ export default function ChordRow({ rootNote, definition }: Props) {
 
   const { primary, alternate, rootPc, scalePcs, startPc, intervalsLabel, notesLabel, abc } = derived
 
+  // data-testid (rather than getByRole('article')) anchors the test count
+  // against future layout that might wrap row content in nested articles.
   return (
     <article data-testid="chord-row" className="chord-row rounded-lg border border-stone-200 p-4 dark:border-stone-700">
       <header className="mb-2 flex items-start justify-between gap-3">
