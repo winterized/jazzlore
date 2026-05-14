@@ -3,8 +3,8 @@
  *
  * Composes music-core helpers with packages/ui components to render the full
  * chord entry: symbol (dual-form), full name, intervals, note names, staff
- * score, and piano keyboard. Play and star buttons are placeholder UI in
- * Phase 6 — they gain handlers in Phase 8 (audio) and Phase 9 (collection).
+ * score, and piano keyboard. The play button is wired to audioEngine.playChord
+ * via ChordPlayButton (Phase 8). The star button gains a handler in Phase 9.
  */
 
 import { useMemo } from 'react'
@@ -19,10 +19,11 @@ import {
 import type { ChordDefinition } from '@jazzlore/music-core'
 import { formatIntervals } from '../../lib/formatIntervals'
 import { rootToStartPc } from '../../lib/rootToStartPc'
+import ChordPlayButton from '../audio/ChordPlayButton'
 import ChordSymbolDisplay from './ChordSymbolDisplay'
 
-/** Tailwind class shared by both placeholder buttons so focus is keyboard-visible
- *  in both themes and meets WCAG 1.4.11 non-text contrast against the stone palette. */
+/** Tailwind focus-ring class for the star button (Phase 9). The play button's
+ *  focus ring lives in ChordPlayButton. Meets WCAG 1.4.11 non-text contrast. */
 const FOCUS_RING =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-stone-950'
 
@@ -49,10 +50,13 @@ export default function ChordRow({ rootNote, definition }: Props) {
       intervalsLabel: formatIntervals(definition.tonalIntervals),
       notesLabel: voicing.notes.join(' '),
       abc: buildChordAbc([...voicing.notes]),
+      /** Unicode display-form notes, no octave — passed to ChordPlayButton which
+       *  applies withOctaves + ASCII normalisation before calling playChord. */
+      playNotes: voicing.notes,
     }
   }, [rootNote, definition])
 
-  const { primary, alternate, rootPc, scalePcs, startPc, intervalsLabel, notesLabel, abc } = derived
+  const { primary, alternate, rootPc, scalePcs, startPc, intervalsLabel, notesLabel, abc, playNotes } = derived
 
   // data-testid (rather than getByRole('article')) anchors the test count
   // against future layout that might wrap row content in nested articles.
@@ -74,14 +78,7 @@ export default function ChordRow({ rootNote, definition }: Props) {
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          {/* Play button — Phase 8 wires handler */}
-          <button
-            type="button"
-            aria-label={`Play ${primary}`}
-            className={`rounded-md border border-stone-300 bg-white px-3 py-1 text-sm hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800 ${FOCUS_RING}`}
-          >
-            <span aria-hidden="true">♪</span>
-          </button>
+          <ChordPlayButton primary={primary} notes={playNotes} />
           {/* Star button — Phase 9 wires handler */}
           <button
             type="button"
