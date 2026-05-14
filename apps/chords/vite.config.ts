@@ -10,7 +10,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
-    port: 5173,
+    port: 5174,
   },
   test: {
     root: __dirname,
@@ -19,5 +19,6 @@ export default defineConfig({
     setupFiles: [resolve(__dirname, 'src/test/setup.ts')],
     css: true,
     exclude: ['node_modules', 'dist', 'tests/e2e/**'],
+    passWithNoTests: true,
   },
 })

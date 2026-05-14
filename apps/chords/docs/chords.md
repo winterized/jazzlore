@@ -1,6 +1,6 @@
 # Spec: Chords page
 
-> Second site. Status: draft v0.1. Owner: Aurélien.
+> Second site. Status: v0.2 (decisions locked 2026-05-14). Owner: Aurélien.
 > Mirrors the structure of `apps/scales/docs/specs/scales.md`. Where a decision is "same as scales," it is called out explicitly — these come from `packages/ui` and `packages/music-core` and must not diverge without a spec update on both sides.
 > Lives at `chords.jazzlore.com`.
 
@@ -78,23 +78,15 @@ Recommendation: **option 1 (by chord size)** for v1 — most predictable, easies
 Same component as scales (`<PianoKeyboard />` in `packages/ui`). The component takes a list of note semitones from the root and a "role" marker for the root key. For chords:
 - All chord tones highlighted
 - Root key visually distinguished (same treatment as scales)
-- Range: 2 octaves ?
-
-For chords spanning more than one octave on the keyboard (some extended chords), to be discussed in brainstorming
+- Range: 2 octaves, anchored on the chord's root (Q9 resolved 2026-05-14)
 
 ### Audio playback
-Same engine as scales. The open question is *how* a chord is played by default:
-- **Block:** all notes simultaneously, sustained briefly (~1 second)
-- **Arpeggiated:** notes played in sequence, root upward, then a brief block at the end
-- **Both, user-selectable per chord:** small toggle on the row
-
-To be discussed.
+Same engine as scales. Playback mode (resolved 2026-05-14): **arpeggiated** (notes played in sequence, root upward) followed by a brief block at the end. This is the default and only mode in v1.
 
 ### Save / collection
 Same shape as scales but separate storage key: `jazzlore:chords:v1` (note the version number — independent of scales' version).
 - Saved chord shape: `{ rootNote, chordId, savedAt }`
-- "My Chord Collection" route at `/collection/chords`
-- Optional combined view at `/collection` showing both scales and chords — see open question
+- "My Chord Collection" route at `/collection/chords` (the only collection route for this app; no combined `/collection` view in v1)
 
 ### Print
 Same print stylesheet as scales. Same kind of density selector. Difference: each printed chord shows its symbol prominently (chord symbols are the primary reference shorthand for jazz musicians — `Cmaj7` is more useful on a printed sheet than the full name). Optional: chord diagrams in addition to/instead of notation — see open question.
@@ -140,21 +132,21 @@ Same as scales:
 - MIDI input / output
 - Sharing collections via URL
 - Auth / cloud sync
-- The combined `/collection` view (see open question)
+- The combined `/collection` view (resolved: not in v1; see Resolved decisions section)
 
-## Open questions
+## Resolved decisions (2026-05-14)
 
-Resolve in brainstorming, before any code is written.
+All nine open questions from v0.1 were resolved in the brainstorming and planning session on 2026-05-14. The full rationale and trade-off discussion lives in the implementation plan (see `.claude/plans/chords-v1.md`). Summary of locked decisions:
 
-1. **Chord ordering.** Option 1 (by size) is my recommendation. Confirm or pick another.
-2. **Default playback mode.** Block, arpeggiated, or both with a global default? Which default if "both"?
-3. **Grand staff for extended chords.** Treble-only and let the chord pile high, or use grand staff for chords spanning > 1 octave? Consistency vs. readability.
-4. **Sticky chord-symbol header.** When scrolling the long flat list, should the chord symbol (e.g. `Cmaj7`) of the row in view stick to the top? Helps orientation in a 30-row list.
-5. **Combined collection view.** Should there be a `/collection` route that shows both scales and chords side by side? Or keep them strictly separate at `/collection/scales` and `/collection/chords`? Affects the storage shape and the navigation.
-6. **Chord symbol display.** Lots of conventions exist for chord symbols (`Cmaj7` vs `CΔ7` vs `CM7`). Pick one canonical form. Recommendation: `Cmaj7` style (most common in modern jazz lead sheets).
-7. **Curated chord list.** Confirm the proposed ~25–30 chords or revise. Some candidates for exclusion: maj7♯11 (covered by Lydian context), 13 (often implies 7♭9♯11♭13 — pick one)...
-8. **Where does the print show the chord symbol?** Above the score (more visible) or beside it (saves vertical space). 
-9. **How do we render chords spanning over 2 octaves** If we agreed to use the same keyboard element we used for scales, should we display it the same way (always the same position), or must we adapt it to the chord? 
+1. **Chord ordering:** Option 1 — by chord size (triads → 6ths → 7ths → 9ths/11ths/13ths). Most predictable for lookup.
+2. **Default playback mode:** Arpeggiated (root upward), then a brief block at the end. Single mode in v1 (no per-chord toggle).
+3. **Grand staff for extended chords:** Treble-only; let notes stack high. Consistency wins for v1.
+4. **Sticky chord-symbol header:** No sticky header in v1. The flat list is scrollable; revisit if UX testing reveals orientation problems.
+5. **Combined collection view:** No `/collection` combined route in v1. Only `/collection/chords` exists. Scales keeps `/collection/scales`.
+6. **Chord symbol display:** `Cmaj7` style (modern jazz lead-sheet convention). No delta or M variants.
+7. **Curated chord list:** ~25–30 chords confirmed (final list in `apps/chords/src/data/curated.ts`, authored in Phase 2).
+8. **Print chord symbol placement:** Above the score (more visible on printed sheets).
+9. **Keyboard range for extended chords:** 2 octaves anchored on the chord's root. Notes beyond 2 octaves are displayed as if folded into the range (implementation detail for Phase 3).
 
 ## Acceptance criteria (v1 ships when…)
 
