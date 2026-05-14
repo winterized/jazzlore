@@ -1,99 +1,77 @@
-# Jazzlore — Claude Code project memory
+# Jazzlore — workspace memory
 
-## Project context
+## Portfolio
 
-A public, polished web app for jazz musicians and learners to explore scales and chords. Built as a hands-on learning exercise in modern AI-augmented software engineering by Aurélien Fontaine, an engineering director returning to hands-on coding after several years.
+Jazzlore is a small public portfolio for jazz musicians and learners, by Aurélien Fontaine — an engineering director returning to hands-on coding. Built as a learning instrument for modern AI-augmented engineering.
 
-The project is called **Jazzlore**. It is the first site in a small portfolio under `jazzlore.com` (this site lives at `scales.jazzlore.com`, with sibling sites `chords.jazzlore.com` and `musicians.jazzlore.com` planned).
+Sub-sites under `jazzlore.com`:
 
-The site must feel public-ready from v1: clean design, fast, accessible, mobile-friendly, no rough edges.
+- `scales.jazzlore.com` — jazz scales reference (this monorepo's first app, live)
+- `chords.jazzlore.com` — planned
+- `musicians.jazzlore.com` — planned, the only one that will need a backend (likely Cloudflare Pages Functions + Neo4j AuraDB HTTP Query API)
 
-## Tech stack
+Every public-facing app must feel public-ready from v1: clean, fast, accessible, mobile-friendly, no rough edges.
 
-- **Build**: Vite
-- **Framework**: React 19 + TypeScript (strict mode)
-- **Package manager**: pnpm
-- **Music theory**: Tonal — modular `@tonaljs/note` (only `Note.transpose` is used; the umbrella `@tonaljs/tonal` was swapped out during v1 to drop ~20 KB gz of unused dictionaries)
-- **Score rendering**: abcjs
-- **Piano keyboard rendering**: custom SVG component (no dependency) — small, focused, fully testable
-- **Audio**: Tone.js
-- **Styling**: Tailwind CSS
-- **Persistence**: `localStorage` (wrapped behind a `storage` module so we can swap for Supabase later)
-- **Routing**: React Router
-- **Testing**: Vitest + React Testing Library + Playwright for e2e
-- **Linting / formatting**: ESLint + Prettier
-- **Deployment**: Live at <https://scales.jazzlore.com>. Cloudflare Workers Static Assets (Cloudflare unified Workers and Pages in late 2025 — the new wizard creates Workers projects by default even via the Pages entry point), configured via `wrangler.jsonc` at the repo root. Every push to `main` auto-deploys via Cloudflare's GitHub integration. `not_found_handling: "single-page-application"` is set so React Router owns client-side paths. No backend — pure static + localStorage. The sibling `musicians.jazzlore.com` project will likely use Cloudflare Pages Functions + Neo4j AuraDB's HTTP Query API.
-
-## Agent tooling (installed in Claude Code)
-
-- **Superpowers** plugin — planning gate, TDD discipline, two-stage review
-- **Context7** plugin — fresh library docs injected on demand (Tonal, abcjs, Tone.js, React Router)
-Always use Context7 when generating code that imports an external library (Tonal, abcjs, Tone.js, React Router, Tailwind, Vitest, Playwright) — resolve the library id, fetch the docs, then write the code.
-- **Playwright MCP server** — lets Claude drive a real browser to validate UI changes and run e2e tests itself
-- **Claude in Chrome** — Chrome extension for driving an authenticated browser session, useful when poking at deployed previews
-
-## Commands
-
-- `pnpm dev` — local dev server
-- `pnpm build` — production build
-- `pnpm test` — unit tests (vitest, watch mode)
-- `pnpm test:run` — single test run
-- `pnpm test:e2e` — Playwright end-to-end
-- `pnpm lint` — ESLint
-- `pnpm format` — Prettier
-
-## Project structure
+## Workspace layout
 
 ```
-src/
-  components/       Reusable UI components
-  features/         Feature-scoped folders (scales/, chords/, ...)
-  lib/              Domain logic (music theory wrappers, storage)
-  pages/            Route components
-  styles/           Tailwind + globals
-tests/
-  e2e/              Playwright
-docs/
-  specs/            One spec per feature, written before the code
+jazzlore/
+├── apps/                 # one directory per deployable site
+│   └── scales/           # see apps/scales/CLAUDE.md for app-specific details
+├── packages/             # cross-cutting libraries
+│   ├── ui/               # React design system, purely presentational
+│   └── music-core/       # music theory, audio, storage — no React
+├── tests/e2e/            # Playwright, app-agnostic location
+└── (root configs: tsconfig.base.json, eslint, prettier, wrangler, playwright)
 ```
 
-## Conventions
+Per-app `CLAUDE.md` files take precedence over this one for that app's conventions.
 
-1. **TDD by default.** Domain logic (anything in `lib/` or `features/*/logic/`) gets a failing test first. UI is tested via React Testing Library where there is behavior worth asserting.
-2. **Read the spec first.** Every feature has a doc in `docs/specs/`. Before coding, re-read it. If the spec doesn't answer the question, update the spec — don't guess.
-3. **No `any`.** TypeScript strict. Use `unknown` and narrow.
-4. **Small files.** Components < 150 lines; if it grows, split.
-5. **Domain logic stays out of components.** Components call functions from `lib/` or `features/*/logic/`. Never import Tonal directly in a component.
-6. **Storage abstraction.** All persistence goes through `lib/storage.ts`. Never call `localStorage` directly elsewhere — this is how we will swap for Supabase cleanly.
-7. **Accessibility is not optional.** Keyboard navigation, semantic HTML, proper ARIA labels, color contrast ≥ WCAG AA.
-8. **Mobile-first.** Tailwind breakpoints up from default (mobile) → `md:` → `lg:`.
-9. **Commits.** Conventional commits (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`).
+## Shared tooling
 
-## Definition of done (per feature)
+- **Package manager:** pnpm 11 (`packageManager` field) + workspaces (`pnpm-workspace.yaml`)
+- **Language:** TypeScript 6 strict, `noUncheckedIndexedAccess`, `verbatimModuleSyntax`. Shared compiler options in `tsconfig.base.json`.
+- **Testing:** Vitest 4 + React Testing Library per package; Playwright 1.60 for e2e at the workspace root.
+- **Lint / format:** ESLint flat config + Prettier at the workspace root, scanning all packages.
+- **Styling:** Tailwind CSS 4 (CSS-first config, no JS config file). Each app imports `tailwindcss` and adds `@source` for any `packages/*` whose classes it uses.
+- **Deployment:** Cloudflare Workers Static Assets via `wrangler.jsonc` at the repo root (single project covering this monorepo's first deployed app). `not_found_handling: "single-page-application"` for React Router. Auto-deploy on push to `main` via Cloudflare's GitHub integration.
 
-- [ ] Spec in `docs/specs/<feature>.md` is up to date
-- [ ] Unit tests for domain logic, green
-- [ ] Component renders correctly on mobile and desktop
-- [ ] Keyboard accessible
-- [ ] No `console.log`, no `any`, no TODO without a linked issue
-- [ ] Lighthouse: performance > 90, accessibility > 95
+## Boundary rules between packages
 
-## Learning goals (Aurélien)
+- **`packages/ui` is purely presentational.** No imports from `@jazzlore/music-core`. Components accept pre-computed data via props (pitch classes, formatted labels, controlled state). Enforced by an eslint `no-restricted-imports` rule and by NOT listing react in music-core's deps.
+- **`packages/music-core` has no React.** Pure music theory, audio engine, storage abstraction, theme persistence. Reusable across apps and (eventually) outside Jazzlore.
+- **Apps integrate both.** They own the conversion between domain types and UI props (build `RootOption[]`, compute `scalePcs`, wrap theme persistence in a small `useTheme()` hook, etc.).
 
-This project is *also* a learning instrument. When there is a tension between "ship fastest" and "learn modern practice," lean toward learn — but explain the tradeoff. Specifically I want hands-on experience with:
+## Top-level commands
 
-- Spec-driven development with AI
-- TDD with AI (red-green-refactor loop)
-- The Superpowers plugin workflow (planning gate, review gate)
-- Context7 for fresh library docs
-- Playwright MCP for self-validating UI changes
-- Modern frontend defaults (Vite, TS strict, Tailwind, accessibility)
+All scripts delegate to workspaces via `pnpm -F`:
 
-When you propose something, briefly note *why* — what tradeoff you made and what the alternative would have been. Treat me as a senior engineer returning from a long break, not a beginner.
+- `pnpm dev` — start the scales app dev server
+- `pnpm build` — production build of all apps
+- `pnpm test:run` — recursive unit tests across all packages
+- `pnpm test:e2e` — Playwright e2e at the workspace root
+- `pnpm storybook` — Storybook for `@jazzlore/ui`
+- `pnpm lint`, `pnpm format` — workspace-wide
 
-## Out of scope (for now)
+## Conventions (repo-wide)
 
-- Authentication / user accounts
-- Server / database (will come with Supabase later)
-- The musicians sub-site (separate project, will live at `musicians.jazzlore.com`)
-- Native apps
+1. **TDD by default.** Domain logic and pure helpers get a failing test first. UI is tested via React Testing Library where behavior is worth asserting. Visual fixes deserve tests too (DOM order, nav links, CSS scope) — extract a pure helper when behavior is buried in a component.
+2. **Read the spec first.** Each app keeps specs under `apps/<app>/docs/specs/`. Update the spec before guessing.
+3. **No `any`.** Use `unknown` and narrow.
+4. **Small files.** Components under ~150 lines; split when growing.
+5. **Domain logic stays out of components.** Components call functions from `@jazzlore/music-core` or app-level logic modules — never reach for Tonal/Tone/abcjs directly.
+6. **Accessibility is not optional.** Keyboard navigation, semantic HTML, ARIA, color contrast ≥ WCAG AA.
+7. **Mobile-first.** Tailwind breakpoints up from default → `md:` → `lg:`.
+8. **Conventional commits** with the trailer `Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>`.
+
+## Quality bars (per app)
+
+- Lighthouse: performance ≥ 90, accessibility ≥ 95.
+- axe-core: 0 violations on every public page in both light and dark themes.
+- Bundle: initial JS ≤ 100 KB gz where reasonable; dynamic-import heavy chunks (notation, audio).
+
+## Agent tooling
+
+- **Superpowers** plugin — planning gate, TDD discipline, two-stage review (subagent-driven-development for monorepo-scale work).
+- **Context7** plugin — fresh library docs. Always use Context7 when generating code that imports an external library (Tonal, abcjs, Tone.js, React Router, Tailwind, Vitest, Playwright, Storybook). Resolve the library id, fetch docs, then write code.
+- **Playwright MCP** — drive a real browser for visual checks, a11y audits via axe-core injection, and ad-hoc validation during dev (not only for formal e2e).

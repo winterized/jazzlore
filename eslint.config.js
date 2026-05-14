@@ -24,7 +24,7 @@ export default defineConfig([
     },
   },
   {
-    files: ['src/**/*.{test,spec}.{ts,tsx}', 'src/test/**/*.{ts,tsx}'],
+    files: ['{apps,packages}/**/src/**/*.{test,spec}.{ts,tsx}', '{apps,packages}/**/src/test/**/*.{ts,tsx}'],
     extends: [testingLibrary.configs['flat/react']],
   },
   prettier,
