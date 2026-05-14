@@ -1,0 +1,9 @@
+@import 'tailwindcss';
+
+/* Drive Tailwind v4 dark: variant from data-theme="dark", not prefers-color-scheme.
+   Required for the manual theme toggle (Task 22) to override the OS preference. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+@source "../../../packages/ui/src";
+
+@import './styles/print.css';
+@import './styles/theme.css';

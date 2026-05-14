@@ -1,7 +1,9 @@
 {
   "files": [],
   "references": [
-    { "path": "./tsconfig.app.json" },
+    { "path": "./apps/scales/tsconfig.app.json" },
+    { "path": "./packages/music-core" },
+    { "path": "./packages/ui" },
     { "path": "./tsconfig.node.json" }
   ]
 }
