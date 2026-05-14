@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { ChordDefinition } from './chord-types'
 import { chordNotes, formatAlternateSymbol, formatPrimarySymbol } from './chord'
+import { pitchClass } from './music'
 
 // ---------------------------------------------------------------------------
 // Inline test fixtures — 27 chord definitions with tonalIntervals.
@@ -210,5 +211,35 @@ const FIXTURES: readonly Fixture[] = [
 describe('chordNotes — parameterized 81 cases (27 chords × 3 roots)', () => {
   it.each(FIXTURES)('$id on $root', ({ id, root, notes }) => {
     expect(chordNotes(root, find(id)).notes).toEqual(notes)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Invariant: intervals[] and tonalIntervals[] must stay in sync.
+// Without this, a future contributor editing one array but not the other
+// would silently corrupt either UI highlighting (intervals consumers) or
+// note spelling (tonalIntervals consumers). The check cross-validates the
+// whole chain: tonalIntervals → Tonal transpose → toUnicode → pitchClass
+// must equal (rootPc + intervals[i]) mod 12 for every (chord, root) pair.
+// ---------------------------------------------------------------------------
+
+describe('intervals ↔ tonalIntervals semitone invariant', () => {
+  it('every definition has matching array lengths', () => {
+    for (const def of TEST_DEFINITIONS) {
+      expect(def.intervals.length, `${def.id}.intervals vs tonalIntervals length`).toBe(
+        def.tonalIntervals.length,
+      )
+    }
+  })
+
+  it.each(FIXTURES)('$id on $root: every note pitch-class matches (rootPc + intervals[i]) mod 12', ({ id, root }) => {
+    const def = find(id)
+    const { notes } = chordNotes(root, def)
+    const rootPc = pitchClass(root)
+    for (let i = 0; i < def.intervals.length; i++) {
+      const expectedPc = (rootPc + def.intervals[i]!) % 12
+      const actualPc = pitchClass(notes[i]!)
+      expect(actualPc, `${id} on ${root} at position ${i} (interval ${def.intervals[i]}, note "${notes[i]}")`).toBe(expectedPc)
+    }
   })
 })
