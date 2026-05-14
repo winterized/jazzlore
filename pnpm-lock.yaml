@@ -111,9 +111,6 @@ importers:
       '@jazzlore/ui':
         specifier: workspace:*
         version: link:../../packages/ui
-      abcjs:
-        specifier: ^6.6.3
-        version: 6.6.3
       react:
         specifier: ^19.2.5
         version: 19.2.6

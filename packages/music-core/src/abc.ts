@@ -8,7 +8,17 @@ const PITCH_ORDER: Record<string, number> = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5
  * `^` = sharp prefix, `_` = flat prefix.
  */
 export function noteToAbc(note: string, octave: number): string {
-  const accidental = note.endsWith('#') ? '^' : note.endsWith('b') ? '_' : ''
+  // Order matters: check the two-char accidentals before the one-char ones,
+  // so 'Abb' is recognised as a double flat (__) not a single 'A' + flat 'b'.
+  const accidental = note.endsWith('##')
+    ? '^^'
+    : note.endsWith('bb')
+    ? '__'
+    : note.endsWith('#')
+    ? '^'
+    : note.endsWith('b')
+    ? '_'
+    : ''
   const letter = note[0]
   if (!letter) return ''
   if (octave === 4) return `${accidental}${letter}`
@@ -72,11 +82,13 @@ export function buildAbcTune(notes: string[], startOctave: number): string | nul
 }
 
 /**
- * Normalise a note name that may carry Unicode accidentals (♯ / ♭) to the
- * ASCII convention used throughout this module (# / b).
+ * Normalise a note name that may carry Unicode accidentals (♯ / ♭ / 𝄫) to the
+ * ASCII convention used throughout this module (# / b / bb). The single-character
+ * double-flat U+1D12B is expanded to two ASCII flats so downstream code only has
+ * to handle one accidental representation.
  */
 function normaliseNote(note: string): string {
-  return note.replace(/♯/g, '#').replace(/♭/g, 'b')
+  return note.replace(/𝄫/g, 'bb').replace(/♯/g, '#').replace(/♭/g, 'b')
 }
 
 /**

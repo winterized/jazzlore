@@ -34,6 +34,15 @@ describe('noteToAbc', () => {
     expect(noteToAbc('C#', 5)).toBe('^c')
   })
 
+  it('double flat prefix __', () => {
+    expect(noteToAbc('Abb', 4)).toBe('__A')
+    expect(noteToAbc('Bbb', 5)).toBe('__b')
+  })
+
+  it('double sharp prefix ^^', () => {
+    expect(noteToAbc('G##', 4)).toBe('^^G')
+  })
+
   it('returns empty for empty token', () => {
     expect(noteToAbc('', 4)).toBe('')
   })
@@ -136,5 +145,23 @@ describe('buildChordAbc', () => {
     const abc = buildChordAbc(['C', 'E', 'G'], 3)
     // C in octave 3 is C, (comma suffix in ABC)
     expect(abc).toContain('C,')
+  })
+
+  it('Cdim7 — double-flat 7th (B♭♭) renders as __B not _B', () => {
+    // Cdim7 has notes [C, E♭, G♭, B♭♭]. The diminished 7 is the double flat.
+    // Bug regression guard: previously this rendered as _B (single flat),
+    // collapsing the chord's enharmonic spelling.
+    const abc = buildChordAbc(['C', 'E♭', 'G♭', 'B♭♭'])
+    expect(abc).toContain('__B]')
+    // Confirm the chord body uses exactly the double-flat form, not a stray
+    // single _B (the substring '_B' would match both — assert on a tail anchor
+    // that distinguishes them).
+    expect(abc).toMatch(/G__B\]$/)
+  })
+
+  it('Unicode 𝄫 (U+1D12B) double-flat normalises to double-flat ABC __', () => {
+    // Same as above but using the true Unicode glyph instead of stacked ♭♭.
+    const abc = buildChordAbc(['C', 'E♭', 'G♭', 'A𝄫'])
+    expect(abc).toContain('__A')
   })
 })
