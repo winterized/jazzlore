@@ -9,7 +9,7 @@ import prettier from 'eslint-config-prettier'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', 'node_modules', 'playwright-report', 'test-results']),
+  globalIgnores(['dist', '**/dist/**', 'node_modules', 'playwright-report', 'test-results']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -26,6 +26,19 @@ export default defineConfig([
   {
     files: ['{apps,packages}/**/src/**/*.{test,spec}.{ts,tsx}', '{apps,packages}/**/src/test/**/*.{ts,tsx}'],
     extends: [testingLibrary.configs['flat/react']],
+  },
+  {
+    files: ['packages/ui/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        paths: [
+          { name: '@jazzlore/music-core', message: 'packages/ui must not depend on music-core; pass derived data via props' },
+          { name: '@tonaljs/note', message: 'packages/ui must not import music libs directly' },
+          { name: 'tone', message: 'packages/ui must not import music libs directly' },
+          { name: 'abcjs', message: 'packages/ui must not import music libs directly' },
+        ],
+      }],
+    },
   },
   prettier,
 ])

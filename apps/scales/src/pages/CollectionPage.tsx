@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
-import ThemeToggle from '../components/ThemeToggle'
+import { ThemeToggle } from '@jazzlore/ui'
+import { useTheme } from '../lib/useTheme'
 import { listSaved } from '../features/collection/collectionStore'
 import PrintDensity from '../features/collection/PrintDensity'
 import ScaleRow from '../features/scales/ScaleRow'
@@ -9,6 +10,7 @@ import { notesForScale } from '@jazzlore/music-core'
 
 export default function CollectionPage() {
   const saved = listSaved()
+  const { theme, toggle: toggleTheme } = useTheme()
   const [included, setIncluded] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(saved.map((s) => [`${s.rootNote}-${s.scaleId}`, true])),
   )
@@ -27,7 +29,7 @@ export default function CollectionPage() {
           >
             ← Scales
           </Link>
-          <ThemeToggle />
+          <ThemeToggle theme={theme} onToggle={toggleTheme} />
         </div>
       </div>
 

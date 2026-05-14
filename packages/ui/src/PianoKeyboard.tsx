@@ -1,32 +1,29 @@
 import type { ReactNode } from 'react'
-import { pitchClass } from '@jazzlore/music-core'
 
 type Props = {
-  scaleNotes: string[] // canonical, e.g. ['Bb','C','Db','Eb','F','G','Ab']
-  root: string // canonical, e.g. 'Bb'
-  startOctave: number // octave of the C at or below root
-  showNoteNames?: boolean
+  rootPc?: number // 0..11; undefined = no root highlight
+  scalePcs: readonly number[] // 0..11; pitch classes of scale tones
+  startOctave?: number // default 4 (only affects data-note attributes for tests)
+  showNoteNames?: boolean // default false
 }
 
 type KeyState = 'root' | 'scale' | 'off'
 
-const WHITE_KEYS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as const
+const WHITE_KEY_PCS = [0, 2, 4, 5, 7, 9, 11] as const // C D E F G A B
+const WHITE_KEY_NAMES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as const
+
+const BLACK_KEY_SPECS = [
+  { afterWhite: 0, pc: 1, name: 'C#' },
+  { afterWhite: 1, pc: 3, name: 'D#' },
+  { afterWhite: 3, pc: 6, name: 'F#' },
+  { afterWhite: 4, pc: 8, name: 'G#' },
+  { afterWhite: 5, pc: 10, name: 'A#' },
+] as const
 
 const WHITE = 32
 const BLACK_W = 20
 const HEIGHT = 110
 const BLACK_H = 70
-
-// Offsets (in white-key positions within an octave) where black keys appear,
-// paired with their canonical sharp name. Black keys sit in the gaps after
-// the C, D, F, G, A whites — never after E or B.
-const BLACK_KEYS: ReadonlyArray<{ afterWhite: number; name: string }> = [
-  { afterWhite: 0, name: 'C#' },
-  { afterWhite: 1, name: 'D#' },
-  { afterWhite: 3, name: 'F#' },
-  { afterWhite: 4, name: 'G#' },
-  { afterWhite: 5, name: 'A#' },
-]
 
 const classFor = (kind: 'white' | 'black'): string => {
   if (kind === 'white') return 'fill-white dark:fill-stone-100'
@@ -34,16 +31,15 @@ const classFor = (kind: 'white' | 'black'): string => {
 }
 
 export default function PianoKeyboard({
-  scaleNotes,
-  root,
-  startOctave,
+  rootPc,
+  scalePcs,
+  startOctave = 4,
   showNoteNames = false,
 }: Props) {
-  const rootPc = pitchClass(root)
-  const scalePcs = new Set(scaleNotes.map(pitchClass))
+  const scalePcSet = new Set(scalePcs)
 
   const stateFor = (pc: number): KeyState =>
-    pc === rootPc ? 'root' : scalePcs.has(pc) ? 'scale' : 'off'
+    pc === rootPc ? 'root' : scalePcSet.has(pc) ? 'scale' : 'off'
 
   const whites: ReactNode[] = []
   const blacks: ReactNode[] = []
@@ -92,10 +88,11 @@ export default function PianoKeyboard({
 
   // 2 octaves of white keys (14 total)
   for (let i = 0; i < 14; i++) {
-    const letter = WHITE_KEYS[i % 7]
-    if (!letter) continue
+    const pcIndex = i % 7
+    const pc = WHITE_KEY_PCS[pcIndex]
+    const letter = WHITE_KEY_NAMES[pcIndex]
+    if (pc === undefined || letter === undefined) continue
     const oct = startOctave + Math.floor(i / 7)
-    const pc = pitchClass(letter)
     const state = stateFor(pc)
     whites.push(
       <rect
@@ -133,11 +130,10 @@ export default function PianoKeyboard({
 
   // Black keys: 5 per octave, placed between whites at the gaps after C/D/F/G/A.
   for (let octIdx = 0; octIdx < 2; octIdx++) {
-    for (let i = 0; i < BLACK_KEYS.length; i++) {
-      const spec = BLACK_KEYS[i]
+    for (let i = 0; i < BLACK_KEY_SPECS.length; i++) {
+      const spec = BLACK_KEY_SPECS[i]
       if (!spec) continue
-      const pc = pitchClass(spec.name)
-      const state = stateFor(pc)
+      const state = stateFor(spec.pc)
       const x = (octIdx * 7 + spec.afterWhite + 1) * WHITE - BLACK_W / 2
       blacks.push(
         <rect

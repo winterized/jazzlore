@@ -1,5 +1,5 @@
-import PianoKeyboard from '../../components/PianoKeyboard'
-import { formatRoot, withOctaves } from '@jazzlore/music-core'
+import { PianoKeyboard } from '@jazzlore/ui'
+import { formatRoot, pitchClass, withOctaves } from '@jazzlore/music-core'
 import type { ScaleDefinition } from '@jazzlore/music-core'
 import PlayButton from '../audio/PlayButton'
 import ScaleScore from './ScaleScore'
@@ -40,7 +40,7 @@ export default function ScaleRow({ scale, root, notes }: Props) {
         {scale.intervalDisplay.join(' ')}
       </p>
       <ScaleScore notes={notes} />
-      <PianoKeyboard scaleNotes={notes} root={root} startOctave={4} />
+      <PianoKeyboard scalePcs={notes.map(pitchClass)} rootPc={pitchClass(root)} startOctave={4} />
     </article>
   )
 }

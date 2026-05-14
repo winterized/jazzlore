@@ -1,13 +1,35 @@
+import { useMemo } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router'
-import ThemeToggle from '../components/ThemeToggle'
-import RootPicker from '../features/scales/RootPicker'
+import { RootPicker, ThemeToggle, type RootOption } from '@jazzlore/ui'
 import ScaleList from '../features/scales/ScaleList'
-import { formatRoot, rootFromSlug, slugFromRoot } from '@jazzlore/music-core'
+import {
+  DEFAULT_ROOTS,
+  alternateSpelling,
+  formatRoot,
+  isAmbiguous,
+  rootFromSlug,
+  slugFromRoot,
+} from '@jazzlore/music-core'
+import { useTheme } from '../lib/useTheme'
 
 export default function ScalesPage() {
   const { root: slug } = useParams<{ root: string }>()
   const navigate = useNavigate()
   const root = slug ? rootFromSlug(slug) : null
+  const { theme, toggle } = useTheme()
+
+  const options: readonly RootOption[] = useMemo(
+    () =>
+      DEFAULT_ROOTS.map((value) => {
+        const alt = isAmbiguous(value) ? alternateSpelling(value) : null
+        return {
+          value,
+          label: formatRoot(value),
+          alternate: alt ? { value: alt, label: formatRoot(alt) } : undefined,
+        }
+      }),
+    [],
+  )
 
   if (!root) return <Navigate to="/scales/C" replace />
 
@@ -24,10 +46,11 @@ export default function ScalesPage() {
           >
             My scales
           </Link>
-          <ThemeToggle />
+          <ThemeToggle theme={theme} onToggle={toggle} />
         </div>
       </div>
       <RootPicker
+        options={options}
         selected={root}
         onSelect={(next) => navigate(`/scales/${slugFromRoot(next)}`)}
       />
