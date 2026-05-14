@@ -21,11 +21,8 @@ import { formatIntervals } from '../../lib/formatIntervals'
 import { rootToStartPc } from '../../lib/rootToStartPc'
 import ChordPlayButton from '../audio/ChordPlayButton'
 import ChordSymbolDisplay from './ChordSymbolDisplay'
+import StarButton from './StarButton'
 
-/** Tailwind focus-ring class for the star button (Phase 9). The play button's
- *  focus ring lives in ChordPlayButton. Meets WCAG 1.4.11 non-text contrast. */
-const FOCUS_RING =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-stone-950'
 
 type Props = {
   /** Root note in display form, e.g. 'C', 'F♯', 'B♭'. */
@@ -79,15 +76,7 @@ export default function ChordRow({ rootNote, definition }: Props) {
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <ChordPlayButton primary={primary} notes={playNotes} />
-          {/* Star button — Phase 9 wires handler */}
-          <button
-            type="button"
-            aria-label={`Save ${primary} to my collection`}
-            aria-pressed={false}
-            className={`rounded-md px-2 py-1 text-lg leading-none hover:bg-stone-200 dark:hover:bg-stone-800 ${FOCUS_RING}`}
-          >
-            <span aria-hidden="true">☆</span>
-          </button>
+          <StarButton rootNote={rootNote} chordId={definition.id} primary={primary} />
         </div>
       </header>
       <div className="mt-3 flex flex-col gap-3 md:flex-row">
