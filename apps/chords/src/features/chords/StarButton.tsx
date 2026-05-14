@@ -59,7 +59,7 @@ export default function StarButton({ rootNote, chordId, primary }: Props) {
           : `Save ${primary} to my collection`
       }
       onClick={toggle}
-      className={`rounded-md px-2 py-1 text-lg leading-none hover:bg-stone-200 dark:hover:bg-stone-800 ${FOCUS_RING}`}
+      className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-lg leading-none hover:bg-stone-200 dark:hover:bg-stone-800 ${FOCUS_RING}`}
     >
       <span aria-hidden="true">{starred ? '★' : '☆'}</span>
     </button>

@@ -30,6 +30,15 @@ export type SavedChord = {
 }
 
 const KEY = 'chords:v1'
+/**
+ * Full localStorage key, including the `jazzlore:` prefix that
+ * `@jazzlore/music-core/storage.write` adds automatically. We need the full key
+ * here for direct reads from localStorage — required for snapshot stability
+ * (see "Snapshot cache" below). This is the ONE deliberate exception to the
+ * "never call localStorage directly" rule (CLAUDE.md) — defined once, with
+ * intent. If the prefix or suffix changes, update both KEY and FULL_KEY.
+ */
+const FULL_KEY = `jazzlore:${KEY}`
 
 // ── Pub-sub ──────────────────────────────────────────────────────────────────
 // Same-tab storage events don't fire, so we maintain our own listener set.
@@ -60,13 +69,18 @@ export function subscribe(listener: Listener): () => void {
 // localStorage.clear() get an empty snapshot on the next call (raw becomes null
 // → different from the previous raw → re-parses → empty array).
 
-let cachedRaw: string | null = undefined as unknown as string | null
+// `cachedRaw === null` is a valid "no entry in localStorage" state, so we
+// can't use null as the "not yet warmed" sentinel. A separate boolean is the
+// type-honest fix.
+let cacheWarmed = false
+let cachedRaw: string | null = null
 let cachedList: readonly SavedChord[] = []
 
 function readSnapshot(): readonly SavedChord[] {
-  const raw = localStorage.getItem('jazzlore:chords:v1')
-  if (raw === cachedRaw) return cachedList
+  const raw = localStorage.getItem(FULL_KEY)
+  if (cacheWarmed && raw === cachedRaw) return cachedList
   cachedRaw = raw
+  cacheWarmed = true
   if (raw === null) {
     cachedList = []
     return cachedList
@@ -81,13 +95,11 @@ function readSnapshot(): readonly SavedChord[] {
 
 function persist(list: SavedChord[]): void {
   write(KEY, list)
-  // After writing, reset cache so the next readSnapshot() call picks up the
-  // new raw string and returns the fresh list.
-  cachedRaw = undefined as unknown as string | null
+  // Warm the cache directly with the just-written value so the next
+  // readSnapshot() returns the same reference without re-parsing.
   cachedList = list
-  // Set cachedRaw to the just-written value so same-reference is returned on
-  // the next call without re-parsing.
-  cachedRaw = localStorage.getItem('jazzlore:chords:v1')
+  cachedRaw = localStorage.getItem(FULL_KEY)
+  cacheWarmed = true
   notify()
 }
 
