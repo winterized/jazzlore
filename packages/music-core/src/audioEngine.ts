@@ -107,14 +107,21 @@ const CHORD_BLOCK_S = 0.6 // ~600 ms all-sustain phase at the end
  *   ASCII sharps (`#`) or flats (`b`). Same convention as `playScale`.
  * @param mode - Only `'arp-then-block'` exists in v1. Reserved for future extension.
  *
+ * @returns A Promise that resolves once all notes have been **scheduled** on the
+ *   Tone.js timeline. It does **not** wait for playback to finish. Callers that
+ *   want to react when the audio actually ends must set their own timer for
+ *   `(n - 1) * 150 + 600 ms`.
+ *
  * Timing for n notes:
  *   - Note i attacks at `now + i * 0.15 s`
  *   - Note i sustains until the block end: `now + (n-1) * 0.15 + 0.6 s`
  *   - All notes release together at that same block end time
  *   - Total wall time ≈ `(n-1) * 150 + 600 ms` (≈1.5 – 2 s for 4-7 note chords)
  *
- * Stops any in-flight playback first (matching `playScale` semantics).
- * Empty `notes` array is a no-op.
+ * Re-entrancy: stops any in-flight playback first (matching `playScale`
+ * semantics) — UNLESS `notes` is empty. An empty array is a true no-op: it
+ * does not stop a chord currently sounding. Callers wanting an explicit
+ * "silence everything" should call {@link stopAll} directly.
  */
 export async function playChord(
   notes: string[],
