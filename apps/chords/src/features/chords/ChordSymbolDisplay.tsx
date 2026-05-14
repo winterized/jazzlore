@@ -22,7 +22,7 @@ type Props = {
 export default function ChordSymbolDisplay({ primary, alternate }: Props) {
   return (
     <div className="chord-symbol-display">
-      <p className="text-lg font-semibold text-stone-900 dark:text-stone-100">{primary}</p>
+      <p data-testid="chord-primary" className="text-lg font-semibold text-stone-900 dark:text-stone-100">{primary}</p>
       {alternate !== undefined ? (
         <p className="text-xs text-stone-500 dark:text-stone-400">{alternate}</p>
       ) : (

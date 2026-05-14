@@ -55,7 +55,7 @@ export default function ChordRow({ rootNote, definition }: Props) {
   const { primary, alternate, rootPc, scalePcs, startPc, intervalsLabel, notesLabel, abc } = derived
 
   return (
-    <article className="chord-row rounded-lg border border-stone-200 p-4 dark:border-stone-700">
+    <article data-testid="chord-row" className="chord-row rounded-lg border border-stone-200 p-4 dark:border-stone-700">
       <header className="mb-2 flex items-start justify-between gap-3">
         <div className="flex gap-4">
           <ChordSymbolDisplay primary={primary} alternate={alternate} />
