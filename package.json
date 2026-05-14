@@ -14,6 +14,8 @@
     "test:ui": "pnpm -F @jazzlore/scales test:ui",
     "test:e2e": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test",
     "test:e2e:install": "PLAYWRIGHT_BROWSERS_PATH=0 playwright install chromium webkit",
+    "storybook": "pnpm -F @jazzlore/ui storybook",
+    "build-storybook": "pnpm -F @jazzlore/ui build-storybook",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
