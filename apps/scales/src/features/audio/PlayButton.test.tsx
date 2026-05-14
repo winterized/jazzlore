@@ -8,7 +8,7 @@ const { playScale, stopAll, unlockAudio } = vi.hoisted(() => ({
   unlockAudio: vi.fn().mockResolvedValue(undefined),
 }))
 
-vi.mock('./audioEngine', () => ({
+vi.mock('@jazzlore/music-core', () => ({
   playScale,
   stopAll,
   unlockAudio,

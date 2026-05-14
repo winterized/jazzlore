@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { CURATED_SCALES, FAMILIES, type Family, type ScaleDefinition } from './data/curated'
-import { notesForScale } from '../../lib/music'
+import { notesForScale, type Family, type ScaleDefinition } from '@jazzlore/music-core'
+import { CURATED_SCALES, FAMILIES } from './data/curated'
 import ScaleRow from './ScaleRow'
 
 type Props = { root: string }

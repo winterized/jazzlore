@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { pitchClass } from '../lib/music'
+import { pitchClass } from '@jazzlore/music-core'
 
 type Props = {
   scaleNotes: string[] // canonical, e.g. ['Bb','C','Db','Eb','F','G','Ab']

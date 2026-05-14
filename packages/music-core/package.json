@@ -1,0 +1,29 @@
+{
+  "name": "@jazzlore/music-core",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "dependencies": {
+    "@tonaljs/note": "^4.12.1",
+    "tone": "^15.1.22"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@vitest/ui": "^4.1.5",
+    "jsdom": "^29.1.1",
+    "typescript": "~6.0.2",
+    "vite": "^8.0.10",
+    "vitest": "^4.1.5"
+  },
+  "scripts": {
+    "typecheck": "tsc -b tsconfig.json",
+    "test": "vitest",
+    "test:run": "vitest run"
+  }
+}

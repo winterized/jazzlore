@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { read, write } from '../../lib/storage'
+import { read, write } from '@jazzlore/music-core'
 
 type Density = 1 | 2 | 3
 const KEY = 'scales-print:v1'

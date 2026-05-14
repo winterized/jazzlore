@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { playScale, stopAll, unlockAudio } from './audioEngine'
+import { playScale, stopAll, unlockAudio } from '@jazzlore/music-core'
 
 type Props = {
   notes: string[]

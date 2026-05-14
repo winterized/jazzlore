@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { applyTheme, resolveInitialTheme, setOverride, type Theme } from '../lib/theme'
+import { applyTheme, resolveInitialTheme, setOverride, type Theme } from '@jazzlore/music-core'
 
 export default function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>(() => resolveInitialTheme())

@@ -1,4 +1,4 @@
-import { ALL_ROOTS, normalizeRoot } from './spelling'
+import { normalizeRoot } from './spelling'
 
 export function slugFromRoot(root: string): string {
   if (root.endsWith('b')) return `${root[0]}-flat`
@@ -16,4 +16,3 @@ export function rootFromSlug(slug: string): string | null {
   return normalizeRoot(candidate)
 }
 
-export { ALL_ROOTS }

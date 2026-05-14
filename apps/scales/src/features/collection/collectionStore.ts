@@ -1,4 +1,4 @@
-import { read, write } from '../../lib/storage'
+import { read, write } from '@jazzlore/music-core'
 
 const KEY = 'scales:v1'
 

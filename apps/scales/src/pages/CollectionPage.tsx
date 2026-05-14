@@ -5,7 +5,7 @@ import { listSaved } from '../features/collection/collectionStore'
 import PrintDensity from '../features/collection/PrintDensity'
 import ScaleRow from '../features/scales/ScaleRow'
 import { CURATED_SCALES } from '../features/scales/data/curated'
-import { notesForScale } from '../lib/music'
+import { notesForScale } from '@jazzlore/music-core'
 
 export default function CollectionPage() {
   const saved = listSaved()

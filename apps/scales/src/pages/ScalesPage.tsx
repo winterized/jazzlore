@@ -2,8 +2,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router'
 import ThemeToggle from '../components/ThemeToggle'
 import RootPicker from '../features/scales/RootPicker'
 import ScaleList from '../features/scales/ScaleList'
-import { formatRoot } from '../features/scales/logic/spelling'
-import { rootFromSlug, slugFromRoot } from '../features/scales/logic/url'
+import { formatRoot, rootFromSlug, slugFromRoot } from '@jazzlore/music-core'
 
 export default function ScalesPage() {
   const { root: slug } = useParams<{ root: string }>()

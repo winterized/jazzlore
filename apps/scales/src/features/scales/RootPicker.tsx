@@ -1,6 +1,5 @@
 import { useMemo, useState, type KeyboardEvent } from 'react'
-import { alternateSpelling, DEFAULT_ROOTS, formatRoot, isAmbiguous, toInternal } from './logic/spelling'
-import { slugFromRoot } from './logic/url'
+import { alternateSpelling, DEFAULT_ROOTS, formatRoot, isAmbiguous, slugFromRoot, toInternal } from '@jazzlore/music-core'
 
 type SpellingMap = Record<string, string> // canonical default → alternate (only when flipped)
 

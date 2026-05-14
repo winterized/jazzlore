@@ -1,8 +1,7 @@
 import PianoKeyboard from '../../components/PianoKeyboard'
-import { withOctaves } from '../../lib/music'
+import { formatRoot, withOctaves } from '@jazzlore/music-core'
+import type { ScaleDefinition } from '@jazzlore/music-core'
 import PlayButton from '../audio/PlayButton'
-import type { ScaleDefinition } from './data/curated'
-import { formatRoot } from './logic/spelling'
 import ScaleScore from './ScaleScore'
 import StarButton from './StarButton'
 

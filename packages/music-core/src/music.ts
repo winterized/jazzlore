@@ -1,5 +1,5 @@
 import { transpose } from '@tonaljs/note'
-import type { ScaleDefinition } from '../features/scales/data/curated'
+import type { ScaleDefinition } from './scale-types'
 
 /**
  * Map a display interval token from CURATED_SCALES (e.g. "♭3", "♯4") to a

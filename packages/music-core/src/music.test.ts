@@ -1,10 +1,27 @@
 import { describe, expect, it } from 'vitest'
-import { CURATED_SCALES } from '../features/scales/data/curated'
+import type { ScaleDefinition } from './scale-types'
 import { notesForScale, pitchClass, withOctaves } from './music'
 
+// Minimal inline fixture — covers every intervalDisplay token used in the tests.
+// CURATED_SCALES lives in apps/scales and is app data, not music-core's concern.
+const TEST_SCALES: readonly ScaleDefinition[] = [
+  { id: 'ionian',          name: 'Ionian',          family: 'modes-of-major',          intervalDisplay: ['1','2','3','4','5','6','7'],            semitones: [0,2,4,5,7,9,11] },
+  { id: 'dorian',          name: 'Dorian',          family: 'modes-of-major',          intervalDisplay: ['1','2','♭3','4','5','6','♭7'],          semitones: [0,2,3,5,7,9,10] },
+  { id: 'phrygian',        name: 'Phrygian',        family: 'modes-of-major',          intervalDisplay: ['1','♭2','♭3','4','5','♭6','♭7'],        semitones: [0,1,3,5,7,8,10] },
+  { id: 'bebop-dominant',  name: 'Bebop dominant',  family: 'bebop',                   intervalDisplay: ['1','2','3','4','5','6','♭7','7'],        semitones: [0,2,4,5,7,9,10,11] },
+  { id: 'hirajoshi',       name: 'Hirajoshi',       family: 'exotic',                  intervalDisplay: ['1','2','♭3','5','♭6'],                  semitones: [0,2,3,7,8] },
+  { id: 'whole-tone',      name: 'Whole tone',      family: 'symmetric',               intervalDisplay: ['1','2','3','♯4','♯5','♭7'],             semitones: [0,2,4,6,8,10] },
+  { id: 'altered',         name: 'Altered',         family: 'modes-of-melodic-minor',  intervalDisplay: ['1','♭2','♭3','♭4','♭5','♭6','♭7'],      semitones: [0,1,3,4,6,8,10] },
+  { id: 'super-locrian-bb7', name: 'Super Locrian ♭♭7', family: 'modes-of-harmonic-minor', intervalDisplay: ['1','♭2','♭3','♭4','♭5','♭6','♭♭7'], semitones: [0,1,3,4,6,8,9] },
+  { id: 'lydian-augmented',name: 'Lydian augmented',family: 'modes-of-melodic-minor',  intervalDisplay: ['1','2','3','♯4','♯5','6','7'],          semitones: [0,2,4,6,8,9,11] },
+  { id: 'ionian-aug',      name: 'Ionian ♯5',       family: 'modes-of-harmonic-minor', intervalDisplay: ['1','2','3','4','♯5','6','7'],           semitones: [0,2,4,5,8,9,11] },
+  { id: 'dorian-sharp4',   name: 'Dorian ♯4',       family: 'modes-of-harmonic-minor', intervalDisplay: ['1','2','♭3','♯4','5','6','♭7'],         semitones: [0,2,3,6,7,9,10] },
+  { id: 'lydian-sharp2',   name: 'Lydian ♯2',       family: 'modes-of-harmonic-minor', intervalDisplay: ['1','♯2','3','♯4','5','6','7'],          semitones: [0,3,4,6,7,9,11] },
+]
+
 const findScale = (id: string) => {
-  const s = CURATED_SCALES.find((x) => x.id === id)
-  if (!s) throw new Error(`scale ${id} missing from curated data`)
+  const s = TEST_SCALES.find((x) => x.id === id)
+  if (!s) throw new Error(`scale ${id} missing from test fixture`)
   return s
 }
 
@@ -33,8 +50,8 @@ describe('notesForScale', () => {
     expect(notesForScale('Db', findScale('ionian'))).toEqual(['Db', 'Eb', 'F', 'Gb', 'Ab', 'Bb', 'C'])
   })
 
-  it('every curated scale produces the expected note count for root C', () => {
-    for (const scale of CURATED_SCALES) {
+  it('every test-fixture scale produces the expected note count for root C', () => {
+    for (const scale of TEST_SCALES) {
       const notes = notesForScale('C', scale)
       expect(notes).toHaveLength(scale.semitones.length)
     }

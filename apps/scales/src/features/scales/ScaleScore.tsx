@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react'
-import { buildAbcTune } from './logic/abc'
+import { buildAbcTune } from '@jazzlore/music-core'
 
 type Props = {
   notes: string[] // e.g. ['Bb','C','Db','Eb','F','G','Ab']

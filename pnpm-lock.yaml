@@ -47,9 +47,9 @@ importers:
 
   apps/scales:
     dependencies:
-      '@tonaljs/note':
-        specifier: ^4.12.1
-        version: 4.12.1
+      '@jazzlore/music-core':
+        specifier: workspace:*
+        version: link:../../packages/music-core
       abcjs:
         specifier: ^6.6.3
         version: 6.6.3
@@ -62,9 +62,6 @@ importers:
       react-router:
         specifier: ^7.15.0
         version: 7.15.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-      tone:
-        specifier: ^15.1.22
-        version: 15.1.22
     devDependencies:
       '@tailwindcss/vite':
         specifier: ^4.3.0
@@ -99,6 +96,34 @@ importers:
       tailwindcss:
         specifier: ^4.3.0
         version: 4.3.0
+      typescript:
+        specifier: ~6.0.2
+        version: 6.0.3
+      vite:
+        specifier: ^8.0.10
+        version: 8.0.11(@types/node@24.12.3)(jiti@2.7.0)
+      vitest:
+        specifier: ^4.1.5
+        version: 4.1.5(@types/node@24.12.3)(@vitest/ui@4.1.5)(jsdom@29.1.1)(vite@8.0.11(@types/node@24.12.3)(jiti@2.7.0))
+
+  packages/music-core:
+    dependencies:
+      '@tonaljs/note':
+        specifier: ^4.12.1
+        version: 4.12.1
+      tone:
+        specifier: ^15.1.22
+        version: 15.1.22
+    devDependencies:
+      '@testing-library/jest-dom':
+        specifier: ^6.9.1
+        version: 6.9.1
+      '@vitest/ui':
+        specifier: ^4.1.5
+        version: 4.1.5(vitest@4.1.5)
+      jsdom:
+        specifier: ^29.1.1
+        version: 29.1.1
       typescript:
         specifier: ~6.0.2
         version: 6.0.3
