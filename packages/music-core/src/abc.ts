@@ -70,3 +70,54 @@ export function buildAbcTune(notes: string[], startOctave: number): string | nul
   if (!voice) return null
   return `X:1\nM:none\nL:1/4\nK:C\n${voice}|`
 }
+
+/**
+ * Normalise a note name that may carry Unicode accidentals (♯ / ♭) to the
+ * ASCII convention used throughout this module (# / b).
+ */
+function normaliseNote(note: string): string {
+  return note.replace(/♯/g, '#').replace(/♭/g, 'b')
+}
+
+/**
+ * Build a complete ABC tune string for a chord rendered as stacked noteheads
+ * (`[CEG]` syntax), ready to pass to abcjs.renderAbc.
+ *
+ * Notes are accepted with either Unicode (♯/♭) or ASCII (#/b) accidentals.
+ * The root note is placed in `octave` (default 4). Subsequent notes are
+ * assigned to ascending octaves: whenever a note's pitch order is ≤ the
+ * previous note's, the octave increments by 1 so the chord reads upward on
+ * the staff without any crossing voices.
+ *
+ * Headers:
+ *   X:1     reference number
+ *   M:none  no meter / no bar lines
+ *   L:1/1   whole-note duration (chord is a single simultaneous beat)
+ *   K:C     no key signature — every accidental is written explicitly
+ *
+ * Returns null when the notes array is empty.
+ */
+export function buildChordAbc(notes: string[], octave = 4): string | null {
+  if (notes.length === 0) return null
+
+  const normalised = notes.map(normaliseNote)
+
+  const orderOf = (n: string): number => {
+    const head = n[0]
+    if (!head) throw new Error(`empty note token`)
+    const o = PITCH_ORDER[head]
+    if (o === undefined) throw new Error(`unknown note letter "${head}" in token "${n}"`)
+    return o
+  }
+
+  let oct = octave
+  let prevOrder = -1
+  const tokens = normalised.map((n) => {
+    const order = orderOf(n)
+    if (prevOrder !== -1 && order <= prevOrder) oct += 1
+    prevOrder = order
+    return noteToAbc(n, oct)
+  })
+
+  return `X:1\nM:none\nL:1/1\nK:C\n[${tokens.join('')}]`
+}

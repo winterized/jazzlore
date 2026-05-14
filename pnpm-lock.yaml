@@ -196,6 +196,10 @@ importers:
         version: 4.1.5(@types/node@24.12.3)(@vitest/ui@4.1.5)(jsdom@29.1.1)(vite@8.0.11(@types/node@24.12.3)(esbuild@0.25.12)(jiti@2.7.0))
 
   packages/ui:
+    dependencies:
+      abcjs:
+        specifier: ^6.6.3
+        version: 6.6.3
     devDependencies:
       '@storybook/addon-essentials':
         specifier: ^8.6.0

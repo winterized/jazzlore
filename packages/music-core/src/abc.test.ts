@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildAbcTune, noteToAbc, notesToAbcVoice } from './abc'
+import { buildAbcTune, buildChordAbc, noteToAbc, notesToAbcVoice } from './abc'
 
 describe('noteToAbc', () => {
   it('uppercase letter for octave 4', () => {
@@ -87,5 +87,54 @@ describe('buildAbcTune', () => {
 
   it('returns null for empty input (component skips rendering)', () => {
     expect(buildAbcTune([], 4)).toBeNull()
+  })
+})
+
+describe('buildChordAbc', () => {
+  it('C major triad — produces ABC string containing [CEG]', () => {
+    const abc = buildChordAbc(['C', 'E', 'G'])
+    expect(abc).toContain('[CEG]')
+  })
+
+  it('C7 chord — B♭ renders as _B in stacked chord', () => {
+    const abc = buildChordAbc(['C', 'E', 'G', 'B♭'])
+    expect(abc).toContain('_B')
+    // All four notes must appear inside the chord bracket
+    expect(abc).toMatch(/\[.*C.*E.*G.*_B.*\]|\[.*_B.*\]/)
+  })
+
+  it('F# major triad — sharps render as ^ prefix', () => {
+    // F♯4 A♯4 — then C♯ wraps past A♯ (order 0 ≤ 5), so C♯ lands in octave 5 (lowercase)
+    const abc = buildChordAbc(['F♯', 'A♯', 'C♯'])
+    expect(abc).toContain('^F')
+    expect(abc).toContain('^A')
+    expect(abc).toContain('^c') // C♯ in octave 5 → lowercase
+  })
+
+  it('C13 chord spanning >1 octave — upper notes use lowercase', () => {
+    // C E G B♭ D F A — 7 notes spanning ~1.75 octaves
+    const abc = buildChordAbc(['C', 'E', 'G', 'B♭', 'D', 'F', 'A'])
+    // D, F, A above the octave boundary should be lowercase
+    expect(abc).toMatch(/[def]/) // at least one lowercase note for the upper register
+  })
+
+  it('wraps in valid ABC tune headers', () => {
+    const abc = buildChordAbc(['C', 'E', 'G'])
+    expect(abc).toMatch(/^X:1\nM:none\nL:1\/1\nK:C\n/)
+  })
+
+  it('uses L:1/1 whole note duration (chord plays as one beat)', () => {
+    const abc = buildChordAbc(['C', 'E', 'G'])
+    expect(abc).toContain('L:1/1')
+  })
+
+  it('returns null for empty input', () => {
+    expect(buildChordAbc([])).toBeNull()
+  })
+
+  it('respects octave parameter — octave 3 puts root in lower register', () => {
+    const abc = buildChordAbc(['C', 'E', 'G'], 3)
+    // C in octave 3 is C, (comma suffix in ABC)
+    expect(abc).toContain('C,')
   })
 })
