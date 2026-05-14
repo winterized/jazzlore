@@ -47,6 +47,9 @@ importers:
 
   apps/chords:
     dependencies:
+      '@jazzlore/music-core':
+        specifier: workspace:*
+        version: link:../../packages/music-core
       react:
         specifier: ^19.2.5
         version: 19.2.6
