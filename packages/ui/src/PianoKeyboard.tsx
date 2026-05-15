@@ -1,45 +1,61 @@
 import type { ReactNode } from 'react'
+import {
+  WHITE_PC_SET,
+  deriveBlackKeySpecs,
+  deriveWhiteKeyNamesForOctave,
+  deriveWhiteKeyPcsForOctave,
+} from './pianoKeyboard.helpers'
 
+/**
+ * Props for PianoKeyboard.
+ *
+ * `startPc` — the pitch class (0-11) of the leftmost white key of the visible
+ * 2-octave window. Defaults to 0 (C). **Must be a white-key pitch class**:
+ * one of 0 (C), 2 (D), 4 (E), 5 (F), 7 (G), 9 (A), 11 (B).
+ *
+ * Passing a black-key pitch class (1, 3, 6, 8, 10) throws an error at render
+ * time. This is intentional: the caller must explicitly choose which
+ * neighbouring white key to anchor on, so intent is unambiguous when wiring
+ * chord roots (Phase 6).
+ */
 type Props = {
   rootPc?: number // 0..11; undefined = no root highlight
   scalePcs: readonly number[] // 0..11; pitch classes of scale tones
   startOctave?: number // default 4 (only affects data-note attributes for tests)
+  startPc?: number // default 0 (C); must be a white-key PC — see JSDoc above
   showNoteNames?: boolean // default false
 }
 
 type KeyState = 'root' | 'scale' | 'off'
-
-const WHITE_KEY_PCS = [0, 2, 4, 5, 7, 9, 11] as const // C D E F G A B
-const WHITE_KEY_NAMES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as const
-
-const BLACK_KEY_SPECS = [
-  { afterWhite: 0, pc: 1, name: 'C#' },
-  { afterWhite: 1, pc: 3, name: 'D#' },
-  { afterWhite: 3, pc: 6, name: 'F#' },
-  { afterWhite: 4, pc: 8, name: 'G#' },
-  { afterWhite: 5, pc: 10, name: 'A#' },
-] as const
 
 const WHITE = 32
 const BLACK_W = 20
 const HEIGHT = 110
 const BLACK_H = 70
 
-const classFor = (kind: 'white' | 'black'): string => {
-  if (kind === 'white') return 'fill-white dark:fill-stone-100'
-  return 'fill-stone-900 dark:fill-stone-950'
-}
+const classFor = (kind: 'white' | 'black'): string =>
+  kind === 'white' ? 'fill-white dark:fill-stone-100' : 'fill-stone-900 dark:fill-stone-950'
 
 export default function PianoKeyboard({
   rootPc,
   scalePcs,
   startOctave = 4,
+  startPc = 0,
   showNoteNames = false,
 }: Props) {
-  const scalePcSet = new Set(scalePcs)
+  if (!WHITE_PC_SET.has(startPc)) {
+    throw new Error(
+      `startPc ${startPc} is a black key — pass a white-key pitch class (0 C, 2 D, 4 E, 5 F, 7 G, 9 A, 11 B)`,
+    )
+  }
 
+  const scalePcSet = new Set(scalePcs)
   const stateFor = (pc: number): KeyState =>
     pc === rootPc ? 'root' : scalePcSet.has(pc) ? 'scale' : 'off'
+
+  const octavePcs = deriveWhiteKeyPcsForOctave(startPc)
+  const octaveNames = deriveWhiteKeyNamesForOctave(startPc)
+  const blackSpecs = deriveBlackKeySpecs(octavePcs)
 
   const whites: ReactNode[] = []
   const blacks: ReactNode[] = []
@@ -68,11 +84,9 @@ export default function PianoKeyboard({
       )
       return
     }
-    // Scale-tone marker: use a fill that contrasts with the key's background.
-    // White keys → dark fill; black keys → light fill. Both meet WCAG 1.4.11
-    // non-text contrast (≥ 3:1) comfortably.
-    const scaleFill =
-      kind === 'white' ? 'fill-stone-700' : 'fill-stone-200'
+    // Scale-tone marker: dark fill on white keys, light fill on black. Both
+    // satisfy WCAG 1.4.11 non-text contrast (≥ 3:1).
+    const scaleFill = kind === 'white' ? 'fill-stone-700' : 'fill-stone-200'
     markers.push(
       <circle
         key={key}
@@ -86,13 +100,22 @@ export default function PianoKeyboard({
     )
   }
 
-  // 2 octaves of white keys (14 total)
+  // 2 octaves of white keys. Octave number increments on B→C crossings (pc=0
+  // appearing after a non-zero pc), so F4 G4 A4 B4 C5 D5 E5 F5 … works for any
+  // startPc, not just C.
+  let currentOct = startOctave
+  let prevPc = -1
+
   for (let i = 0; i < 14; i++) {
     const pcIndex = i % 7
-    const pc = WHITE_KEY_PCS[pcIndex]
-    const letter = WHITE_KEY_NAMES[pcIndex]
+    const pc = octavePcs[pcIndex]
+    const letter = octaveNames[pcIndex]
     if (pc === undefined || letter === undefined) continue
-    const oct = startOctave + Math.floor(i / 7)
+
+    if (i > 0 && pc === 0 && prevPc !== 0) currentOct++
+    const oct = currentOct
+    prevPc = pc
+
     const state = stateFor(pc)
     whites.push(
       <rect
@@ -128,30 +151,25 @@ export default function PianoKeyboard({
     }
   }
 
-  // Black keys: 5 per octave, placed between whites at the gaps after C/D/F/G/A.
-  for (let octIdx = 0; octIdx < 2; octIdx++) {
-    for (let i = 0; i < BLACK_KEY_SPECS.length; i++) {
-      const spec = BLACK_KEY_SPECS[i]
-      if (!spec) continue
-      const state = stateFor(spec.pc)
-      const x = (octIdx * 7 + spec.afterWhite + 1) * WHITE - BLACK_W / 2
-      blacks.push(
-        <rect
-          key={`b-${octIdx}-${i}`}
-          data-role="black-key"
-          data-state={state}
-          data-note={spec.name}
-          x={x}
-          y={0}
-          width={BLACK_W}
-          height={BLACK_H}
-          className={`${classFor('black')} stroke-stone-900`}
-          strokeWidth={1}
-        />,
-      )
-      if (state !== 'off') {
-        pushMarker(`bm-${octIdx}-${i}`, x + BLACK_W / 2, BLACK_H - 10, state, 'black')
-      }
+  for (const spec of blackSpecs) {
+    const state = stateFor(spec.pc)
+    const x = (spec.globalWhiteIdx + 1) * WHITE - BLACK_W / 2
+    blacks.push(
+      <rect
+        key={`b-${spec.globalWhiteIdx}`}
+        data-role="black-key"
+        data-state={state}
+        data-note={spec.name}
+        x={x}
+        y={0}
+        width={BLACK_W}
+        height={BLACK_H}
+        className={`${classFor('black')} stroke-stone-900`}
+        strokeWidth={1}
+      />,
+    )
+    if (state !== 'off') {
+      pushMarker(`bm-${spec.globalWhiteIdx}`, x + BLACK_W / 2, BLACK_H - 10, state, 'black')
     }
   }
 

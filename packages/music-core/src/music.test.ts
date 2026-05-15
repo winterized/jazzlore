@@ -88,6 +88,20 @@ describe('pitchClass', () => {
     expect(pitchClass('Ebb')).toBe(2)  // D
   })
 
+  it('accepts Unicode accidentals (♯ U+266F, ♭ U+266D) — chord.ts produces these', () => {
+    expect(pitchClass('F♯')).toBe(6)
+    expect(pitchClass('B♭')).toBe(10)
+    expect(pitchClass('D♭')).toBe(1)
+    expect(pitchClass('A♭')).toBe(8)
+    expect(pitchClass('C♯')).toBe(1)
+  })
+
+  it('accepts Unicode double-flat — both 𝄫 (U+1D12B) and stacked ♭♭', () => {
+    expect(pitchClass('A♭♭')).toBe(7)  // G — used for B♭dim7's diminished 7
+    expect(pitchClass('A𝄫')).toBe(7)
+    expect(pitchClass('B♭♭')).toBe(9)  // A
+  })
+
   it('throws on empty input', () => {
     expect(() => pitchClass('')).toThrow(/empty note/)
   })

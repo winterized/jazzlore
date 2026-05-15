@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test'
 
+test.use({ baseURL: 'http://localhost:5173' })
+
 test('scale notation does not overlap the piano keyboard', async ({ page }) => {
   // Regression: abcjs writes inline `overflow: hidden; height: <Npx>` on its host.
   // With paddingtop/paddingbottom defaulted to 0, the SVG's bottom edge was

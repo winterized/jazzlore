@@ -40,12 +40,13 @@ export function notesForScale(root: string, scale: ScaleDefinition): string[] {
 }
 
 /**
- * Canonical chromatic pitch class (0..11) for a note token like 'C', 'F#', 'Bb', 'B𝄫'.
+ * Canonical chromatic pitch class (0..11) for a note token like 'C', 'F#', 'Bb', 'B𝄫', 'F♯', 'B♭'.
  * - C = 0, C#/Db = 1, ..., B = 11
- * - Sharps: '#'
- * - Flats: 'b'
- * - Double flats: '𝄫' (U+1D12B) or 'bb' suffix — handled by repeatedly subtracting 1
- * Throws on an unknown leading letter.
+ * - Sharps: ASCII '#' or Unicode '♯' (U+266F)
+ * - Flats: ASCII 'b' or Unicode '♭' (U+266D)
+ * - Double flats: '𝄫' (U+1D12B) — counted as -2; or repeated 'bb' / '♭♭' work too
+ * Throws on an unknown leading letter. Accepts both ASCII and Unicode accidentals so that
+ * notes produced by chord.ts (Unicode) and scale code (ASCII) feed the same downstream helpers.
  */
 export function pitchClass(note: string): number {
   const letterOffsets: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
@@ -54,12 +55,14 @@ export function pitchClass(note: string): number {
   const base = letterOffsets[head]
   if (base === undefined) throw new Error(`unknown note letter "${head}" in token "${note}"`)
   let pc = base
-  // Walk remaining characters for accidentals: '#' = +1, 'b' = -1 (mod 12)
-  // (Double flat 𝄫 is U+1D12B; treat any non-#/non-b as ignored for v1 simplicity)
-  for (let i = 1; i < note.length; i++) {
-    const ch = note[i]
-    if (ch === '#') pc = (pc + 1) % 12
-    else if (ch === 'b') pc = (pc + 11) % 12
+  // Iterate by code points (not code units) so the U+1D12B '𝄫' character — which
+  // occupies a surrogate pair — is treated as one accidental, not two halves.
+  const codePoints = [...note]
+  for (let i = 1; i < codePoints.length; i++) {
+    const ch = codePoints[i]
+    if (ch === '#' || ch === '♯') pc = (pc + 1) % 12
+    else if (ch === 'b' || ch === '♭') pc = (pc + 11) % 12
+    else if (ch === '𝄫') pc = (pc + 10) % 12
   }
   return pc
 }

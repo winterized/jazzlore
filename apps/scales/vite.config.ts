@@ -9,6 +9,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  server: {
+    port: 5173,
+  },
   test: {
     root: __dirname,
     globals: true,

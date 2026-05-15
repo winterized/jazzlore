@@ -8,7 +8,17 @@ const PITCH_ORDER: Record<string, number> = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5
  * `^` = sharp prefix, `_` = flat prefix.
  */
 export function noteToAbc(note: string, octave: number): string {
-  const accidental = note.endsWith('#') ? '^' : note.endsWith('b') ? '_' : ''
+  // Order matters: check the two-char accidentals before the one-char ones,
+  // so 'Abb' is recognised as a double flat (__) not a single 'A' + flat 'b'.
+  const accidental = note.endsWith('##')
+    ? '^^'
+    : note.endsWith('bb')
+    ? '__'
+    : note.endsWith('#')
+    ? '^'
+    : note.endsWith('b')
+    ? '_'
+    : ''
   const letter = note[0]
   if (!letter) return ''
   if (octave === 4) return `${accidental}${letter}`
@@ -69,4 +79,57 @@ export function buildAbcTune(notes: string[], startOctave: number): string | nul
   const voice = notesToAbcVoice(notes, startOctave)
   if (!voice) return null
   return `X:1\nM:none\nL:1/4\nK:C\n${voice}|`
+}
+
+/**
+ * Normalise a note name that may carry Unicode accidentals (♯ / ♭ / 𝄫) to the
+ * ASCII convention used throughout this module (# / b / bb). The single-character
+ * double-flat U+1D12B is expanded to two ASCII flats so downstream code only has
+ * to handle one accidental representation.
+ */
+function normaliseNote(note: string): string {
+  return note.replace(/𝄫/g, 'bb').replace(/♯/g, '#').replace(/♭/g, 'b')
+}
+
+/**
+ * Build a complete ABC tune string for a chord rendered as stacked noteheads
+ * (`[CEG]` syntax), ready to pass to abcjs.renderAbc.
+ *
+ * Notes are accepted with either Unicode (♯/♭) or ASCII (#/b) accidentals.
+ * The root note is placed in `octave` (default 4). Subsequent notes are
+ * assigned to ascending octaves: whenever a note's pitch order is ≤ the
+ * previous note's, the octave increments by 1 so the chord reads upward on
+ * the staff without any crossing voices.
+ *
+ * Headers:
+ *   X:1     reference number
+ *   M:none  no meter / no bar lines
+ *   L:1/1   whole-note duration (chord is a single simultaneous beat)
+ *   K:C     no key signature — every accidental is written explicitly
+ *
+ * Returns null when the notes array is empty.
+ */
+export function buildChordAbc(notes: string[], octave = 4): string | null {
+  if (notes.length === 0) return null
+
+  const normalised = notes.map(normaliseNote)
+
+  const orderOf = (n: string): number => {
+    const head = n[0]
+    if (!head) throw new Error(`empty note token`)
+    const o = PITCH_ORDER[head]
+    if (o === undefined) throw new Error(`unknown note letter "${head}" in token "${n}"`)
+    return o
+  }
+
+  let oct = octave
+  let prevOrder = -1
+  const tokens = normalised.map((n) => {
+    const order = orderOf(n)
+    if (prevOrder !== -1 && order <= prevOrder) oct += 1
+    prevOrder = order
+    return noteToAbc(n, oct)
+  })
+
+  return `X:1\nM:none\nL:1/1\nK:C\n[${tokens.join('')}]`
 }

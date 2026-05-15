@@ -6,7 +6,9 @@
   "packageManager": "pnpm@11.0.9",
   "scripts": {
     "dev": "pnpm -F @jazzlore/scales dev",
-    "build": "pnpm -F @jazzlore/scales build",
+    "dev:chords": "pnpm -F @jazzlore/chords dev",
+    "build": "pnpm -F @jazzlore/scales build && pnpm -F @jazzlore/chords build",
+    "build:chords": "pnpm -F @jazzlore/chords build",
     "preview": "pnpm -F @jazzlore/scales preview",
     "typecheck": "pnpm -r run typecheck",
     "test": "pnpm -r run test",
