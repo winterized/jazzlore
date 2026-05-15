@@ -63,7 +63,7 @@ export default function ChordRow({ rootNote, definition }: Props) {
         <div className="flex gap-4">
           <ChordSymbolDisplay primary={primary} alternate={alternate} />
           <div>
-            <p className="text-sm font-medium text-stone-700 dark:text-stone-300">
+            <p className="chord-full-name text-sm font-medium text-stone-700 dark:text-stone-300">
               {definition.fullName}
             </p>
             <p className="chord-notes font-mono text-sm text-stone-700 dark:text-stone-200">
@@ -74,18 +74,19 @@ export default function ChordRow({ rootNote, definition }: Props) {
             </p>
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        {/* Play and star buttons are hidden in print via print:hidden */}
+        <div className="flex shrink-0 items-center gap-2 print:hidden">
           <ChordPlayButton primary={primary} notes={playNotes} />
           <StarButton rootNote={rootNote} chordId={definition.id} primary={primary} />
         </div>
       </header>
-      <div className="mt-3 flex flex-col gap-3 md:flex-row">
+      <div className="chord-body mt-3 flex flex-col gap-3 md:flex-row">
         {abc !== null && (
-          <div className="w-full md:w-48 md:shrink-0">
+          <div className="chord-score w-full md:w-48 md:shrink-0">
             <AbcScore abc={abc} />
           </div>
         )}
-        <div className="min-w-0 flex-1">
+        <div className="chord-keyboard min-w-0 flex-1">
           <PianoKeyboard scalePcs={scalePcs} rootPc={rootPc} startPc={startPc} />
         </div>
       </div>
