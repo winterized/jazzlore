@@ -36,7 +36,9 @@ The canonical mapping table lives in `apps/chords/src/data/curated.ts`. Display 
 
 ## Chord ordering
 
-By chord size (triads → 6ths → 7ths → 9ths → 11ths → 13ths), sub-ordered within each bucket by quality (major → minor → dominant clean → dominant altered). No family headers. `C7alt` ends the list naturally as the densest 13th-class chord. See `apps/chords/docs/chords.md` for the full 27-chord ordered list.
+By chord size (triads → 6ths → 7ths → 9ths → 11ths → 13ths), sub-ordered within each bucket by quality (major → minor → dominant clean → dominant altered). `C7alt` ends the list naturally as the densest 13th-class chord. See `apps/chords/docs/chords.md` for the full 27-chord ordered list.
+
+As of the 2026-05-15 sticky-header design, chords are rendered **grouped by category** (TRIADS / SIXTHS / SEVENTHS / NINTHS / EXTENDED / ALTERED) with faint body section-divider headers — the within-group order is unchanged (size + quality), only flat→grouped presentation changed. The page also has a shared sticky header (`StickyHeader` from `@jazzlore/ui`). See `apps/chords/docs/chords.md` → "Superseded by the sticky-header design".
 
 ## Definition of done (per feature)
 

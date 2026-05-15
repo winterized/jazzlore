@@ -1,6 +1,6 @@
 # Spec: Chords page
 
-> Second site. Status: v0.2 (decisions locked 2026-05-14). Owner: Aurélien.
+> Second site. Status: v0.3 (2026-05-15 — sticky-header design supersedes parts of v0.2; see "Superseded by the sticky-header design"). Owner: Aurélien.
 > Mirrors the structure of `apps/scales/docs/specs/scales.md`. Where a decision is "same as scales," it is called out explicitly — these come from `packages/ui` and `packages/music-core` and must not diverge without a spec update on both sides.
 > Lives at `chords.jazzlore.com`.
 
@@ -147,6 +147,15 @@ All nine open questions from v0.1 were resolved in the brainstorming and plannin
 7. **Curated chord list:** ~25–30 chords confirmed (final list in `apps/chords/src/data/curated.ts`, authored in Phase 2).
 8. **Print chord symbol placement:** Above the score (more visible on printed sheets).
 9. **Keyboard range for extended chords:** 2 octaves anchored on the chord's root. Notes beyond 2 octaves are displayed as if folded into the range (implementation detail for Phase 3).
+
+## Superseded by the sticky-header design (2026-05-15)
+
+A Claude Design handoff (`design_handoff_sticky_header/`) introduced a shared sticky-header pattern across both apps. It **reverses two v1 decisions above** for the main `/chords/:root` page:
+
+- **#4 "No sticky header" → superseded.** The page now has a sticky, translucent header (title + inline/sheet root picker + scroll-spy chip row). The chip row directly answers the orientation concern that #4 deferred ("revisit if UX testing reveals orientation problems").
+- **#1 "single ungrouped scrollable list, no family headers" → superseded.** Chords are now rendered **grouped by category** (TRIADS / SIXTHS / SEVENTHS / NINTHS / EXTENDED / ALTERED) with faint body section-divider headers between groups. The within-group order is still by chord size + quality as #1 specified; only the flat-vs-grouped presentation changed. The chip row anchors per chord card.
+
+Everything else in v1 (card layout, notation, keyboard, audio, save/collection, print, routing) is unchanged. Full rationale and the phased plan live in `.claude/plans/temporal-bouncing-bubble.md`; pixel spec in `design_handoff_sticky_header/README.md`.
 
 ## Acceptance criteria (v1 ships when…)
 
