@@ -170,11 +170,16 @@ export default function StickyHeader({
         {/* Spacer pushes util controls to the right */}
         <span className="flex-1" aria-hidden="true" />
 
-        {/* Util pill */}
+        {/* Util pill — DESKTOP ONLY. The design handoff's mobile Row-1-right is
+            just the compact "C ▾" pill + theme toggle (README mobile anatomy
+            table; mobile mockups 05–08 carry no util pill). Gated with the same
+            `sm:` (640px) breakpoint + always-mounted/CSS-`hidden` pattern as the
+            dual root pickers above, so a11y/tab-order stay correct and the
+            frozen prop API is untouched (internal class-only tweak). */}
         <LinkComponent
           href={utilLink.href}
           className={[
-            'inline-flex h-8 items-center rounded-md px-3',
+            'hidden sm:inline-flex h-8 items-center rounded-md px-3',
             'border border-stone-300 bg-white hover:bg-stone-200',
             'dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800',
             'text-[13px] font-medium text-stone-900 dark:text-stone-100',

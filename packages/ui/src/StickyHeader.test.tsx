@@ -131,6 +131,23 @@ describe('StickyHeader — util pill uses injected LinkComponent', () => {
     expect(link).toHaveAttribute('href', '/scales')
     expect(link).toHaveTextContent('My scales')
   })
+
+  // Design-match regression (Phase 9): the handoff's mobile Row-1-right is
+  // ONLY the compact root pill + theme toggle — the util pill is desktop-only
+  // (README mobile anatomy table; mobile mockups 05–08 carry no util pill).
+  // The pill is always mounted (a11y/SSR-stable) but CSS-gated to ≥640px,
+  // same `hidden`/`sm:` pattern as the dual root pickers. jsdom can't evaluate
+  // the media query, so assert the class contract instead — this fails loudly
+  // if the desktop-only gating is ever dropped and the pill leaks onto mobile.
+  it('gates the util pill to desktop only (hidden below the sm breakpoint)', () => {
+    renderHeader({
+      LinkComponent: CustomLink,
+      utilLink: { label: 'My scales', href: '/scales' },
+    })
+    const link = screen.getByTestId('custom-link')
+    expect(link.className).toContain('hidden')
+    expect(link.className).toContain('sm:inline-flex')
+  })
 })
 
 // ─── Theme button ──────────────────────────────────────────────────────────────
