@@ -16,6 +16,7 @@
     "test:ui": "pnpm -F @jazzlore/scales test:ui",
     "test:e2e": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test",
     "test:e2e:install": "PLAYWRIGHT_BROWSERS_PATH=0 playwright install chromium webkit",
+    "lighthouse:audit": "node tests/lighthouse-audit.mjs",
     "storybook": "pnpm -F @jazzlore/ui storybook",
     "build-storybook": "pnpm -F @jazzlore/ui build-storybook",
     "lint": "eslint .",
@@ -26,6 +27,7 @@
     "@axe-core/playwright": "^4.11.3",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.60.0",
+    "chrome-launcher": "^1.2.1",
     "eslint": "^10.2.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jsx-a11y": "^6.10.2",
@@ -33,6 +35,7 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "eslint-plugin-testing-library": "^7.16.2",
     "globals": "^17.5.0",
+    "lighthouse": "^13.3.0",
     "prettier": "^3.8.3",
     "prettier-plugin-tailwindcss": "^0.8.0",
     "typescript-eslint": "^8.58.2"
