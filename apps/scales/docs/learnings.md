@@ -24,3 +24,5 @@ La méthode que je kiffe à ma petite échelle (il faudra voir à plus grande é
 - On passe en MODE PLAN
 - On lui dit qqch du type 'Read ./apps/chords/docs/chords.md. We're going to refine it together before any code is written. Walk me through the open questions one at a time. For each, propose your default, explain your reasoning, then ask me to confirm or chat. When we're done, update the spec file directly'
 - On valide le plan, et quand on lui donne le OK on lui dit qu'il passe en auto mode mais qu'il doit utiliser la skill subagent de SuperPowers
+
+Plan quality is now compounding — each plan visibly inherits and extends the discipline of the previous one. This is an actual long-term value of the AI-assisted workflow.
