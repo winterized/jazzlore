@@ -1,0 +1,273 @@
+import { render, screen, act } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
+import type { ComponentType, ReactNode } from 'react'
+import StickyHeader, { type Chip, type ChipGroup } from './StickyHeader'
+import type { RootOption } from './RootPicker'
+
+// ─── Shared fixtures ───────────────────────────────────────────────────────────
+
+const ROOT_OPTIONS: readonly RootOption[] = [
+  { value: 'C', label: 'C' },
+  { value: 'Db', label: 'D♭' },
+]
+
+const CHIP_GROUPS: ChipGroup[] = [
+  {
+    label: 'TRIADS',
+    chips: [
+      { id: 'maj', label: 'Cmaj' },
+      { id: 'm', label: 'Cm' },
+    ],
+  },
+  {
+    label: 'SIXTHS',
+    chips: [{ id: '6', label: 'C6' }],
+  },
+]
+
+/**
+ * A custom LinkComponent that renders a distinct element so tests can assert
+ * the injected component is what gets rendered — not a bare <a> emitted by
+ * the header itself.
+ */
+const CustomLink: ComponentType<{ href: string; className?: string; children: ReactNode }> = ({
+  href,
+  children,
+  className,
+}) => (
+  <a href={href} data-testid="custom-link" className={className}>
+    {children}
+  </a>
+)
+
+const PlainLink: ComponentType<{ href: string; className?: string; children: ReactNode }> = ({
+  href,
+  children,
+  className,
+}) => (
+  <a href={href} className={className}>
+    {children}
+  </a>
+)
+
+function renderHeader(overrides: Partial<Parameters<typeof StickyHeader>[0]> = {}) {
+  return render(
+    <StickyHeader
+      title="C chords"
+      LinkComponent={PlainLink}
+      utilLink={{ label: 'My collection', href: '/collection' }}
+      theme="dark"
+      onThemeToggle={() => {}}
+      rootOptions={ROOT_OPTIONS}
+      selectedRoot="C"
+      onRootChange={() => {}}
+      chipGroups={CHIP_GROUPS}
+      {...overrides}
+    />,
+  )
+}
+
+// ─── Rendering ─────────────────────────────────────────────────────────────────
+
+describe('StickyHeader — rendering', () => {
+  it('renders the title in an <h1>', () => {
+    renderHeader({ title: 'C chords' })
+    const heading = screen.getByRole('heading', { level: 1 })
+    expect(heading).toBeInTheDocument()
+    expect(heading).toHaveTextContent('C chords')
+  })
+
+  it('renders chip group labels', () => {
+    renderHeader()
+    expect(screen.getByText('TRIADS')).toBeInTheDocument()
+    expect(screen.getByText('SIXTHS')).toBeInTheDocument()
+  })
+
+  it('renders chip labels from chipGroups', () => {
+    renderHeader()
+    expect(screen.getByText('Cmaj')).toBeInTheDocument()
+    expect(screen.getByText('Cm')).toBeInTheDocument()
+    expect(screen.getByText('C6')).toBeInTheDocument()
+  })
+
+  it('renders the util link label', () => {
+    renderHeader({ utilLink: { label: 'My collection', href: '/collection' } })
+    expect(screen.getByText('My collection')).toBeInTheDocument()
+  })
+
+  it('renders the selected root in the picker stub', () => {
+    renderHeader({ selectedRoot: 'F#' })
+    expect(screen.getByLabelText(/selected root/i)).toHaveTextContent('F#')
+  })
+})
+
+// ─── LinkComponent injection ──────────────────────────────────────────────────
+
+describe('StickyHeader — util pill uses injected LinkComponent', () => {
+  it('renders the custom LinkComponent for the util link', () => {
+    renderHeader({ LinkComponent: CustomLink })
+    // The injected component uses data-testid="custom-link"
+    expect(screen.getByTestId('custom-link')).toBeInTheDocument()
+  })
+
+  it('does NOT render a bare <a> element produced by the header itself', () => {
+    renderHeader({ LinkComponent: CustomLink })
+    // All rendered <a> elements visible in the accessibility tree must carry
+    // data-testid="custom-link" — i.e., they all came from the CustomLink injection.
+    const links = screen.getAllByRole('link')
+    for (const link of links) {
+      expect(link).toHaveAttribute('data-testid', 'custom-link')
+    }
+  })
+
+  it('passes the href and label to the LinkComponent', () => {
+    renderHeader({
+      LinkComponent: CustomLink,
+      utilLink: { label: 'My scales', href: '/scales' },
+    })
+    const link = screen.getByTestId('custom-link')
+    expect(link).toHaveAttribute('href', '/scales')
+    expect(link).toHaveTextContent('My scales')
+  })
+})
+
+// ─── Theme button ──────────────────────────────────────────────────────────────
+
+describe('StickyHeader — theme button', () => {
+  it('shows ☀︎ when theme is dark', () => {
+    renderHeader({ theme: 'dark' })
+    expect(screen.getByText('☀︎')).toBeInTheDocument()
+  })
+
+  it('shows ☾ when theme is light', () => {
+    renderHeader({ theme: 'light' })
+    expect(screen.getByText('☾')).toBeInTheDocument()
+  })
+
+  it('aria-pressed is true when theme is dark', () => {
+    renderHeader({ theme: 'dark' })
+    const btn = screen.getByRole('button', { name: /toggle theme/i })
+    expect(btn).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('aria-pressed is false when theme is light', () => {
+    renderHeader({ theme: 'light' })
+    const btn = screen.getByRole('button', { name: /toggle theme/i })
+    expect(btn).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('calls onThemeToggle when the button is clicked', async () => {
+    const onThemeToggle = vi.fn()
+    renderHeader({ onThemeToggle })
+    await userEvent.click(screen.getByRole('button', { name: /toggle theme/i }))
+    expect(onThemeToggle).toHaveBeenCalledOnce()
+  })
+})
+
+// ─── Scroll-reactive data-scrolled attribute ───────────────────────────────────
+
+describe('StickyHeader — scroll-reactive title', () => {
+  beforeEach(() => {
+    // Reset scrollY before each test
+    Object.defineProperty(window, 'scrollY', { writable: true, configurable: true, value: 0 })
+  })
+
+  afterEach(() => {
+    Object.defineProperty(window, 'scrollY', { writable: true, configurable: true, value: 0 })
+  })
+
+  it('data-scrolled is "false" on initial render (scrollY = 0)', () => {
+    renderHeader()
+    expect(screen.getByRole('banner')).toHaveAttribute('data-scrolled', 'false')
+  })
+
+  it('data-scrolled flips to "true" when scrollY crosses 24', () => {
+    renderHeader()
+
+    act(() => {
+      Object.defineProperty(window, 'scrollY', { writable: true, configurable: true, value: 25 })
+      window.dispatchEvent(new Event('scroll'))
+    })
+
+    expect(screen.getByRole('banner')).toHaveAttribute('data-scrolled', 'true')
+  })
+
+  it('data-scrolled returns to "false" when scrollY drops back to 0', () => {
+    renderHeader()
+
+    act(() => {
+      Object.defineProperty(window, 'scrollY', { writable: true, configurable: true, value: 25 })
+      window.dispatchEvent(new Event('scroll'))
+    })
+    expect(screen.getByRole('banner')).toHaveAttribute('data-scrolled', 'true')
+
+    act(() => {
+      Object.defineProperty(window, 'scrollY', { writable: true, configurable: true, value: 0 })
+      window.dispatchEvent(new Event('scroll'))
+    })
+    expect(screen.getByRole('banner')).toHaveAttribute('data-scrolled', 'false')
+  })
+
+  it('data-scrolled does not flip when scrollY is exactly 24 (boundary)', () => {
+    renderHeader()
+
+    act(() => {
+      Object.defineProperty(window, 'scrollY', { writable: true, configurable: true, value: 24 })
+      window.dispatchEvent(new Event('scroll'))
+    })
+
+    expect(screen.getByRole('banner')).toHaveAttribute('data-scrolled', 'false')
+  })
+})
+
+// ─── Scroll listener cleanup ───────────────────────────────────────────────────
+
+describe('StickyHeader — scroll listener cleanup', () => {
+  it('removes the scroll listener on unmount', () => {
+    const addSpy = vi.spyOn(window, 'addEventListener')
+    const removeSpy = vi.spyOn(window, 'removeEventListener')
+
+    const { unmount } = renderHeader()
+
+    // There should be a scroll listener registered
+    const addedScrollListeners = addSpy.mock.calls.filter(([event]) => event === 'scroll')
+    expect(addedScrollListeners).toHaveLength(1)
+
+    unmount()
+
+    // The same handler should be removed
+    const removedScrollListeners = removeSpy.mock.calls.filter(([event]) => event === 'scroll')
+    expect(removedScrollListeners).toHaveLength(1)
+
+    addSpy.mockRestore()
+    removeSpy.mockRestore()
+  })
+})
+
+// ─── Chip activation ──────────────────────────────────────────────────────────
+
+describe('StickyHeader — chip activation', () => {
+  it('calls onChipActivate with the chip id when a chip is clicked', async () => {
+    const onChipActivate = vi.fn()
+    renderHeader({ onChipActivate })
+    await userEvent.click(screen.getByText('Cmaj'))
+    expect(onChipActivate).toHaveBeenCalledWith('maj')
+  })
+})
+
+// ─── Type exports ──────────────────────────────────────────────────────────────
+
+describe('StickyHeader — exported types', () => {
+  it('Chip type has id and label', () => {
+    const chip: Chip = { id: 'maj', label: 'Cmaj' }
+    expect(chip.id).toBe('maj')
+    expect(chip.label).toBe('Cmaj')
+  })
+
+  it('ChipGroup type has label and chips array', () => {
+    const group: ChipGroup = { label: 'TRIADS', chips: [{ id: 'maj', label: 'Cmaj' }] }
+    expect(group.label).toBe('TRIADS')
+    expect(group.chips).toHaveLength(1)
+  })
+})

@@ -1,0 +1,240 @@
+import type { Meta, StoryObj } from '@storybook/react'
+import { useState, type ComponentType, type ReactNode } from 'react'
+import StickyHeader, { type ChipGroup } from './StickyHeader'
+import type { RootOption } from './RootPicker'
+
+// ─── Stub fixtures ─────────────────────────────────────────────────────────────
+
+const ROOT_OPTIONS: readonly RootOption[] = [
+  { value: 'C', label: 'C' },
+  { value: 'Db', label: 'D♭', alternate: { value: 'C#', label: 'C♯' } },
+  { value: 'D', label: 'D' },
+  { value: 'Eb', label: 'E♭', alternate: { value: 'D#', label: 'D♯' } },
+  { value: 'E', label: 'E' },
+  { value: 'F', label: 'F' },
+  { value: 'F#', label: 'F♯', alternate: { value: 'Gb', label: 'G♭' } },
+  { value: 'G', label: 'G' },
+  { value: 'Ab', label: 'A♭', alternate: { value: 'G#', label: 'G♯' } },
+  { value: 'A', label: 'A' },
+  { value: 'Bb', label: 'B♭', alternate: { value: 'A#', label: 'A♯' } },
+  { value: 'B', label: 'B' },
+]
+
+const CHORDS_CHIP_GROUPS: ChipGroup[] = [
+  {
+    label: 'TRIADS',
+    chips: [
+      { id: 'maj', label: 'Cmaj' },
+      { id: 'm', label: 'Cm' },
+      { id: 'dim', label: 'Cdim' },
+      { id: 'aug', label: 'Caug' },
+      { id: 'sus2', label: 'Csus2' },
+      { id: 'sus4', label: 'Csus4' },
+    ],
+  },
+  {
+    label: 'SIXTHS',
+    chips: [
+      { id: '6', label: 'C6' },
+      { id: 'm6', label: 'Cm6' },
+      { id: '69', label: 'C6/9' },
+    ],
+  },
+  {
+    label: 'SEVENTHS',
+    chips: [
+      { id: 'maj7', label: 'Cmaj7' },
+      { id: 'm7', label: 'Cm7' },
+      { id: '7', label: 'C7' },
+      { id: 'm7b5', label: 'Cm7b5' },
+      { id: 'dim7', label: 'Cdim7' },
+      { id: 'mMaj7', label: 'CmMaj7' },
+    ],
+  },
+  {
+    label: 'NINTHS',
+    chips: [
+      { id: 'maj9', label: 'Cmaj9' },
+      { id: 'm9', label: 'Cm9' },
+      { id: '9', label: 'C9' },
+      { id: '7b9', label: 'C7b9' },
+      { id: '7#9', label: 'C7#9' },
+    ],
+  },
+]
+
+const SCALES_CHIP_GROUPS: ChipGroup[] = [
+  {
+    label: 'MODES',
+    chips: [
+      { id: 'major-modes', label: 'Modes of major' },
+      { id: 'mel-min-modes', label: 'Modes of melodic minor' },
+      { id: 'harm-min-modes', label: 'Modes of harmonic minor' },
+    ],
+  },
+  {
+    label: 'PENTATONIC',
+    chips: [
+      { id: 'pentatonic', label: 'Pentatonic & blues' },
+    ],
+  },
+  {
+    label: 'OTHER',
+    chips: [
+      { id: 'bebop', label: 'Bebop' },
+      { id: 'exotic', label: 'Exotic' },
+    ],
+  },
+]
+
+/**
+ * A simple stub LinkComponent that renders a plain anchor — fine for Storybook
+ * and unit tests. Apps pass their own SPA-aware router link instead.
+ */
+const StubLink: ComponentType<{ href: string; className?: string; children: ReactNode }> = ({
+  href,
+  children,
+  className,
+}) => (
+  <a href={href} className={className}>
+    {children}
+  </a>
+)
+
+// ─── Meta ──────────────────────────────────────────────────────────────────────
+
+const meta: Meta<typeof StickyHeader> = {
+  title: 'Components/StickyHeader',
+  component: StickyHeader,
+  tags: ['autodocs'],
+  parameters: {
+    layout: 'fullscreen',
+  },
+  render: function Render(args) {
+    const [theme, setTheme] = useState<'light' | 'dark'>(args.theme)
+    const [root, setRoot] = useState(args.selectedRoot)
+    return (
+      <StickyHeader
+        {...args}
+        theme={theme}
+        onThemeToggle={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+        selectedRoot={root}
+        onRootChange={setRoot}
+        LinkComponent={StubLink}
+      />
+    )
+  },
+}
+export default meta
+
+type Story = StoryObj<typeof StickyHeader>
+
+// ─── Chords app stories ────────────────────────────────────────────────────────
+
+export const ChordsDesktopDark: Story = {
+  name: 'Chords · Desktop · Dark',
+  args: {
+    title: 'C chords',
+    utilLink: { label: 'My chord collection', href: '/collection/chords' },
+    theme: 'dark',
+    rootOptions: ROOT_OPTIONS,
+    selectedRoot: 'C',
+    chipGroups: CHORDS_CHIP_GROUPS,
+  },
+  parameters: {
+    viewport: { defaultViewport: 'desktop' },
+  },
+}
+
+export const ChordsDesktopLight: Story = {
+  name: 'Chords · Desktop · Light',
+  args: {
+    ...ChordsDesktopDark.args,
+    theme: 'light',
+  },
+  parameters: {
+    viewport: { defaultViewport: 'desktop' },
+  },
+}
+
+export const ChordsMobileDark: Story = {
+  name: 'Chords · Mobile · Dark',
+  args: {
+    ...ChordsDesktopDark.args,
+    theme: 'dark',
+  },
+  parameters: {
+    viewport: { defaultViewport: 'mobile1' },
+  },
+}
+
+export const ChordsMobileLight: Story = {
+  name: 'Chords · Mobile · Light',
+  args: {
+    ...ChordsDesktopDark.args,
+    theme: 'light',
+  },
+  parameters: {
+    viewport: { defaultViewport: 'mobile1' },
+  },
+}
+
+// ─── Scales app stories ────────────────────────────────────────────────────────
+
+export const ScalesDesktopDark: Story = {
+  name: 'Scales · Desktop · Dark',
+  args: {
+    title: 'C scales',
+    utilLink: { label: 'My scales', href: '/collection/scales' },
+    theme: 'dark',
+    rootOptions: ROOT_OPTIONS,
+    selectedRoot: 'C',
+    chipGroups: SCALES_CHIP_GROUPS,
+  },
+  parameters: {
+    viewport: { defaultViewport: 'desktop' },
+  },
+}
+
+export const ScalesDesktopLight: Story = {
+  name: 'Scales · Desktop · Light',
+  args: {
+    ...ScalesDesktopDark.args,
+    theme: 'light',
+  },
+  parameters: {
+    viewport: { defaultViewport: 'desktop' },
+  },
+}
+
+// ─── Scrolled state story ──────────────────────────────────────────────────────
+
+/**
+ * Simulates the header after the user has scrolled down >24px.
+ * The story wraps the header in a tall page so you can actually scroll,
+ * but also pre-applies data-scrolled via a decorator that fires a fake scroll.
+ */
+export const ScrolledState: Story = {
+  name: 'Scrolled state (title shrinks)',
+  args: {
+    title: 'C chords',
+    utilLink: { label: 'My chord collection', href: '/collection/chords' },
+    theme: 'dark',
+    rootOptions: ROOT_OPTIONS,
+    selectedRoot: 'C',
+    chipGroups: CHORDS_CHIP_GROUPS,
+  },
+  decorators: [
+    (Story) => (
+      <div style={{ height: '200vh' }}>
+        <Story />
+        <div style={{ padding: '100px 20px', color: '#888', fontSize: '14px' }}>
+          Scroll up to see the header shrink.
+        </div>
+      </div>
+    ),
+  ],
+  parameters: {
+    layout: 'fullscreen',
+  },
+}

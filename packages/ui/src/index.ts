@@ -1,4 +1,5 @@
 export { default as AbcScore } from './AbcScore'
 export { default as PianoKeyboard } from './PianoKeyboard'
 export { default as RootPicker, type RootOption } from './RootPicker'
+export { default as StickyHeader, type Chip, type ChipGroup } from './StickyHeader'
 export { default as ThemeToggle } from './ThemeToggle'
