@@ -1,6 +1,6 @@
 import { useEffect, useMemo, type ReactNode } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router'
-import { StickyHeader, type RootOption } from '@jazzlore/ui'
+import { StickyHeader, type RootOption, type ChipGroup } from '@jazzlore/ui'
 import {
   DEFAULT_ROOTS,
   alternateSpelling,
@@ -9,6 +9,7 @@ import {
   isAmbiguous,
   rootFromSlug,
   slugFromRoot,
+  type ChordDefinition,
 } from '@jazzlore/music-core'
 import { useTheme } from '../lib/useTheme'
 import ChordRow from '../features/chords/ChordRow'
@@ -87,6 +88,32 @@ export default function ChordsPage() {
     [],
   )
 
+  // Per-root derived data. Memoised on [root] so a theme toggle (which
+  // re-renders this page) doesn't rebuild the 27-entry map + chip groups,
+  // and so the intent is self-documenting. Null branch is never consumed —
+  // the component returns <Navigate> when root is null.
+  const { rootDisplay, chordById, chipGroups } = useMemo<{
+    rootDisplay: string
+    chordById: Map<string, ChordDefinition>
+    chipGroups: ChipGroup[]
+  }>(() => {
+    if (!root) return { rootDisplay: '', chordById: new Map(), chipGroups: [] }
+    const rd = formatRoot(root)
+    const map = new Map(CURATED_CHORDS.map((def) => [def.id, def]))
+    // Chip id MUST equal the DOM id on the matching <li> wrapper (see render).
+    const groups: ChipGroup[] = CHORD_GROUPS.map((group) => ({
+      label: group.label,
+      chips: group.chordIds.map((id) => {
+        const def = map.get(id)
+        return {
+          id: `chord-${id}`,
+          label: def ? formatPrimarySymbol(rd, def.primarySuffix) : id,
+        }
+      }),
+    }))
+    return { rootDisplay: rd, chordById: map, chipGroups: groups }
+  }, [root])
+
   useEffect(() => {
     if (!root) return
     // Restore the previous title on unmount so a future ChordCollectionPage
@@ -99,25 +126,6 @@ export default function ChordsPage() {
   }, [root])
 
   if (!root) return <Navigate to="/chords/C" replace />
-
-  // ── Derived data ────────────────────────────────────────────────────────────
-
-  const rootDisplay = formatRoot(root)
-  const chordById = new Map(CURATED_CHORDS.map((def) => [def.id, def]))
-
-  // Build chip groups per current root.
-  // Chip id MUST equal the DOM id on the matching <li> wrapper (see render below).
-  const chipGroups = CHORD_GROUPS.map((group) => ({
-    label: group.label,
-    chips: group.chordIds.map((id) => {
-      const def = chordById.get(id)
-      return {
-        id: `chord-${id}`,
-        // Chip label = chord's primary symbol for this root (e.g. "Cmaj7")
-        label: def ? formatPrimarySymbol(rootDisplay, def.primarySuffix) : id,
-      }
-    }),
-  }))
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
@@ -139,7 +147,7 @@ export default function ChordsPage() {
 
       <main className="min-h-screen bg-stone-100 px-[14px] pb-[80px] pt-4 text-stone-900 dark:bg-stone-950 dark:text-stone-100 md:px-[20px] md:pt-6">
         {CHORD_GROUPS.map((group) => (
-          <section key={group.label}>
+          <section key={group.label} aria-label={group.label}>
             <SectionDivider label={group.label} />
             <ul className="flex flex-col gap-[8px] md:gap-[10px]">
               {group.chordIds.map((id) => {

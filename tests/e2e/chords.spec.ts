@@ -114,9 +114,11 @@ test('chip click scrolls to matching chord card below the header', async ({ page
   const dim7Chip = chipNav.locator('button', { hasText: 'Cdim7' })
   await dim7Chip.click()
 
-  // The chord card with id="chord-dim7" should be visible in the viewport
+  // The chord card with id="chord-dim7" must actually be scrolled INTO the
+  // viewport (not merely present/un-hidden). toBeInViewport would fail if the
+  // scroll-margin-top broke and the card sat behind the sticky header.
   const dim7Card = page.locator('#chord-dim7')
-  await expect(dim7Card).toBeVisible()
+  await expect(dim7Card).toBeInViewport()
 })
 
 test('scroll-spy: after scrolling past all TRIADS the active chip changes', async ({ page }) => {
@@ -128,18 +130,14 @@ test('scroll-spy: after scrolling past all TRIADS the active chip changes', asyn
   const firstChip = chipNav.locator('button').first()
   await expect(firstChip).toHaveAttribute('aria-current', 'true')
 
-  // Click the SEVENTHS group chip for maj7 to jump to that section (exact text match)
+  // Click the SEVENTHS maj7 chip. Playwright's expect() auto-retries up to the
+  // timeout, so we assert the end state directly instead of a brittle fixed
+  // waitForTimeout(600) that can under-wait on a loaded CI machine.
   const maj7Chip = page.locator('[data-chip-id="chord-maj7"]')
   await maj7Chip.click()
 
-  // Give scroll-spy time to fire after scroll animation settles
-  await page.waitForTimeout(600)
-
-  // The scroll-spy should have updated — some chip should still have aria-current="true"
-  const activeChip = chipNav.locator('button[aria-current="true"]')
-  await expect(activeChip).toBeVisible()
-
-  // The first chip (C major triad) should NO LONGER be aria-current after scrolling deep
-  // into the SEVENTHS section (scroll-spy should have moved past it)
+  // Active chip moves to maj7 (optimistic-on-click + scroll-spy converge here);
+  // the C-major triad chip is no longer current.
+  await expect(maj7Chip).toHaveAttribute('aria-current', 'true')
   await expect(firstChip).not.toHaveAttribute('aria-current', 'true')
 })
