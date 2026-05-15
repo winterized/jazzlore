@@ -1,7 +1,7 @@
 /**
  * Desktop inline root-note picker for the StickyHeader Row 1.
  *
- * 12 buttons in a horizontal row, 32w × 36h, 4px gap.
+ * 12 buttons in a horizontal row, 36w × 32h, 4px gap (handoff spec).
  * Active button = amber fill. Ambiguous options carry a superscript badge.
  * Badge click → toggle spelling only. Main button click → onRootChange.
  *
@@ -92,7 +92,7 @@ export default function InlineRootPicker({ rootOptions, selectedRoot, onRootChan
               data-index={i}
               onClick={() => onRootChange(displayed.value)}
               className={[
-                'w-8 h-9 rounded-md border text-[12px] font-semibold',
+                'w-9 h-8 rounded-md border text-[12px] font-semibold',
                 'transition-colors duration-[120ms]',
                 isSelected
                   ? 'bg-amber-500 border-amber-500 text-stone-900'

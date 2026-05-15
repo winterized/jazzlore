@@ -66,6 +66,30 @@ describe('ChipRow — rendering', () => {
     expect(screen.getByText('SIXTHS')).toBeInTheDocument()
   })
 
+  // Handoff hierarchy: the category label must read dimmer than the chips so
+  // categories recede and chips are the foreground. axe-core's color-contrast
+  // rule flags aria-hidden text too, so the label cannot drop below the AA
+  // floor (stone-600/300) — the hierarchy is achieved by making the chips a
+  // step STRONGER (stone-700/200), both still WCAG AA. Regression guard for the
+  // reported bug "TRIADS etc should not be the same colour as the chord names".
+  it('renders the group label a different, dimmer colour than the chip text (both AA)', () => {
+    renderChipRow()
+    const label = screen.getByText('TRIADS')
+    expect(label).toHaveAttribute('aria-hidden', 'true')
+    // Label sits at the AA floor — dimmer than the stronger chips.
+    expect(label).toHaveClass('text-stone-600', 'dark:text-stone-300')
+
+    // An inactive chip is a step stronger (first chip is active by default, so
+    // 'Cm' is inactive in the fixture).
+    const inactiveChip = screen.getByText('Cm')
+    expect(inactiveChip).toHaveClass('text-stone-700', 'dark:text-stone-200')
+
+    // The user's actual complaint: same colour. Assert they differ in BOTH
+    // themes — the label must not carry the chip's text tokens.
+    expect(label).not.toHaveClass('text-stone-700')
+    expect(label).not.toHaveClass('dark:text-stone-200')
+  })
+
   it('omits group category labels when the group label is empty (scales pattern)', () => {
     renderChipRow({ chipGroups: SCALES_CHIP_GROUPS })
     expect(screen.queryByText('TRIADS')).not.toBeInTheDocument()
