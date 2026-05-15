@@ -23,6 +23,9 @@ import PrintDensityControl, { type PrintDensity } from '../features/collection/P
 import ChordRow from '../features/chords/ChordRow'
 import { CURATED_CHORDS } from '../data/curated'
 
+/** Pass only the suffix to read/write — music-core's storage helpers prepend
+ *  the `jazzlore:` namespace automatically. Full key in localStorage:
+ *  `jazzlore:chords-print-density:v1`. Distinct from the chord collection key. */
 const DENSITY_KEY = 'chords-print-density:v1'
 
 function readDensity(): PrintDensity {

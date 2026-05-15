@@ -25,8 +25,10 @@ type Props = {
 
 export default function PrintDensity({ density, onChange }: Props) {
   return (
-    <fieldset className="flex items-center gap-3 text-sm">
-      <legend className="sr-only">Print density</legend>
+    <fieldset className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+      <legend className="mr-1 font-medium text-stone-700 dark:text-stone-300">
+        Print density:
+      </legend>
       {DENSITIES.map(({ value, label }) => (
         <label key={value} className="flex items-center gap-1">
           <input

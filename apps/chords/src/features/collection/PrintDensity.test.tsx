@@ -71,10 +71,12 @@ describe('PrintDensity', () => {
     // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container -- structural a11y check
     const fieldset = container.querySelector('fieldset')
     expect(fieldset).not.toBeNull()
-    // The legend should be present (may be visually hidden via sr-only)
+    // The legend should be present and labelled "Print density:" (visible per
+    // WCAG 2.4.6 — visible labels where practical).
     // eslint-disable-next-line testing-library/no-node-access -- structural a11y check
     const legend = fieldset?.querySelector('legend')
     expect(legend).not.toBeNull()
+    expect(legend?.textContent).toMatch(/Print density/i)
   })
 
   // 5. Radios are grouped under the same name (keyboard arrow-key navigation)
