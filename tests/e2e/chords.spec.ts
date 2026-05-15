@@ -106,6 +106,10 @@ test('body sections are rendered with category dividers', async ({ page }) => {
 test('chip click scrolls to matching chord card below the header', async ({ page }) => {
   // Use a larger viewport to ensure desktop layout (inline root picker)
   await page.setViewportSize({ width: 1280, height: 800 })
+  // Reduced motion → ChipRow's auto-center + scrollIntoView are instant
+  // (no smooth animation to race Playwright's actionability under the
+  // 4-worker parallel-load the full suite runs at). Deterministic.
+  await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/chords/C')
 
   // Click the "dim7" chip — it's in the SEVENTHS group
@@ -123,6 +127,11 @@ test('chip click scrolls to matching chord card below the header', async ({ page
 
 test('scroll-spy: after scrolling past all TRIADS the active chip changes', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 })
+  // Reduced motion → instant scroll/auto-center so the clicked chip doesn't
+  // move under Playwright mid-click when the full suite runs in parallel
+  // (this test passed solo but flaked under 4-worker load — root cause was
+  // the smooth auto-center animation, not assertion timing).
+  await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/chords/C')
 
   // On page load the first chip (C major) should be active

@@ -22,6 +22,11 @@ import {
 } from './stickyHeader.helpers'
 import type { ChipGroup } from './StickyHeader'
 
+/** How long after a chip click the scroll-spy is suppressed so the
+ *  click-initiated scroll can settle without overriding the clicked chip.
+ *  Comfortably exceeds a smooth scrollIntoView; harmless under instant. */
+const CLICK_SETTLE_MS = 800
+
 // ─── Props ─────────────────────────────────────────────────────────────────────
 
 export type ChipRowProps = {
@@ -51,6 +56,23 @@ export default function ChipRow({
 
   const rowRef = useRef<HTMLElement>(null)
 
+  // After a chip click we scroll the page to that section. The resulting
+  // scroll events would make the spy recompute and transiently override the
+  // clicked chip (it bounces through intermediate sections, or lands on a
+  // neighbour if the target settles a hair past the threshold). Suppress
+  // spy-driven overrides for a short settle window after a click; genuine
+  // user scrolling afterwards resumes normal scroll-spy. Boolean+timer (not a
+  // Date.now() comparison) so the click handler stays purity-rule clean.
+  const spyLockedRef = useRef(false)
+  const lockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(
+    () => () => {
+      if (lockTimerRef.current !== null) clearTimeout(lockTimerRef.current)
+    },
+    [],
+  )
+
   // ── Scroll-spy: window scroll → measure targets → resolveActiveChip ──────────
 
   useEffect(() => {
@@ -66,6 +88,10 @@ export default function ChipRow({
         .filter((t): t is ResolvedTarget => t !== null)
 
       if (targets.length === 0) return
+
+      // Within the post-click settle window, the clicked chip stays active —
+      // don't let the in-flight scroll override it.
+      if (spyLockedRef.current) return
 
       const newActive = resolveActiveChip(targets, headerHeight)
       if (newActive !== null) setActiveId(newActive)
@@ -111,11 +137,17 @@ export default function ChipRow({
   // ── Click handler ─────────────────────────────────────────────────────────────
 
   function handleChipClick(id: string) {
-    // Optimistically mark the clicked chip active. The smooth scroll fires
-    // scroll events on the way to the target; without this, the spy would
-    // pick whichever section is transiently under the header and the active
-    // chip would visibly bounce through intermediate chips during transit.
+    // Optimistically mark the clicked chip active, then lock the spy for a
+    // short settle window so the click-initiated scroll doesn't override it
+    // (covers smooth-scroll duration; instant scroll under reduced-motion
+    // still fires scroll events the lock must absorb).
     setActiveId(id)
+    spyLockedRef.current = true
+    if (lockTimerRef.current !== null) clearTimeout(lockTimerRef.current)
+    lockTimerRef.current = setTimeout(() => {
+      spyLockedRef.current = false
+      lockTimerRef.current = null
+    }, CLICK_SETTLE_MS)
     const el = document.getElementById(id)
     if (el && typeof el.scrollIntoView === 'function') {
       el.scrollIntoView({ behavior: scrollBehavior, block: 'start' })

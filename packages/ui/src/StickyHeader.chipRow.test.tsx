@@ -6,7 +6,7 @@
  * getBoundingClientRect so we can drive resolveActiveChip through the component.
  */
 
-import { render, screen, act } from '@testing-library/react'
+import { render, screen, act, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import ChipRow from './StickyHeader.chipRow'
@@ -201,6 +201,51 @@ describe('ChipRow — scroll-spy', () => {
     // Others must not have it.
     expect(screen.getByRole('button', { name: 'Cmaj' })).not.toHaveAttribute('aria-current')
     expect(screen.getByRole('button', { name: 'Cm' })).not.toHaveAttribute('aria-current')
+  })
+
+  it('a chip click locks the spy briefly so the click-initiated scroll cannot override it', () => {
+    vi.useFakeTimers()
+    try {
+      renderChipRow({ headerHeight: 80 })
+
+      // Rects positioned so a scroll WOULD resolve sixths-6 (C6) active.
+      vi.spyOn(anchorMaj, 'getBoundingClientRect').mockReturnValue({
+        top: -200, bottom: -174, left: 0, right: 100, width: 100, height: 26,
+        x: 0, y: -200, toJSON: () => ({}),
+      })
+      vi.spyOn(anchorM, 'getBoundingClientRect').mockReturnValue({
+        top: -100, bottom: -74, left: 0, right: 100, width: 100, height: 26,
+        x: 0, y: -100, toJSON: () => ({}),
+      })
+      vi.spyOn(anchor6, 'getBoundingClientRect').mockReturnValue({
+        top: 70, bottom: 96, left: 0, right: 100, width: 100, height: 26,
+        x: 0, y: 70, toJSON: () => ({}),
+      })
+
+      const cmaj = screen.getByRole('button', { name: 'Cmaj' })
+      const c6 = screen.getByRole('button', { name: 'C6' })
+
+      // Click Cmaj → optimistic active + spy lock engaged.
+      fireEvent.click(cmaj)
+      expect(cmaj).toHaveAttribute('aria-current', 'true')
+
+      // A scroll during the lock window must NOT move active to C6.
+      act(() => {
+        window.dispatchEvent(new Event('scroll'))
+      })
+      expect(cmaj).toHaveAttribute('aria-current', 'true')
+      expect(c6).not.toHaveAttribute('aria-current')
+
+      // After the settle window expires, normal scroll-spy resumes.
+      act(() => {
+        vi.advanceTimersByTime(900)
+        window.dispatchEvent(new Event('scroll'))
+      })
+      expect(c6).toHaveAttribute('aria-current', 'true')
+      expect(cmaj).not.toHaveAttribute('aria-current')
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('missing target ids do not crash (gracefully filtered out)', () => {
