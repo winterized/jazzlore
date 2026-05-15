@@ -183,8 +183,11 @@ export default function ChipRow({
               aria-hidden="true"
               className={[
                 'shrink-0 px-[6px]',
-                'text-[10px] font-semibold uppercase tracking-[0.08em]',
-                'text-stone-500 dark:text-stone-500',
+                'text-[10px] font-semibold tracking-[0.08em] uppercase',
+                // WCAG 1.4.3 AA: stone-500 on the translucent header bg
+                // measured 4.46 (just under 4.5). stone-600/300 clears it in
+                // both themes while keeping the label visually subdued.
+                'text-stone-600 dark:text-stone-300',
                 'whitespace-nowrap',
               ].join(' ')}
             >
@@ -214,8 +217,11 @@ export default function ChipRow({
                       ].join(' ')
                     : [
                         // Inactive: outline style (same as Phase-1 stub).
+                        // WCAG 1.4.3 AA: stone-500/400 on the translucent
+                        // header bg measured 4.46/4.0 (under 4.5). stone-600/
+                        // 300 clears 4.5 in both themes; hover still darkens.
                         'border-stone-300 dark:border-stone-700',
-                        'bg-transparent text-stone-500 dark:text-stone-400',
+                        'bg-transparent text-stone-600 dark:text-stone-300',
                         'hover:border-stone-400 hover:text-stone-900',
                         'dark:hover:border-stone-500 dark:hover:text-stone-100',
                       ].join(' '),

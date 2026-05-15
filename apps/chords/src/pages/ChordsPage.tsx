@@ -46,23 +46,23 @@ function SectionDivider({ label }: { label: string }) {
       className={[
         // layout: label + fill line
         'flex items-center gap-3',
-        'pt-[18px] pb-[6px] px-[4px]',
+        'px-[4px] pt-[18px] pb-[6px]',
       ].join(' ')}
     >
       <span
         className={[
           'shrink-0',
-          'text-[11px] font-semibold uppercase tracking-[0.1em]',
-          'text-stone-400 dark:text-stone-600',
+          'text-[11px] font-semibold tracking-[0.1em] uppercase',
+          // WCAG 1.4.3 AA: stone-400/600 over the page bg measured
+          // 2.36 (light) / 2.58 (dark) — well under 4.5. stone-600/300
+          // clears AA while keeping the divider visually subdued.
+          'text-stone-600 dark:text-stone-300',
         ].join(' ')}
       >
         {label}
       </span>
       {/* 1px divider line filling the rest of the row (::after equivalent) */}
-      <span
-        aria-hidden="true"
-        className="flex-1 h-px bg-stone-200 dark:bg-stone-800"
-      />
+      <span aria-hidden="true" className="h-px flex-1 bg-stone-200 dark:bg-stone-800" />
     </div>
   )
 }
@@ -145,7 +145,7 @@ export default function ChordsPage() {
         // onChipActivate not needed — chords app has no accordions to expand
       />
 
-      <main className="min-h-screen bg-stone-100 px-[14px] pb-[80px] pt-4 text-stone-900 dark:bg-stone-950 dark:text-stone-100 md:px-[20px] md:pt-6">
+      <main className="min-h-screen bg-stone-100 px-[14px] pt-4 pb-[80px] text-stone-900 md:px-[20px] md:pt-6 dark:bg-stone-950 dark:text-stone-100">
         {CHORD_GROUPS.map((group) => (
           <section key={group.label} aria-label={group.label}>
             <SectionDivider label={group.label} />

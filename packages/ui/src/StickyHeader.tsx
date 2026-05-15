@@ -28,9 +28,14 @@ function ThemeButton({ theme, onThemeToggle }: ThemeButtonProps) {
         'inline-flex h-8 w-8 items-center justify-center rounded-md',
         'border border-stone-300 bg-white hover:bg-stone-200',
         'dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800',
+        'text-stone-900 dark:text-stone-100',
         'transition-colors duration-[120ms]',
       ].join(' ')}
     >
+      {/* Explicit glyph color: without it the icon inherited the document's
+          default near-black `color`, which on the dark-theme button bg
+          measured ~1.4:1 (WCAG 1.4.3 AA fail). stone-900/100 mirrors the
+          rest of the header and clears AA in both themes. */}
       <span aria-hidden="true">{theme === 'dark' ? '☀︎' : '☾'}</span>
     </button>
   )
@@ -121,9 +126,7 @@ export default function StickyHeader({
     .filter(Boolean)
     .join(' ')
 
-  const rowTransition = prefersReduced
-    ? ''
-    : 'transition-[padding] duration-[180ms] ease-[ease]'
+  const rowTransition = prefersReduced ? '' : 'transition-[padding] duration-[180ms] ease-[ease]'
 
   return (
     <header
@@ -137,13 +140,7 @@ export default function StickyHeader({
       ].join(' ')}
     >
       {/* Row 1: title + root picker slot + util controls */}
-      <div
-        className={[
-          'flex items-center gap-3',
-          rowPadding,
-          rowTransition,
-        ].join(' ')}
-      >
+      <div className={['flex items-center gap-3', rowPadding, rowTransition].join(' ')}>
         <h1 className={titleClasses}>{title}</h1>
 
         {/* Both pickers are always mounted and CSS-gated. a11y correctness
@@ -177,7 +174,7 @@ export default function StickyHeader({
         <LinkComponent
           href={utilLink.href}
           className={[
-            'inline-flex h-8 items-center px-3 rounded-md',
+            'inline-flex h-8 items-center rounded-md px-3',
             'border border-stone-300 bg-white hover:bg-stone-200',
             'dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800',
             'text-[13px] font-medium text-stone-900 dark:text-stone-100',
