@@ -224,14 +224,15 @@ describe('ChipRow — scroll-spy', () => {
     const { unmount } = renderChipRow()
 
     const addedScrollListeners = addSpy.mock.calls.filter(([event]) => event === 'scroll')
-    // ChipRow registers its own scroll listener (StickyHeader.tsx has one for
-    // scrolled state but ChipRow is rendered standalone here — so ≥1).
+    // ChipRow is rendered standalone here, so it owns every scroll listener.
     expect(addedScrollListeners.length).toBeGreaterThanOrEqual(1)
 
     unmount()
 
     const removedScrollListeners = removeSpy.mock.calls.filter(([event]) => event === 'scroll')
-    expect(removedScrollListeners.length).toBeGreaterThanOrEqual(1)
+    // Exact parity (not ≥1): every scroll listener ChipRow added must be
+    // removed — a future leak (add 2, remove 1) would slip past a ≥1 check.
+    expect(removedScrollListeners.length).toBe(addedScrollListeners.length)
 
     addSpy.mockRestore()
     removeSpy.mockRestore()
@@ -258,6 +259,18 @@ describe('ChipRow — click behavior', () => {
     renderChipRow({ onChipActivate })
     await userEvent.click(screen.getByRole('button', { name: 'Cmaj' }))
     expect(onChipActivate).toHaveBeenCalledWith('triads-maj')
+  })
+
+  it('optimistically marks the clicked chip active (no spy jitter during smooth scroll)', async () => {
+    renderChipRow()
+    // The first chip (Cmaj) is active by default. Click a DIFFERENT chip (Cm,
+    // whose anchor isn't in the DOM here — scrollIntoView is guarded). It must
+    // become aria-current="true" immediately, not after the scroll settles
+    // (guards the click→smooth-scroll→spy bounce).
+    const cm = screen.getByRole('button', { name: 'Cm' })
+    expect(cm).not.toHaveAttribute('aria-current', 'true')
+    await userEvent.click(cm)
+    expect(cm).toHaveAttribute('aria-current', 'true')
   })
 
   it('calls scrollIntoView on the target element when a chip is clicked', async () => {

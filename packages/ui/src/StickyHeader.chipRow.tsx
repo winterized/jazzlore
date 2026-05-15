@@ -41,7 +41,7 @@ export default function ChipRow({
   headerHeight,
 }: ChipRowProps) {
   const prefersReduced = usePrefersReducedMotion()
-  const scrollBehavior = prefersReduced ? 'instant' : 'smooth'
+  const scrollBehavior: ScrollBehavior = prefersReduced ? 'instant' : 'smooth'
 
   // Flat ordered list of all chips across all groups — used for scroll-spy.
   const allChips = chipGroups.flatMap((g) => g.chips)
@@ -100,7 +100,7 @@ export default function ChipRow({
     if (!isChipVisible(row.scrollLeft, rowWidth, chipLeft, chipWidth)) {
       const target = centerScrollLeft(rowWidth, totalScrollWidth, chipLeft, chipWidth)
       if (typeof row.scrollTo === 'function') {
-        row.scrollTo({ left: target, behavior: scrollBehavior as ScrollBehavior })
+        row.scrollTo({ left: target, behavior: scrollBehavior })
       } else {
         // Fallback for test environments where scrollTo is not implemented.
         row.scrollLeft = target
@@ -111,9 +111,14 @@ export default function ChipRow({
   // ── Click handler ─────────────────────────────────────────────────────────────
 
   function handleChipClick(id: string) {
+    // Optimistically mark the clicked chip active. The smooth scroll fires
+    // scroll events on the way to the target; without this, the spy would
+    // pick whichever section is transiently under the header and the active
+    // chip would visibly bounce through intermediate chips during transit.
+    setActiveId(id)
     const el = document.getElementById(id)
     if (el && typeof el.scrollIntoView === 'function') {
-      el.scrollIntoView({ behavior: scrollBehavior as ScrollBehavior, block: 'start' })
+      el.scrollIntoView({ behavior: scrollBehavior, block: 'start' })
     }
     onChipActivate?.(id)
   }
