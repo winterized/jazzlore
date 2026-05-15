@@ -42,8 +42,10 @@ export default function ChordRow({ rootNote, definition }: Props) {
       primary: formatPrimarySymbol(rootNote, definition.primarySuffix),
       alternate: formatAlternateSymbol(rootNote, definition.alternateSuffix) ?? undefined,
       rootPc,
-      scalePcs: voicing.notes.map(pitchClass),
       startPc: rootToStartPc(rootPc),
+      /** Root-position semitone offsets (root first) — drives chord-mode key
+       *  highlighting so each tone shows exactly once, ascending from the root. */
+      chordSemitones: definition.intervals,
       intervalsLabel: formatIntervals(definition.tonalIntervals),
       notesLabel: voicing.notes.join(' '),
       abc: buildChordAbc([...voicing.notes]),
@@ -53,7 +55,7 @@ export default function ChordRow({ rootNote, definition }: Props) {
     }
   }, [rootNote, definition])
 
-  const { primary, alternate, rootPc, scalePcs, startPc, intervalsLabel, notesLabel, abc, playNotes } = derived
+  const { primary, alternate, rootPc, startPc, chordSemitones, intervalsLabel, notesLabel, abc, playNotes } = derived
 
   // data-testid (rather than getByRole('article')) anchors the test count
   // against future layout that might wrap row content in nested articles.
@@ -87,7 +89,12 @@ export default function ChordRow({ rootNote, definition }: Props) {
           </div>
         )}
         <div className="chord-keyboard min-w-0 flex-1">
-          <PianoKeyboard scalePcs={scalePcs} rootPc={rootPc} startPc={startPc} />
+          <PianoKeyboard
+            voicing="chord"
+            chordSemitones={chordSemitones}
+            rootPc={rootPc}
+            startPc={startPc}
+          />
         </div>
       </div>
     </article>

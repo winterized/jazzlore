@@ -2,8 +2,11 @@ import type { ReactNode } from 'react'
 import {
   WHITE_PC_SET,
   deriveBlackKeySpecs,
+  deriveLeadingBlackKeyName,
+  deriveWhiteKeyAbsOffsets,
   deriveWhiteKeyNamesForOctave,
   deriveWhiteKeyPcsForOctave,
+  resolveChordKeyPositions,
 } from './pianoKeyboard.helpers'
 
 /**
@@ -17,13 +20,25 @@ import {
  * time. This is intentional: the caller must explicitly choose which
  * neighbouring white key to anchor on, so intent is unambiguous when wiring
  * chord roots (Phase 6).
+ *
+ * `voicing` — `'scale'` (default) repeats the highlighted pitch-class pattern
+ * every octave (correct for scales). `'chord'` places **each chord tone
+ * exactly once**, ascending from the root in root position, using
+ * `chordSemitones`; `scalePcs` is then ignored for highlighting.
+ *
+ * `chordSemitones` — root-relative semitone offsets in ascending stack order,
+ * e.g. `[0, 4, 7, 11, 14, 21]` for a maj13. Element 0 (offset 0) is the root.
+ * Only consulted when `voicing === 'chord'`.
  */
 type Props = {
-  rootPc?: number // 0..11; undefined = no root highlight
-  scalePcs: readonly number[] // 0..11; pitch classes of scale tones
+  rootPc?: number // 0..11; undefined = no root highlight (scale mode only)
+  /** Pitch classes of scale tones (0–11). Optional; ignored when `voicing="chord"`. */
+  scalePcs?: readonly number[] // 0..11; pitch classes of scale tones (scale mode)
   startOctave?: number // default 4 (only affects data-note attributes for tests)
   startPc?: number // default 0 (C); must be a white-key PC — see JSDoc above
   showNoteNames?: boolean // default false
+  voicing?: 'scale' | 'chord' // default 'scale' — see JSDoc above
+  chordSemitones?: readonly number[] // root-position offsets; chord mode only
 }
 
 type KeyState = 'root' | 'scale' | 'off'
@@ -38,10 +53,12 @@ const classFor = (kind: 'white' | 'black'): string =>
 
 export default function PianoKeyboard({
   rootPc,
-  scalePcs,
+  scalePcs = [],
   startOctave = 4,
   startPc = 0,
   showNoteNames = false,
+  voicing = 'scale',
+  chordSemitones = [],
 }: Props) {
   if (!WHITE_PC_SET.has(startPc)) {
     throw new Error(
@@ -49,13 +66,33 @@ export default function PianoKeyboard({
     )
   }
 
-  const scalePcSet = new Set(scalePcs)
-  const stateFor = (pc: number): KeyState =>
-    pc === rootPc ? 'root' : scalePcSet.has(pc) ? 'scale' : 'off'
-
   const octavePcs = deriveWhiteKeyPcsForOctave(startPc)
   const octaveNames = deriveWhiteKeyNamesForOctave(startPc)
   const blackSpecs = deriveBlackKeySpecs(octavePcs)
+  const whiteAbs = deriveWhiteKeyAbsOffsets(octavePcs)
+
+  const scalePcSet = new Set(scalePcs)
+  const stateForPc = (pc: number): KeyState =>
+    pc === rootPc ? 'root' : scalePcSet.has(pc) ? 'scale' : 'off'
+
+  // Chord mode places each tone exactly once (root-position, ascending,
+  // octave-folded) — keyed by absolute semitone position rather than pitch
+  // class so a 13th's 9th lands at root+14, not root+2.
+  const isChord = voicing === 'chord'
+  const chordStateByAbs = new Map<number, KeyState>()
+  if (isChord && rootPc !== undefined) {
+    for (const { abs, role } of resolveChordKeyPositions(chordSemitones, rootPc, startPc)) {
+      // Collision guard: for any valid r0 (0–11) and s>0, r0+s (after fold) can
+      // never equal r0, so the root (s=0) is always the sole occupant of abs=r0
+      // regardless of chordSemitones order. Guard only drops a rare duplicate
+      // fold between two non-root tones (unreachable with curated chords).
+      if (!chordStateByAbs.has(abs)) chordStateByAbs.set(abs, role)
+    }
+  }
+  // `abs` is each key's absolute semitone offset from the leftmost white key.
+  // Scale mode keeps its per-octave pitch-class behaviour untouched.
+  const stateFor = (pc: number, abs: number): KeyState =>
+    isChord ? (chordStateByAbs.get(abs) ?? 'off') : stateForPc(pc)
 
   const whites: ReactNode[] = []
   const blacks: ReactNode[] = []
@@ -116,7 +153,7 @@ export default function PianoKeyboard({
     const oct = currentOct
     prevPc = pc
 
-    const state = stateFor(pc)
+    const state = stateFor(pc, whiteAbs[i] ?? -1)
     whites.push(
       <rect
         key={`w-${i}`}
@@ -152,7 +189,9 @@ export default function PianoKeyboard({
   }
 
   for (const spec of blackSpecs) {
-    const state = stateFor(spec.pc)
+    // A black key sits one semitone above the white key it follows.
+    const blackAbs = (whiteAbs[spec.globalWhiteIdx] ?? -2) + 1
+    const state = stateFor(spec.pc, blackAbs)
     const x = (spec.globalWhiteIdx + 1) * WHITE - BLACK_W / 2
     blacks.push(
       <rect
@@ -173,15 +212,42 @@ export default function PianoKeyboard({
     }
   }
 
+  // Decorative leading half black-key (Fix #3): when the window starts on a
+  // white key a real piano shows a black key to the left of (D, E, G, A, B),
+  // draw that key centred on x=0 so exactly half shows past the left edge.
+  // Never a marker target, no data-state — purely for visual orientation.
+  // Unconditional on caller: C/F windows (incl. all scales) get nothing.
+  const leadingBlackName = deriveLeadingBlackKeyName(startPc)
+  const leadingBlack =
+    leadingBlackName !== null ? (
+      <rect
+        key="leading-black"
+        data-role="leading-black-key"
+        data-note={leadingBlackName}
+        x={-BLACK_W / 2}
+        y={0}
+        width={BLACK_W}
+        height={BLACK_H}
+        className={`${classFor('black')} stroke-stone-900`}
+        strokeWidth={1}
+      />
+    ) : null
+
   const totalWidth = 14 * WHITE
+  // Shift the viewBox origin left by half a black key only when a leading key
+  // is drawn, so the 14 real keys keep their exact positions and precisely
+  // half the leading key is visible at the edge.
+  const minX = leadingBlack !== null ? -BLACK_W / 2 : 0
+  const viewWidth = totalWidth - minX
   return (
     <svg
-      viewBox={`0 0 ${totalWidth} ${HEIGHT}`}
+      viewBox={`${minX} 0 ${viewWidth} ${HEIGHT}`}
       width="100%"
       height={HEIGHT}
       role="img"
-      aria-label="piano keyboard with highlighted scale notes"
+      aria-label={`piano keyboard with highlighted ${voicing === 'chord' ? 'chord' : 'scale'} notes`}
     >
+      {leadingBlack}
       {whites}
       {blacks}
       {markers}

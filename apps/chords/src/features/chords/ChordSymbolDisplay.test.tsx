@@ -48,4 +48,55 @@ describe('ChordSymbolDisplay', () => {
     expect(screen.getByText('Cdim')).toBeInTheDocument()
     expect(screen.getByText('C°')).toBeInTheDocument()
   })
+
+  // Left-alignment regression contract (see ChordSymbolDisplay.tsx header).
+  //
+  // The reported "primary and alternate are not perfectly left-aligned" was
+  // diagnosed in a real browser as pure ~0.25px font side-bearing: the box-left
+  // of both lines is already bit-identical (Δ = 0px, light and dark). jsdom
+  // cannot measure glyph ink, so these tests instead lock the *structural*
+  // guarantee the alignment depends on — a single left-origin column with no
+  // padding / margin / text-indent and no per-line text-align override — so the
+  // sub-pixel residual can never regress into a real whole-pixel offset.
+  it('lays both lines out in one shared left-aligned column (no left divergence)', () => {
+    const { container } = render(<ChordSymbolDisplay primary="Cm" alternate="C-" />)
+    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container -- structural contract check
+    const wrapper = container.querySelector('.chord-symbol-display')
+    expect(wrapper).not.toBeNull()
+    // One flex column → both <p> share the same left origin; w-fit shrinks the
+    // box to content so it behaves as one tight unit inside ChordRow's flex row;
+    // items-start + text-left make the start edge explicit and divergence-proof.
+    expect(wrapper).toHaveClass('inline-flex', 'w-fit', 'flex-col', 'items-start', 'text-left')
+  })
+
+  it('keeps the intentional size contrast and adds no left padding/indent to either line', () => {
+    render(<ChordSymbolDisplay primary="Cm" alternate="C-" />)
+    const primary = screen.getByText('Cm')
+    const alternate = screen.getByText('C-')
+
+    // Size contrast is the whole point (apps/chords/CLAUDE.md: "the size
+    // difference does the work") — primary text-lg, alternate text-xs.
+    expect(primary).toHaveClass('text-lg', 'font-semibold')
+    expect(alternate).toHaveClass('text-xs')
+
+    // Neither line may carry a horizontal box offset (padding / margin /
+    // indent / per-line alignment) that would shift one start edge off the
+    // other. Asserting the class lists stay free of those utilities guards
+    // the alignment without needing real layout (jsdom can't measure it).
+    for (const el of [primary, alternate]) {
+      const cls = el.className
+      expect(cls).not.toMatch(/\b-?(p|m)(l|x)-/) // no padding/margin left or x
+      expect(cls).not.toMatch(/\bindent-/) // no text-indent
+      expect(cls).not.toMatch(/\btext-(center|right)\b/) // no align override
+    }
+  })
+
+  it('still uses block-level paragraphs so the two start edges stack vertically', () => {
+    render(<ChordSymbolDisplay primary="Cmaj7" alternate="CΔ7" />)
+    // Both symbols are <p> elements (default display:block) inside the flex
+    // column — they stack on separate lines sharing one left origin rather
+    // than flowing inline where side-by-side text would never align.
+    expect(screen.getByText('Cmaj7').tagName).toBe('P')
+    expect(screen.getByText('CΔ7').tagName).toBe('P')
+  })
 })

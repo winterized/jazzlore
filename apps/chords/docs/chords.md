@@ -75,10 +75,25 @@ Recommendation: **option 1 (by chord size)** for v1 — most predictable, easies
 - For chords spanning more than one octave (some 11s and 13s), see open question
 
 ### Piano keyboard rendering
-Same component as scales (`<PianoKeyboard />` in `packages/ui`). The component takes a list of note semitones from the root and a "role" marker for the root key. For chords:
-- All chord tones highlighted
-- Root key visually distinguished (same treatment as scales)
-- Range: 2 octaves, anchored on the chord's root (Q9 resolved 2026-05-14)
+Same component as scales (`<PianoKeyboard />` in `packages/ui`), opted into chord
+mode via `voicing="chord"` (default `"scale"` preserves the scales behaviour — the
+scale pattern repeats every octave, see `apps/scales/docs/specs/scales.md`). For
+chords:
+- Range: 2 octaves, anchored on the chord's root (Q9 resolved 2026-05-14).
+- Root key visually distinguished (same treatment as scales).
+- **Each chord tone is shown exactly once, not repeated every octave** (updated
+  2026-05-15). Tones are placed ascending from the root (root-position voicing).
+  Unlike scales, the per-octave repeat is *not* wanted here — a chord is a set of
+  specific voices, not a pattern.
+- **Octave-fold overflow:** if a tone's ascending position would fall outside the
+  2-octave window, it drops one octave so it still appears exactly once within the
+  fixed keyboard (keeps card width constant; every tone always visible). All 27
+  curated chords fit without folding (widest = `maj13`/`13`, 21 semitones < 24);
+  the fold is a forward-looking fallback only.
+- **Leading half black-key:** when the window starts on a white key preceded by a
+  black key (D, E, G, A, B) a half black-key is drawn at the left edge for visual
+  orientation (decorative only — never highlighted). C and F starts are unchanged.
+  Scales always start on C so are visually unaffected.
 
 ### Audio playback
 Same engine as scales. Playback mode (resolved 2026-05-14): **arpeggiated** (notes played in sequence, root upward) followed by a brief block at the end. This is the default and only mode in v1.
