@@ -100,15 +100,15 @@ describe('ChordsPage — navigation links', () => {
 describe('ChordsPage — RootOption[] builder', () => {
   it('ambiguous roots (e.g. Db) have an alternate spelling in the picker', () => {
     renderAt('/chords/C')
-    // Db option should exist; its alternate flip button shows 'C♯'
-    const flipButton = screen.getByRole('button', { name: /switch D♭ to C♯/i })
+    // Db option should exist; InlineRootPicker badge label is "Show C♯ spelling"
+    const flipButton = screen.getByRole('button', { name: /show C♯ spelling/i })
     expect(flipButton).toBeInTheDocument()
   })
 
   it('non-ambiguous roots (e.g. E) do not have an alternate spelling', () => {
     renderAt('/chords/C')
-    // There should be no flip button for E
-    const eFlip = screen.queryByRole('button', { name: /switch E to/i })
+    // There should be no flip button for E (non-ambiguous root)
+    const eFlip = screen.queryByRole('button', { name: /show.*E.*spelling/i })
     expect(eFlip).toBeNull()
   })
 })

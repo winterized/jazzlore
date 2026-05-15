@@ -325,6 +325,16 @@ All v1 open questions resolved during brainstorming on 2026-05-12. See git histo
 
 One item remains *provisional pending visual validation at implementation time*: **the root-key visual treatment** (color hierarchy vs marker). The current spec commits to color hierarchy as v1 baseline; if the rendered component doesn't make the root pop clearly enough, fall back to a marker (or layer one on top of the color).
 
+## Superseded by the sticky-header design (2026-05-15)
+
+A Claude Design handoff (`design_handoff_sticky_header/`) introduced a shared sticky-header pattern across both apps. It changes the scales page layout and accordion wiring:
+
+- **Sticky header adopted.** The page now uses `StickyHeader` from `@jazzlore/ui` — a sticky translucent header that contains the page title, the inline root picker (desktop) / pill + bottom-sheet (mobile), and a scroll-spy chip row. One chip per scale family; the chip row is labelled "Scale categories".
+- **Accordion state is now controlled (lifted).** `ScaleList` no longer owns `expanded` state internally. `ScalesPage` holds `expanded: Record<FamilyId, boolean>` and passes it down together with an `onExpandedChange` callback. `ScaleList` becomes a pure rendering component.
+- **Chip-driven expand (expand-only).** Clicking a family chip in the sticky header expands that family's accordion section — but never collapses it. The expand-only guard lives in `ScalesPage.handleChipActivate`. The family's own accordion header button still toggles (expand and collapse) as before, via `onExpandedChange`.
+
+Full rationale and the phased plan live in `.claude/plans/temporal-bouncing-bubble.md`; pixel spec in `design_handoff_sticky_header/README.md`.
+
 ## Acceptance criteria (v1 ships when…)
 
 - [ ] All 12 roots selectable

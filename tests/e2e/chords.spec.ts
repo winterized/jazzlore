@@ -16,7 +16,7 @@ test('pick C, save Cmaj7, see it in collection, print preview renders', async ({
     page.getByRole('button', { name: /Remove Cmaj7 from my collection/i }),
   ).toBeVisible()
 
-  // 3. Navigate to the collection via the header link.
+  // 3. Navigate to the collection via the header util link (now in StickyHeader).
   await page.getByRole('link', { name: /My chord collection/i }).click()
   await expect(page).toHaveURL(/\/collection\/chords/)
 
@@ -70,4 +70,83 @@ test('Salamander piano samples are served by the chords origin', async ({ reques
     const res = await request.get(`/audio/piano/${file}`)
     expect(res.status(), `/audio/piano/${file}`).toBe(200)
   }
+})
+
+// ─── Phase 6: StickyHeader + grouped sections ─────────────────────────────────
+
+test('sticky header renders with title and chip row', async ({ page }) => {
+  await page.goto('/chords/C')
+
+  // Title rendered in the sticky header
+  await expect(page.getByRole('heading', { name: 'C chords' })).toBeVisible()
+
+  // Chip row is present (nav with the chipNavLabel)
+  const chipNav = page.getByRole('navigation', { name: 'Chord categories' })
+  await expect(chipNav).toBeVisible()
+
+  // At least the first group chip is visible (e.g. "C" for C major triad)
+  // The TRIADS group first chip label is "C" (C major = just the root)
+  const cChip = chipNav.locator('button').first()
+  await expect(cChip).toBeVisible()
+})
+
+test('body sections are rendered with category dividers', async ({ page }) => {
+  await page.goto('/chords/C')
+
+  // Each category section divider is rendered in the body
+  for (const label of ['TRIADS', 'SIXTHS', 'SEVENTHS', 'NINTHS', 'EXTENDED', 'ALTERED']) {
+    await expect(page.getByText(label, { exact: true }).first()).toBeVisible()
+  }
+
+  // All 27 chord rows are present
+  const chordRows = page.locator('[data-testid="chord-row"]')
+  await expect(chordRows).toHaveCount(27)
+})
+
+test('chip click scrolls to matching chord card below the header', async ({ page }) => {
+  // Use a larger viewport to ensure desktop layout (inline root picker)
+  await page.setViewportSize({ width: 1280, height: 800 })
+  // Reduced motion → ChipRow's auto-center + scrollIntoView are instant
+  // (no smooth animation to race Playwright's actionability under the
+  // 4-worker parallel-load the full suite runs at). Deterministic.
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/chords/C')
+
+  // Click the "dim7" chip — it's in the SEVENTHS group
+  // Its chip label is "Cdim7"
+  const chipNav = page.getByRole('navigation', { name: 'Chord categories' })
+  const dim7Chip = chipNav.locator('button', { hasText: 'Cdim7' })
+  await dim7Chip.click()
+
+  // The chord card with id="chord-dim7" must actually be scrolled INTO the
+  // viewport (not merely present/un-hidden). toBeInViewport would fail if the
+  // scroll-margin-top broke and the card sat behind the sticky header.
+  const dim7Card = page.locator('#chord-dim7')
+  await expect(dim7Card).toBeInViewport()
+})
+
+test('scroll-spy: after scrolling past all TRIADS the active chip changes', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 })
+  // Reduced motion → instant scroll/auto-center so the clicked chip doesn't
+  // move under Playwright mid-click when the full suite runs in parallel
+  // (this test passed solo but flaked under 4-worker load — root cause was
+  // the smooth auto-center animation, not assertion timing).
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/chords/C')
+
+  // On page load the first chip (C major) should be active
+  const chipNav = page.getByRole('navigation', { name: 'Chord categories' })
+  const firstChip = chipNav.locator('button').first()
+  await expect(firstChip).toHaveAttribute('aria-current', 'true')
+
+  // Click the SEVENTHS maj7 chip. Playwright's expect() auto-retries up to the
+  // timeout, so we assert the end state directly instead of a brittle fixed
+  // waitForTimeout(600) that can under-wait on a loaded CI machine.
+  const maj7Chip = page.locator('[data-chip-id="chord-maj7"]')
+  await maj7Chip.click()
+
+  // Active chip moves to maj7 (optimistic-on-click + scroll-spy converge here);
+  // the C-major triad chip is no longer current.
+  await expect(maj7Chip).toHaveAttribute('aria-current', 'true')
+  await expect(firstChip).not.toHaveAttribute('aria-current', 'true')
 })

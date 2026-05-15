@@ -1,19 +1,17 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { notesForScale, type Family, type ScaleDefinition } from '@jazzlore/music-core'
 import { CURATED_SCALES, FAMILIES } from './data/curated'
 import ScaleRow from './ScaleRow'
 
-type Props = { root: string }
+export type FamilyId = Family
 
-export default function ScaleList({ root }: Props) {
-  const [expanded, setExpanded] = useState<Record<Family, boolean>>(
-    () =>
-      Object.fromEntries(FAMILIES.map((f) => [f.id, f.defaultExpanded])) as Record<
-        Family,
-        boolean
-      >,
-  )
+type Props = {
+  root: string
+  expanded: Record<FamilyId, boolean>
+  onExpandedChange: (familyId: FamilyId, next: boolean) => void
+}
 
+export default function ScaleList({ root, expanded, onExpandedChange }: Props) {
   const grouped = useMemo(() => {
     const map = new Map<Family, readonly ScaleDefinition[]>()
     for (const family of FAMILIES) {
@@ -32,13 +30,14 @@ export default function ScaleList({ root }: Props) {
         const scales = grouped.get(family.id) ?? []
         const panelId = `family-${family.id}`
         return (
-          <section key={family.id}>
-            <h2 className="text-base">
+          <section key={family.id} aria-label={family.label}>
+            <h2
+              id={`group-${family.id}`}
+              className="text-base scroll-mt-[140px] md:scroll-mt-[220px]"
+            >
               <button
                 type="button"
-                onClick={() =>
-                  setExpanded((p) => ({ ...p, [family.id]: !p[family.id] }))
-                }
+                onClick={() => onExpandedChange(family.id, !isOpen)}
                 aria-expanded={isOpen}
                 aria-controls={panelId}
                 className="flex w-full items-center justify-between rounded-md bg-stone-200 px-4 py-2 text-left font-medium hover:bg-stone-300 dark:bg-stone-800 dark:hover:bg-stone-700"
