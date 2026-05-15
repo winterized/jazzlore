@@ -16,11 +16,10 @@ import ChordRow from '../features/chords/ChordRow'
 import { CURATED_CHORDS } from '../data/curated'
 import { CHORD_GROUPS } from '../data/chordGroups'
 
-// ─── Router-aware link adapter ────────────────────────────────────────────────
-// StickyHeader lives in packages/ui which is router-free. This thin adapter
-// wires react-router's <Link> so SPA navigation is preserved.
-
-function RouterLink({
+// Module-scope adapter: keeps packages/ui router-free while giving
+// StickyHeader SPA-aware navigation. Identity is stable (not re-created per
+// render), which prevents the util-link subtree from re-mounting unnecessarily.
+const RouterLink = ({
   href,
   className,
   children,
@@ -28,13 +27,11 @@ function RouterLink({
   href: string
   className?: string
   children: ReactNode
-}) {
-  return (
-    <Link to={href} className={className}>
-      {children}
-    </Link>
-  )
-}
+}) => (
+  <Link to={href} className={className}>
+    {children}
+  </Link>
+)
 
 // ─── Body section-divider header ──────────────────────────────────────────────
 // Design spec: 11px / 600 / 0.1em uppercase, --jl-text-dim color,

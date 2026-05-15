@@ -12,6 +12,10 @@ The first sub-site of the Jazzlore portfolio: a public, polished jazz scales ref
 - **Audio:** Tone.js via `@jazzlore/music-core/audio`, lazy-loaded. Salamander piano samples in `public/audio/piano/` (CC-BY, see LICENSE.md there).
 - **Persistence:** `localStorage` via `@jazzlore/music-core/storage`. Never call `localStorage` directly — the storage module enforces the `jazzlore:` key prefix and is the seam if we ever swap for a backend.
 
+## Sticky-header design (2026-05-15)
+
+The page now uses `StickyHeader` from `@jazzlore/ui` (sticky translucent header, scroll-reactive title, inline root picker, scroll-spy chip row — one chip per scale family). The family-accordion `expanded` state is controlled: lifted to `ScalesPage`, passed into `ScaleList` via props (`expanded` + `onExpandedChange`). Clicking a chip expands that family (expand-only — never collapses via chip); the family's own accordion header still toggles freely. See `apps/scales/docs/specs/scales.md` → "Superseded by the sticky-header design" for the full rationale.
+
 ## Source structure (`apps/scales/src/`)
 
 ```
