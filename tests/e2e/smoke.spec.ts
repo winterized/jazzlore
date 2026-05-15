@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test'
 
+test.use({ baseURL: 'http://localhost:5173' })
+
 test('root redirects to /scales/C', async ({ page }) => {
   await page.goto('/')
   await expect(page).toHaveURL(/\/scales\/C$/)
