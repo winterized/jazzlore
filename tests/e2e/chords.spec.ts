@@ -37,6 +37,21 @@ test('pick C, save Cmaj7, see it in collection, print preview renders', async ({
     .evaluate((el) => getComputedStyle(el).display)
   expect(gridDisplay).toBe('grid')
   await expect(cmaj7Card).toBeVisible()
+
+  // Regression: v1 print.css clamped .chord-score to max-width:120px, and
+  // abcjs renders at staffwidth 320 on an overflow:hidden host — so the
+  // notation was clipped to an empty-looking sliver in print (worst in
+  // compact, where the score is the only body content). Assert the abcjs
+  // <svg> inside the card renders well past the old 120px clamp under print
+  // emulation, proving the clamp removal took effect.
+  // ~192px (the md:w-48 container) when fixed; ~120 (clipped) if the clamp
+  // regressed. >150 cleanly separates the two without pinning an exact px.
+  const scoreSvgWidth = await cmaj7Card
+    .locator('.chord-score svg')
+    .first()
+    .evaluate((el) => el.getBoundingClientRect().width)
+  expect(scoreSvgWidth).toBeGreaterThan(150)
+
   await page.emulateMedia({ media: 'screen' }) // reset
 })
 
@@ -44,4 +59,15 @@ test('invalid root redirects to /chords/C', async ({ page }) => {
   await page.goto('/chords/zzz')
   await expect(page).toHaveURL(/\/chords\/C$/)
   await expect(page.getByRole('heading', { name: /C chords/i })).toBeVisible()
+})
+
+// Regression: v1 shipped without the Salamander samples in apps/chords/public,
+// so chords.jazzlore.com 404'd every sample and Tone fell back to the synth.
+// audioEngine loads from `/audio/piano/<pitch>.<ext>`; assert the chords origin
+// actually serves them. Pitches mirror SAMPLE_PITCHES in audioEngine.ts.
+test('Salamander piano samples are served by the chords origin', async ({ request }) => {
+  for (const file of ['C4.mp3', 'C4.ogg', 'A5.mp3', 'C2.ogg', 'A6.mp3']) {
+    const res = await request.get(`/audio/piano/${file}`)
+    expect(res.status(), `/audio/piano/${file}`).toBe(200)
+  }
 })
