@@ -54,6 +54,18 @@ describe('InlineRootPicker — rendering', () => {
     ])
   })
 
+  // Handoff README "Spacing & sizing": inline root button = 36px wide × 32px
+  // tall (w-9 h-8). Regression guard: a previous build had these transposed
+  // (w-8 h-9 = 32×36), which made the picker look cramped vs the design.
+  it('sizes each root button 36w × 32h per the handoff spec (not transposed)', () => {
+    renderPicker()
+    for (const radio of screen.getAllByRole('radio')) {
+      expect(radio).toHaveClass('w-9', 'h-8')
+      expect(radio).not.toHaveClass('w-8')
+      expect(radio).not.toHaveClass('h-9')
+    }
+  })
+
   it('renders 5 enharmonic badge buttons (one per ambiguous note)', () => {
     renderPicker()
     // Badges carry aria-label "Show X spelling"

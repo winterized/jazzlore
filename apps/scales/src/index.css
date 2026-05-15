@@ -7,3 +7,20 @@
 
 @import './styles/print.css';
 @import './styles/theme.css';
+
+/* Root background must live on <html>, not only on each page's <main>. The
+   sticky header is translucent (bg .../78 + backdrop-blur); with no themed
+   root the browser's white canvas bleeds through its 22% transparency in dark
+   mode (the "strange dark layer" over the viewport top) and overscroll shows
+   white. data-theme is set on <html> by music-core applyTheme(). Tokens mirror
+   <main>'s bg-stone-100/950 + text-stone-900/100 exactly. */
+@layer base {
+  html {
+    background-color: var(--color-stone-100);
+    color: var(--color-stone-900);
+  }
+  html[data-theme='dark'] {
+    background-color: var(--color-stone-950);
+    color: var(--color-stone-100);
+  }
+}

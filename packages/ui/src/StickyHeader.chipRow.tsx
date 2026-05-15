@@ -184,9 +184,12 @@ export default function ChipRow({
               className={[
                 'shrink-0 px-[6px]',
                 'text-[10px] font-semibold tracking-[0.08em] uppercase',
-                // WCAG 1.4.3 AA: stone-500 on the translucent header bg
-                // measured 4.46 (just under 4.5). stone-600/300 clears it in
-                // both themes while keeping the label visually subdued.
+                // Category label at the AA contrast floor (stone-600/300).
+                // axe-core's color-contrast rule DOES flag aria-hidden text, so
+                // it cannot go lighter than this. The handoff hierarchy (label
+                // dimmer than chips) is preserved by making the chips stronger
+                // (stone-700/200) rather than the label lighter — see chip
+                // styles below. Both stay WCAG AA.
                 'text-stone-600 dark:text-stone-300',
                 'whitespace-nowrap',
               ].join(' ')}
@@ -216,12 +219,13 @@ export default function ChipRow({
                         'dark:border-stone-100 dark:bg-stone-100 dark:text-stone-900',
                       ].join(' ')
                     : [
-                        // Inactive: outline style (same as Phase-1 stub).
-                        // WCAG 1.4.3 AA: stone-500/400 on the translucent
-                        // header bg measured 4.46/4.0 (under 4.5). stone-600/
-                        // 300 clears 4.5 in both themes; hover still darkens.
+                        // Inactive: outline style. Text is stone-700/200 — a
+                        // step stronger than the AA floor so the chips read as
+                        // the foreground and the dimmer category label
+                        // (stone-600/300) recedes, matching the handoff
+                        // hierarchy while both stay WCAG 1.4.3 AA.
                         'border-stone-300 dark:border-stone-700',
-                        'bg-transparent text-stone-600 dark:text-stone-300',
+                        'bg-transparent text-stone-700 dark:text-stone-200',
                         'hover:border-stone-400 hover:text-stone-900',
                         'dark:hover:border-stone-500 dark:hover:text-stone-100',
                       ].join(' '),
