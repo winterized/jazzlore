@@ -1,6 +1,7 @@
 import { useEffect, useState, type ComponentType, type ReactNode } from 'react'
 import type { RootOption } from './RootPicker'
 import InlineRootPicker from './StickyHeader.inlineRootPicker'
+import RootCompactButton from './StickyHeader.rootCompactButton'
 
 function getReducedMotion(): boolean {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false
@@ -189,12 +190,23 @@ export default function StickyHeader({
       >
         <h1 className={titleClasses}>{title}</h1>
 
-        {/* Desktop inline root picker (Phase 2) */}
-        <InlineRootPicker
-          rootOptions={rootOptions}
-          selectedRoot={selectedRoot}
-          onRootChange={onRootChange}
-        />
+        {/* Mobile compact pill (<640px) — portals sheet to document.body */}
+        <div className="sm:hidden">
+          <RootCompactButton
+            rootOptions={rootOptions}
+            selectedRoot={selectedRoot}
+            onRootChange={onRootChange}
+          />
+        </div>
+
+        {/* Desktop inline root picker (≥640px) */}
+        <div className="hidden sm:flex">
+          <InlineRootPicker
+            rootOptions={rootOptions}
+            selectedRoot={selectedRoot}
+            onRootChange={onRootChange}
+          />
+        </div>
 
         {/* Spacer pushes util controls to the right */}
         <span className="flex-1" aria-hidden="true" />
