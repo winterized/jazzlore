@@ -24,7 +24,7 @@ export default function ChordSymbolDisplay({ primary, alternate }: Props) {
     <div className="chord-symbol-display">
       <p data-testid="chord-primary" className="chord-symbol-primary text-lg font-semibold text-stone-900 dark:text-stone-100">{primary}</p>
       {alternate !== undefined ? (
-        <p className="chord-symbol-alternate text-xs text-stone-500 dark:text-stone-400">{alternate}</p>
+        <p className="chord-symbol-alternate text-xs text-stone-600 dark:text-stone-400">{alternate}</p>
       ) : (
         <div className="h-4" aria-hidden="true" />
       )}

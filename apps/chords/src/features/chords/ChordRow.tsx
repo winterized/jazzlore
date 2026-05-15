@@ -69,7 +69,7 @@ export default function ChordRow({ rootNote, definition }: Props) {
             <p className="chord-notes font-mono text-sm text-stone-700 dark:text-stone-200">
               {notesLabel}
             </p>
-            <p className="chord-intervals font-mono text-sm text-stone-500 dark:text-stone-400">
+            <p className="chord-intervals font-mono text-sm text-stone-600 dark:text-stone-400">
               {intervalsLabel}
             </p>
           </div>
