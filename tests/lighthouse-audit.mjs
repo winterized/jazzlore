@@ -35,7 +35,7 @@ const TARGETS = [
   { app: 'chords', filter: '@jazzlore/chords', port: 4174, path: '/chords/C' },
 ]
 
-const GATES = { performance: 90, accessibility: 95 }
+const GATES = { performance: 90, accessibility: 95 } // perf is a single-run measurement and is noisy near the boundary (chords ~88–90); re-run 2–3× before treating a borderline failure as a real regression
 
 /** Resolve a launchable system Chrome binary. */
 function resolveChrome() {
@@ -85,6 +85,7 @@ async function runLighthouse(pageUrl, chromePath) {
       // Default Lighthouse config is mobile form-factor + mobile throttling.
       undefined,
     )
+    if (!runnerResult?.lhr) throw new Error(`Lighthouse returned no result for ${pageUrl}`)
     const lhr = runnerResult.lhr
     return {
       performance: Math.round(lhr.categories.performance.score * 100),

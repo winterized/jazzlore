@@ -27,7 +27,7 @@
  * Filenames mirror the handoff set exactly so each pair compares directly.
  */
 
-import { test, type Page } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 
 const OUT_DIR = 'baselines/sticky-post'
 
@@ -91,8 +91,10 @@ for (const shot of SHOTS) {
     await gotoSettled(page, `${BASE_URL[shot.app]}${PATH[shot.app]}`)
     // Full-page (deliverable requirement) + viewport-framed companion (1:1
     // with the handoff's viewport framing for the header design-match).
-    await page.screenshot({ path: `${OUT_DIR}/${shot.file}`, fullPage: true })
-    await page.screenshot({ path: `${OUT_DIR}/viewport/${shot.file}` })
+    const buf = await page.screenshot({ path: `${OUT_DIR}/${shot.file}`, fullPage: true })
+    expect(buf.length, `screenshot ${shot.file} must be non-empty`).toBeGreaterThan(0)
+    const bufViewport = await page.screenshot({ path: `${OUT_DIR}/viewport/${shot.file}` })
+    expect(bufViewport.length, `screenshot viewport/${shot.file} must be non-empty`).toBeGreaterThan(0)
   })
 }
 
@@ -114,6 +116,8 @@ test('capture 09-mobile-root-sheet.png', async ({ page }) => {
   // visible viewport. The VIEWPORT-framed shot is the meaningful one here
   // (matches the handoff's 09 viewport framing); the fullPage is kept only
   // for matrix completeness.
-  await page.screenshot({ path: `${OUT_DIR}/09-mobile-root-sheet.png`, fullPage: true })
-  await page.screenshot({ path: `${OUT_DIR}/viewport/09-mobile-root-sheet.png` })
+  const buf09 = await page.screenshot({ path: `${OUT_DIR}/09-mobile-root-sheet.png`, fullPage: true })
+  expect(buf09.length, 'screenshot 09-mobile-root-sheet.png must be non-empty').toBeGreaterThan(0)
+  const buf09Viewport = await page.screenshot({ path: `${OUT_DIR}/viewport/09-mobile-root-sheet.png` })
+  expect(buf09Viewport.length, 'screenshot viewport/09-mobile-root-sheet.png must be non-empty').toBeGreaterThan(0)
 })

@@ -145,8 +145,8 @@ describe('StickyHeader — util pill uses injected LinkComponent', () => {
       utilLink: { label: 'My scales', href: '/scales' },
     })
     const link = screen.getByTestId('custom-link')
-    expect(link.className).toContain('hidden')
-    expect(link.className).toContain('sm:inline-flex')
+    expect(link).toHaveClass('hidden')
+    expect(link).toHaveClass('sm:inline-flex')
   })
 })
 
