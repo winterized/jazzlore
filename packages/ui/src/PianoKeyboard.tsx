@@ -213,10 +213,12 @@ export default function PianoKeyboard({
   }
 
   // Decorative leading half black-key (Fix #3): when the window starts on a
-  // white key a real piano shows a black key to the left of (D, E, G, A, B),
-  // draw that key centred on x=0 so exactly half shows past the left edge.
-  // Never a marker target, no data-state — purely for visual orientation.
-  // Unconditional on caller: C/F windows (incl. all scales) get nothing.
+  // white key a real piano shows a black key to the left of (D, E, G, A, B).
+  // Render its inner half *inside* the keyboard, overlaying the left edge of
+  // the first white key (x=0, half a black-key wide) — NOT protruding past
+  // the left edge. Never a marker target, no data-state — purely for visual
+  // orientation. Unconditional on caller: C/F windows (incl. all scales) get
+  // nothing.
   const leadingBlackName = deriveLeadingBlackKeyName(startPc)
   const leadingBlack =
     leadingBlackName !== null ? (
@@ -224,9 +226,9 @@ export default function PianoKeyboard({
         key="leading-black"
         data-role="leading-black-key"
         data-note={leadingBlackName}
-        x={-BLACK_W / 2}
+        x={0}
         y={0}
-        width={BLACK_W}
+        width={BLACK_W / 2}
         height={BLACK_H}
         className={`${classFor('black')} stroke-stone-900`}
         strokeWidth={1}
@@ -234,14 +236,9 @@ export default function PianoKeyboard({
     ) : null
 
   const totalWidth = 14 * WHITE
-  // Shift the viewBox origin left by half a black key only when a leading key
-  // is drawn, so the 14 real keys keep their exact positions and precisely
-  // half the leading key is visible at the edge.
-  const minX = leadingBlack !== null ? -BLACK_W / 2 : 0
-  const viewWidth = totalWidth - minX
   return (
     <svg
-      viewBox={`${minX} 0 ${viewWidth} ${HEIGHT}`}
+      viewBox={`0 0 ${totalWidth} ${HEIGHT}`}
       width="100%"
       height={HEIGHT}
       role="img"
