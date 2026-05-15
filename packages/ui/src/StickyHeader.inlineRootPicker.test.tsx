@@ -148,14 +148,33 @@ describe('InlineRootPicker — click interactions', () => {
 
 // ─── Keyboard navigation ──────────────────────────────────────────────────────
 
-describe('InlineRootPicker — keyboard navigation', () => {
-  it('ArrowRight moves focus to the next button', async () => {
-    renderPicker({ selectedRoot: 'C' })
-    const c = screen.getByRole('radio', { name: 'C' })
-    c.focus()
+describe('InlineRootPicker — keyboard navigation (selection follows focus)', () => {
+  it('ArrowRight moves focus AND commits selection (ARIA radiogroup model)', async () => {
+    const onRootChange = vi.fn()
+    renderPicker({ selectedRoot: 'C', onRootChange })
+    screen.getByRole('radio', { name: 'C' }).focus()
     await userEvent.keyboard('{ArrowRight}')
-    // D♭ button should now have focus
     expect(screen.getByRole('radio', { name: 'D♭' })).toHaveFocus()
+    // Selection follows focus — emits the focused option's displayed value.
+    expect(onRootChange).toHaveBeenCalledWith('Db')
+  })
+
+  it('ArrowDown is an alias for ArrowRight (parity with RootPicker)', async () => {
+    const onRootChange = vi.fn()
+    renderPicker({ selectedRoot: 'C', onRootChange })
+    screen.getByRole('radio', { name: 'C' }).focus()
+    await userEvent.keyboard('{ArrowDown}')
+    expect(screen.getByRole('radio', { name: 'D♭' })).toHaveFocus()
+    expect(onRootChange).toHaveBeenCalledWith('Db')
+  })
+
+  it('ArrowUp is an alias for ArrowLeft (parity with RootPicker)', async () => {
+    const onRootChange = vi.fn()
+    renderPicker({ selectedRoot: 'C', onRootChange })
+    screen.getByRole('radio', { name: 'C' }).focus()
+    await userEvent.keyboard('{ArrowUp}')
+    expect(screen.getByRole('radio', { name: 'B' })).toHaveFocus()
+    expect(onRootChange).toHaveBeenCalledWith('B')
   })
 
   it('ArrowLeft from C wraps to B', async () => {
@@ -206,5 +225,14 @@ describe('InlineRootPicker — badge accessibility labels', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Show C♯ spelling' }))
     // Now badge should say "Show D♭ spelling" (switching back)
     expect(screen.getByRole('button', { name: 'Show D♭ spelling' })).toBeInTheDocument()
+  })
+
+  it('the badge is keyboard-reachable (no tabIndex=-1) — parity with RootPicker', () => {
+    renderPicker()
+    const badge = screen.getByRole('button', { name: 'Show C♯ spelling' })
+    // A negative tabindex would remove the only keyboard path to the spelling
+    // toggle. It must be reachable via Tab (default / non-negative tabindex).
+    const ti = badge.getAttribute('tabindex')
+    expect(ti === null || Number(ti) >= 0).toBe(true)
   })
 })

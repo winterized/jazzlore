@@ -210,13 +210,6 @@ export const ScalesDesktopLight: Story = {
   },
 }
 
-// ─── Scrolled state story ──────────────────────────────────────────────────────
-
-/**
- * Simulates the header after the user has scrolled down >24px.
- * The story wraps the header in a tall page so you can actually scroll,
- * but also pre-applies data-scrolled via a decorator that fires a fake scroll.
- */
 // ─── Inline root picker — focused states ──────────────────────────────────────
 
 /** Inline picker with an unambiguous root active (C). */
@@ -273,6 +266,9 @@ export const InlinePickerFlippedAlternate: Story = {
   },
 }
 
+// ─── Scrolled state story ──────────────────────────────────────────────────────
+
+/** Header after scrolling >24px: the title shrinks 18→15px and padding tightens. */
 export const ScrolledState: Story = {
   name: 'Scrolled state (title shrinks)',
   args: {

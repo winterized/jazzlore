@@ -7,7 +7,7 @@
  * lives in a thin `useEnharmonicFlip` hook wrapper in this same file.
  */
 
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import type { RootOption } from './RootPicker'
 
 // ─── Pure resolver ─────────────────────────────────────────────────────────────
@@ -53,15 +53,24 @@ export function useEnharmonicFlip(): EnharmonicFlipState {
   // Keyed by option.value (the canonical/primary value), true = showing alternate
   const [flipped, setFlipped] = useState<Record<string, boolean>>({})
 
-  const getDisplayed = (option: RootOption): DisplayedSpelling =>
-    resolveDisplayed(option, flipped[option.value] ?? false)
+  // Stable identities so Phase-3 consumers behind React.memo don't re-render
+  // spuriously. getDisplayed/getAlternateLabel legitimately change when
+  // `flipped` changes; toggle has no dependency on it (functional updater).
+  const getDisplayed = useCallback(
+    (option: RootOption): DisplayedSpelling =>
+      resolveDisplayed(option, flipped[option.value] ?? false),
+    [flipped],
+  )
 
-  const getAlternateLabel = (option: RootOption): string | undefined =>
-    resolveAlternateLabel(option, flipped[option.value] ?? false)
+  const getAlternateLabel = useCallback(
+    (option: RootOption): string | undefined =>
+      resolveAlternateLabel(option, flipped[option.value] ?? false),
+    [flipped],
+  )
 
-  const toggle = (optionValue: string): void => {
+  const toggle = useCallback((optionValue: string): void => {
     setFlipped((prev) => ({ ...prev, [optionValue]: !(prev[optionValue] ?? false) }))
-  }
+  }, [])
 
   return { getDisplayed, getAlternateLabel, toggle }
 }

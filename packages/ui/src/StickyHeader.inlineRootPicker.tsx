@@ -5,7 +5,10 @@
  * Active button = amber fill. Ambiguous options carry a superscript badge.
  * Badge click → toggle spelling only. Main button click → onRootChange.
  *
- * a11y: radiogroup with roving tabindex + arrow/Home/End keyboard nav.
+ * a11y: ARIA radiogroup — roving tabindex, selection-follows-focus on
+ * Arrow{Left,Right,Up,Down}/Home/End (mirrors RootPicker's interaction
+ * model so the two pickers behave identically). The enharmonic badge is a
+ * separate keyboard-reachable button.
  */
 
 import { type KeyboardEvent } from 'react'
@@ -25,11 +28,17 @@ export default function InlineRootPicker({ rootOptions, selectedRoot, onRootChan
     (opt) => opt.value === selectedRoot || opt.alternate?.value === selectedRoot,
   )
 
-  const moveFocusTo = (nextIndex: number, container: HTMLElement) => {
-    const btn = container.querySelector<HTMLButtonElement>(
-      `[role="radio"][data-index="${nextIndex}"]`,
-    )
-    btn?.focus()
+  // ARIA radiogroup: selection follows focus. Commit the new root AND move
+  // focus to that button (mirrors RootPicker.moveTo). The button is queried
+  // by data-index so focus lands even though aria-checked updates on the
+  // parent's next render.
+  const selectAndFocus = (nextIndex: number, container: HTMLElement) => {
+    const next = rootOptions[nextIndex]
+    if (!next) return
+    onRootChange(getDisplayed(next).value)
+    container
+      .querySelector<HTMLButtonElement>(`[role="radio"][data-index="${nextIndex}"]`)
+      ?.focus()
   }
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -38,9 +47,11 @@ export default function InlineRootPicker({ rootOptions, selectedRoot, onRootChan
     let nextIndex: number
     switch (e.key) {
       case 'ArrowRight':
+      case 'ArrowDown':
         nextIndex = current === last ? 0 : current + 1
         break
       case 'ArrowLeft':
+      case 'ArrowUp':
         nextIndex = current === 0 ? last : current - 1
         break
       case 'Home':
@@ -53,7 +64,7 @@ export default function InlineRootPicker({ rootOptions, selectedRoot, onRootChan
         return
     }
     e.preventDefault()
-    moveFocusTo(nextIndex, e.currentTarget)
+    selectAndFocus(nextIndex, e.currentTarget)
   }
 
   return (
@@ -106,7 +117,6 @@ export default function InlineRootPicker({ rootOptions, selectedRoot, onRootChan
                   toggle(opt.value)
                 }}
                 aria-label={`Show ${alternateLabel} spelling`}
-                tabIndex={-1}
                 className={[
                   'absolute -top-[6px] -right-[4px]',
                   'min-w-[14px] h-[14px] px-[2px]',
