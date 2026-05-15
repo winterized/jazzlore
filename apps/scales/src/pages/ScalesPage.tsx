@@ -72,17 +72,13 @@ export default function ScalesPage() {
     [],
   )
 
-  const handleChipActivate = useCallback(
-    (chipId: string) => {
-      // chipId is "group-<familyId>" — strip the prefix to get the familyId.
-      const familyId = chipId.replace(/^group-/, '') as FamilyId
-      // Expand-only: if already open, stay open (no toggle-off per handoff).
-      if (!expanded[familyId]) {
-        setExpanded((prev) => ({ ...prev, [familyId]: true }))
-      }
-    },
-    [expanded],
-  )
+  const handleChipActivate = useCallback((chipId: string) => {
+    // chipId is "group-<familyId>" — strip the prefix to get the familyId.
+    const familyId = chipId.replace(/^group-/, '') as FamilyId
+    // Expand-only: if already open, stay open (no toggle-off per handoff).
+    // Functional update form — no closure over `expanded`, so deps array is [].
+    setExpanded((prev) => (prev[familyId] ? prev : { ...prev, [familyId]: true }))
+  }, [])
 
   if (!root) return <Navigate to="/scales/C" replace />
 

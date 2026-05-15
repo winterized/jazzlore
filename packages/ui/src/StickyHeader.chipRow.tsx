@@ -137,17 +137,17 @@ export default function ChipRow({
   // ── Click handler ─────────────────────────────────────────────────────────────
 
   function handleChipClick(id: string) {
-    // Optimistically mark the clicked chip active, then lock the spy for a
-    // short settle window so the click-initiated scroll doesn't override it
-    // (covers smooth-scroll duration; instant scroll under reduced-motion
-    // still fires scroll events the lock must absorb).
-    setActiveId(id)
+    // Gate the spy lock BEFORE the state update so the auto-center effect
+    // that fires immediately after setActiveId cannot race with scroll events.
+    // Then optimistically mark the clicked chip active; the lock suppresses any
+    // scroll events fired by the resulting scrollIntoView for CLICK_SETTLE_MS.
     spyLockedRef.current = true
     if (lockTimerRef.current !== null) clearTimeout(lockTimerRef.current)
     lockTimerRef.current = setTimeout(() => {
       spyLockedRef.current = false
       lockTimerRef.current = null
     }, CLICK_SETTLE_MS)
+    setActiveId(id)
     const el = document.getElementById(id)
     if (el && typeof el.scrollIntoView === 'function') {
       el.scrollIntoView({ behavior: scrollBehavior, block: 'start' })

@@ -83,6 +83,8 @@ test('sticky header renders with title and chip row', async ({ page }) => {
 
 test('family chip click expands accordion and scrolls section into viewport below header', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 })
+  // Instant scroll so the chip can't shift under Playwright under 4-worker parallel load.
+  await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/scales/C')
 
   // "Bebop" is collapsed by default. Use aria-controls to uniquely target the
@@ -108,6 +110,8 @@ test('family chip click expands accordion and scrolls section into viewport belo
 
 test('chip click on already-open family keeps it open (expand-only, no toggle-off)', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 })
+  // Instant scroll so the chip can't shift under Playwright under 4-worker parallel load.
+  await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/scales/C')
 
   // "Modes of major" is open by default. Use aria-controls to uniquely target

@@ -226,6 +226,8 @@ describe('ChipRow — scroll-spy', () => {
       const c6 = screen.getByRole('button', { name: 'C6' })
 
       // Click Cmaj → optimistic active + spy lock engaged.
+      // fireEvent (not userEvent) is deliberate: userEvent with fake timers advances
+      // the click-settle timer internally, which would disarm the lock and defeat this test.
       fireEvent.click(cmaj)
       expect(cmaj).toHaveAttribute('aria-current', 'true')
 
