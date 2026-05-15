@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react'
+import { useEffect, useState, type ComponentType, type ReactNode } from 'react'
 import type { RootOption } from './RootPicker'
 
 function getReducedMotion(): boolean {
@@ -53,13 +53,14 @@ function ThemeButton({ theme, onThemeToggle }: ThemeButtonProps) {
 
 type ChipRowProps = {
   chipGroups: ChipGroup[]
+  navLabel: string
   onChipActivate?: (id: string) => void
 }
 
-function ChipRow({ chipGroups, onChipActivate }: ChipRowProps) {
+function ChipRow({ chipGroups, navLabel, onChipActivate }: ChipRowProps) {
   return (
     <nav
-      aria-label="Quick access"
+      aria-label={navLabel}
       className={[
         'flex items-center gap-[6px] overflow-x-auto',
         'px-[14px] pb-[10px] md:px-[20px] md:pb-[12px]',
@@ -84,7 +85,6 @@ function ChipRow({ chipGroups, onChipActivate }: ChipRowProps) {
             <button
               key={chip.id}
               type="button"
-              aria-current={false}
               onClick={() => onChipActivate?.(chip.id)}
               className={[
                 'inline-flex h-[26px] shrink-0 items-center px-[10px]',
@@ -112,13 +112,17 @@ type Props = {
   utilLink: { label: string; href: string }
   theme: 'dark' | 'light'
   onThemeToggle: () => void
-  /** Stub — final API wired now; real inline picker lands in Phase 2. */
+  /** Final API. `rootOptions`/`onRootChange` are consumed by the real inline
+   *  picker in Phase 2 (Phase 1 renders a selectedRoot stub). */
   rootOptions: readonly RootOption[]
   selectedRoot: string
   onRootChange: (v: string) => void
-  /** Stub — real scroll-spy lands in Phase 4. */
+  /** Final API. Real scroll-spy behavior lands in Phase 4. */
   chipGroups: ChipGroup[]
   onChipActivate?: (id: string) => void
+  /** Accessible name for the chip-row <nav>. Apps pass e.g. "Chord categories"
+   *  / "Scale categories" (Phase 6/7). */
+  chipNavLabel?: string
 }
 
 export default function StickyHeader({
@@ -130,8 +134,8 @@ export default function StickyHeader({
   selectedRoot,
   chipGroups,
   onChipActivate,
+  chipNavLabel = 'Quick access',
 }: Props) {
-  const headerRef = useRef<HTMLElement>(null)
   const [scrolled, setScrolled] = useState(false)
   const prefersReduced = usePrefersReducedMotion()
 
@@ -164,17 +168,13 @@ export default function StickyHeader({
 
   return (
     <header
-      ref={headerRef}
       data-scrolled={scrolled ? 'true' : 'false'}
       className={[
         'sticky top-0 z-50',
         'bg-stone-100/78 dark:bg-stone-950/78',
         'backdrop-blur-[14px] backdrop-saturate-150',
         'border-b border-stone-200 dark:border-stone-800',
-        prefersReduced ? '' : 'transition-[padding,background] duration-[180ms] ease-[ease]',
-      ]
-        .filter(Boolean)
-        .join(' ')}
+      ].join(' ')}
     >
       {/* Row 1: title + root picker slot + util controls */}
       <div
@@ -220,7 +220,7 @@ export default function StickyHeader({
       </div>
 
       {/* Row 2: chip row */}
-      <ChipRow chipGroups={chipGroups} onChipActivate={onChipActivate} />
+      <ChipRow chipGroups={chipGroups} navLabel={chipNavLabel} onChipActivate={onChipActivate} />
     </header>
   )
 }

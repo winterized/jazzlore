@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { useState, type ComponentType, type ReactNode } from 'react'
+import { useEffect, useState, type ComponentType, type ReactNode } from 'react'
 import StickyHeader, { type ChipGroup } from './StickyHeader'
 import type { RootOption } from './RootPicker'
 
@@ -113,6 +113,9 @@ const meta: Meta<typeof StickyHeader> = {
   render: function Render(args) {
     const [theme, setTheme] = useState<'light' | 'dark'>(args.theme)
     const [root, setRoot] = useState(args.selectedRoot)
+    // Keep local interactive state in sync with Storybook controls panel.
+    useEffect(() => setTheme(args.theme), [args.theme])
+    useEffect(() => setRoot(args.selectedRoot), [args.selectedRoot])
     return (
       <StickyHeader
         {...args}

@@ -2,7 +2,7 @@ import { render, screen, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import type { ComponentType, ReactNode } from 'react'
-import StickyHeader, { type Chip, type ChipGroup } from './StickyHeader'
+import StickyHeader, { type ChipGroup } from './StickyHeader'
 import type { RootOption } from './RootPicker'
 
 // ─── Shared fixtures ───────────────────────────────────────────────────────────
@@ -236,7 +236,9 @@ describe('StickyHeader — scroll listener cleanup', () => {
 
     unmount()
 
-    // The same handler should be removed
+    // Exactly one scroll add and one scroll remove (single useEffect, single
+    // handler captured in its closure — so add/remove counts proving 1:1 is
+    // sufficient evidence the listener doesn't leak).
     const removedScrollListeners = removeSpy.mock.calls.filter(([event]) => event === 'scroll')
     expect(removedScrollListeners).toHaveLength(1)
 
@@ -256,18 +258,31 @@ describe('StickyHeader — chip activation', () => {
   })
 })
 
-// ─── Type exports ──────────────────────────────────────────────────────────────
+// ─── Reduced motion ────────────────────────────────────────────────────────────
 
-describe('StickyHeader — exported types', () => {
-  it('Chip type has id and label', () => {
-    const chip: Chip = { id: 'maj', label: 'Cmaj' }
-    expect(chip.id).toBe('maj')
-    expect(chip.label).toBe('Cmaj')
-  })
+describe('StickyHeader — prefers-reduced-motion', () => {
+  it('strips the title transition when reduced motion is requested', () => {
+    const mql = {
+      matches: true,
+      media: '(prefers-reduced-motion: reduce)',
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      onchange: null,
+      dispatchEvent: vi.fn(),
+    }
+    // jsdom doesn't define window.matchMedia, so stub it as a global.
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => mql as unknown as MediaQueryList),
+    )
 
-  it('ChipGroup type has label and chips array', () => {
-    const group: ChipGroup = { label: 'TRIADS', chips: [{ id: 'maj', label: 'Cmaj' }] }
-    expect(group.label).toBe('TRIADS')
-    expect(group.chips).toHaveLength(1)
+    renderHeader()
+    const title = screen.getByRole('heading', { level: 1 })
+    // With reduced motion, the font-size/opacity transition class is omitted.
+    expect(title.className).not.toMatch(/transition-/)
+
+    vi.unstubAllGlobals()
   })
 })
