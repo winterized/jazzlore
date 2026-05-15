@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react'
-import StickyHeader, { type ChipGroup } from './StickyHeader'
+import StickyHeader, { type Chip, type ChipGroup } from './StickyHeader'
 import RootSheet from './StickyHeader.rootSheet'
 import type { RootOption } from './RootPicker'
 
@@ -398,7 +398,7 @@ export const ScrollSpyTracking: Story = {
     useEffect(() => setRoot(args.selectedRoot), [args.selectedRoot])
 
     // All chip ids across all groups — used to create anchor sections.
-    const allChips = args.chipGroups.flatMap((g) => g.chips)
+    const allChips = args.chipGroups.flatMap((g: ChipGroup) => g.chips)
 
     return (
       <div style={{ minHeight: '100vh' }}>
@@ -416,7 +416,7 @@ export const ScrollSpyTracking: Story = {
           }}
         />
         {/* Tall sections — one per chip so the scroll-spy has targets. */}
-        {allChips.map((chip, i) => (
+        {allChips.map((chip: Chip, i: number) => (
           <section
             key={chip.id}
             id={chip.id}
@@ -483,7 +483,7 @@ export const ScrollSpyScales: Story = {
     useEffect(() => setTheme(args.theme), [args.theme])
     useEffect(() => setRoot(args.selectedRoot), [args.selectedRoot])
 
-    const allChips = args.chipGroups.flatMap((g) => g.chips)
+    const allChips = args.chipGroups.flatMap((g: ChipGroup) => g.chips)
 
     return (
       <div style={{ minHeight: '100vh' }}>
@@ -496,7 +496,7 @@ export const ScrollSpyScales: Story = {
           LinkComponent={StubLink}
           onChipActivate={(id) => console.info('[StickyHeader] onChipActivate:', id)}
         />
-        {allChips.map((chip, i) => (
+        {allChips.map((chip: Chip, i: number) => (
           <section
             key={chip.id}
             id={chip.id}
