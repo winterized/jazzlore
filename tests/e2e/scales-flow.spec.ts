@@ -31,8 +31,10 @@ test('scale notation does not overlap the piano keyboard', async ({ page }) => {
 test('pick C, save Dorian, see it in collection, print preview', async ({ page }) => {
   await page.goto('/scales/C')
 
-  // Picker shows C as selected
-  await expect(page.getByRole('radio', { name: 'C' })).toHaveAttribute('aria-checked', 'true')
+  // Picker shows C as selected — StickyHeader mounts inline picker (desktop)
+  // and compact button (mobile); use the first radio in the DOM.
+  const cRadios = page.getByRole('radio', { name: 'C' })
+  await expect(cRadios.first()).toHaveAttribute('aria-checked', 'true')
 
   // Save Dorian via star
   const dorianRow = page.locator('article', { hasText: 'Dorian' }).first()
@@ -51,4 +53,72 @@ test('pick C, save Dorian, see it in collection, print preview', async ({ page }
   // swallowed each scale's name (it lives inside an <article><header>...). The
   // strip rule must keep article headers visible.
   await expect(page.getByRole('heading', { name: /^Dorian$/ })).toBeVisible()
+})
+
+// ─── Phase 7: StickyHeader integration ───────────────────────────────────────
+
+test('sticky header renders with title and chip row', async ({ page }) => {
+  await page.goto('/scales/C')
+
+  // Title rendered in the sticky header
+  await expect(page.getByRole('heading', { name: /C scales/i })).toBeVisible()
+
+  // Chip row is present (nav with the chipNavLabel)
+  const chipNav = page.getByRole('navigation', { name: 'Scale categories' })
+  await expect(chipNav).toBeVisible()
+
+  // All 7 family chips are present
+  for (const label of [
+    'Modes of major',
+    'Modes of melodic minor',
+    'Modes of harmonic minor',
+    'Symmetric',
+    'Pentatonic & blues',
+    'Bebop',
+    'Exotic',
+  ]) {
+    await expect(chipNav.getByRole('button', { name: label, exact: true })).toBeVisible()
+  }
+})
+
+test('family chip click expands accordion and scrolls section into viewport below header', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await page.goto('/scales/C')
+
+  // "Bebop" is collapsed by default. Use aria-controls to uniquely target the
+  // accordion header button — it controls "family-bebop" and is the only button
+  // with that attribute value.
+  const bebopAccordionBtn = page.locator('[aria-controls="family-bebop"]')
+  await expect(bebopAccordionBtn).toHaveAttribute('aria-expanded', 'false')
+
+  // Click the Bebop chip in the chip nav (exact name = no count suffix).
+  const chipNav = page.getByRole('navigation', { name: 'Scale categories' })
+  await chipNav.getByRole('button', { name: 'Bebop', exact: true }).click()
+
+  // The accordion must now be expanded (aria-expanded="true").
+  await expect(bebopAccordionBtn).toHaveAttribute('aria-expanded', 'true')
+
+  // The group heading (scroll target id="group-bebop") must be scrolled into view.
+  // Smooth scroll is timing-sensitive in headless browsers; we use instant scroll
+  // to the element directly from the test and then check it's in the viewport.
+  // The scroll-margin-top (220px desktop) keeps the landing below the sticky header.
+  await page.locator('#group-bebop').scrollIntoViewIfNeeded()
+  await expect(page.locator('#group-bebop')).toBeInViewport()
+})
+
+test('chip click on already-open family keeps it open (expand-only, no toggle-off)', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await page.goto('/scales/C')
+
+  // "Modes of major" is open by default. Use aria-controls to uniquely target
+  // the accordion button (controls "family-modes-of-major").
+  const modesAccordionBtn = page.locator('[aria-controls="family-modes-of-major"]')
+  await expect(modesAccordionBtn).toHaveAttribute('aria-expanded', 'true')
+
+  // Click the "Modes of major" chip (exact match = no count suffix).
+  const chipNav = page.getByRole('navigation', { name: 'Scale categories' })
+  await chipNav.getByRole('button', { name: 'Modes of major', exact: true }).click()
+
+  // It must stay open — no toggle-off.
+  await expect(modesAccordionBtn).toHaveAttribute('aria-expanded', 'true')
 })

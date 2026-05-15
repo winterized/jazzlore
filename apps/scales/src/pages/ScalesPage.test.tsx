@@ -19,14 +19,20 @@ const renderAt = (path: string) =>
   )
 
 describe('ScalesPage routing', () => {
-  it('renders the RootPicker with current root highlighted', () => {
+  it('renders the root picker with current root highlighted', () => {
     renderAt('/scales/D-flat')
-    expect(screen.getByRole('radio', { name: 'D♭' })).toHaveAttribute('aria-checked', 'true')
+    // StickyHeader renders an inline picker (desktop) and a compact button
+    // (mobile), both hidden by CSS but present in the DOM. The inline picker
+    // uses radio semantics for the root buttons.
+    const dFlatRadios = screen.getAllByRole('radio', { name: 'D♭' })
+    expect(dFlatRadios[0]!).toHaveAttribute('aria-checked', 'true')
   })
 
   it('navigates to the new root URL when a root is clicked', async () => {
     renderAt('/scales/C')
-    await userEvent.click(screen.getByRole('radio', { name: 'F♯' }))
+    // getAllByRole because StickyHeader mounts both pickers (CSS-gated).
+    const fSharpRadios = screen.getAllByRole('radio', { name: 'F♯' })
+    await userEvent.click(fSharpRadios[0]!)
     expect(screen.getByTestId('loc').textContent).toBe('/scales/F-sharp')
   })
 
@@ -38,5 +44,15 @@ describe('ScalesPage routing', () => {
       'href',
       '/collection/scales',
     )
+  })
+
+  it('renders the page title in the sticky header', () => {
+    renderAt('/scales/C')
+    expect(screen.getByRole('heading', { name: /C scales/i })).toBeInTheDocument()
+  })
+
+  it('renders the Scale categories chip navigation', () => {
+    renderAt('/scales/C')
+    expect(screen.getByRole('navigation', { name: 'Scale categories' })).toBeInTheDocument()
   })
 })
