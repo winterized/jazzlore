@@ -26,10 +26,16 @@ test('pick C, save Cmaj7, see it in collection, print preview renders', async ({
   const cmaj7Card = page.locator('[data-testid="chord-row"]', { hasText: 'Cmaj7' })
   await expect(cmaj7Card).toBeVisible()
 
-  // 5. Print preview: emulate @media print and verify the card grid renders.
-  //    The collection list has class "print-grid"; the card must remain visible.
+  // 5. Print preview: emulate @media print and verify the @media print rules
+  //    actually take effect. toBeVisible() alone is tautological here — the
+  //    .print-grid <ul> is visible in screen mode too. Assert the computed
+  //    `display` flips to `grid` (only print.css sets that) so a broken
+  //    @media print block (e.g. accidental display:none) would fail loudly.
   await page.emulateMedia({ media: 'print' })
-  await expect(page.locator('.print-grid')).toBeVisible()
+  const gridDisplay = await page
+    .locator('.print-grid')
+    .evaluate((el) => getComputedStyle(el).display)
+  expect(gridDisplay).toBe('grid')
   await expect(cmaj7Card).toBeVisible()
   await page.emulateMedia({ media: 'screen' }) // reset
 })
