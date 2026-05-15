@@ -42,7 +42,6 @@ export default function ChordRow({ rootNote, definition }: Props) {
       primary: formatPrimarySymbol(rootNote, definition.primarySuffix),
       alternate: formatAlternateSymbol(rootNote, definition.alternateSuffix) ?? undefined,
       rootPc,
-      scalePcs: voicing.notes.map(pitchClass),
       startPc: rootToStartPc(rootPc),
       /** Root-position semitone offsets (root first) — drives chord-mode key
        *  highlighting so each tone shows exactly once, ascending from the root. */
@@ -56,7 +55,7 @@ export default function ChordRow({ rootNote, definition }: Props) {
     }
   }, [rootNote, definition])
 
-  const { primary, alternate, rootPc, scalePcs, startPc, chordSemitones, intervalsLabel, notesLabel, abc, playNotes } = derived
+  const { primary, alternate, rootPc, startPc, chordSemitones, intervalsLabel, notesLabel, abc, playNotes } = derived
 
   // data-testid (rather than getByRole('article')) anchors the test count
   // against future layout that might wrap row content in nested articles.
@@ -93,7 +92,6 @@ export default function ChordRow({ rootNote, definition }: Props) {
           <PianoKeyboard
             voicing="chord"
             chordSemitones={chordSemitones}
-            scalePcs={scalePcs}
             rootPc={rootPc}
             startPc={startPc}
           />

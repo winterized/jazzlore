@@ -32,7 +32,8 @@ import {
  */
 type Props = {
   rootPc?: number // 0..11; undefined = no root highlight (scale mode only)
-  scalePcs: readonly number[] // 0..11; pitch classes of scale tones (scale mode)
+  /** Pitch classes of scale tones (0–11). Optional; ignored when `voicing="chord"`. */
+  scalePcs?: readonly number[] // 0..11; pitch classes of scale tones (scale mode)
   startOctave?: number // default 4 (only affects data-note attributes for tests)
   startPc?: number // default 0 (C); must be a white-key PC — see JSDoc above
   showNoteNames?: boolean // default false
@@ -52,7 +53,7 @@ const classFor = (kind: 'white' | 'black'): string =>
 
 export default function PianoKeyboard({
   rootPc,
-  scalePcs,
+  scalePcs = [],
   startOctave = 4,
   startPc = 0,
   showNoteNames = false,
@@ -81,7 +82,10 @@ export default function PianoKeyboard({
   const chordStateByAbs = new Map<number, KeyState>()
   if (isChord && rootPc !== undefined) {
     for (const { abs, role } of resolveChordKeyPositions(chordSemitones, rootPc, startPc)) {
-      // First write wins per position: the root is listed first (offset 0).
+      // Collision guard: for any valid r0 (0–11) and s>0, r0+s (after fold) can
+      // never equal r0, so the root (s=0) is always the sole occupant of abs=r0
+      // regardless of chordSemitones order. Guard only drops a rare duplicate
+      // fold between two non-root tones (unreachable with curated chords).
       if (!chordStateByAbs.has(abs)) chordStateByAbs.set(abs, role)
     }
   }
@@ -241,7 +245,7 @@ export default function PianoKeyboard({
       width="100%"
       height={HEIGHT}
       role="img"
-      aria-label="piano keyboard with highlighted scale notes"
+      aria-label={`piano keyboard with highlighted ${voicing === 'chord' ? 'chord' : 'scale'} notes`}
     >
       {leadingBlack}
       {whites}

@@ -124,6 +124,9 @@ export function deriveLeadingBlackKeyName(startPc: number): string | null {
  * {@link resolveChordKeyPositions}'s `abs` coordinate. A black key sits one
  * semitone above the white key it follows (`whiteAbs[globalWhiteIdx] + 1`).
  *
+ * Expects ≥ 7 elements in `octavePcs` (as returned by
+ * {@link deriveWhiteKeyPcsForOctave}); fewer elements yield NaN offsets.
+ *
  * Pure: same input → same output, no side effects.
  */
 export function deriveWhiteKeyAbsOffsets(octavePcs: readonly number[]): readonly number[] {
@@ -175,6 +178,10 @@ export type ResolvedChordKey = {
  * keeps the card width constant and every tone always visible. All 27 curated
  * chords fit without folding (widest spans 21 semitones < 24); the fold is a
  * forward-looking fallback.
+ *
+ * All offsets in `chordSemitones` must be ≥ 0 (negative offsets produce silent
+ * no-ops: `r0 + s` with s < 0 could already be in range but represents a voice
+ * below the root, which is off the keyboard for any valid `r0`).
  *
  * Pure: same input → same output, no side effects.
  */
