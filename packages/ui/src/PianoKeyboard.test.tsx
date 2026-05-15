@@ -122,4 +122,171 @@ describe('PianoKeyboard', () => {
       ).toThrow(/startPc.*black key/i)
     })
   })
+
+  // Fix #2 + #4 — chord voicing mode: each tone dotted exactly once
+  // (root-position, ascending from the root), no per-octave repeats.
+  describe('voicing="chord"', () => {
+    // Cmaj7 = C E G B → semitone offsets [0,4,7,11] from root C.
+    const CMAJ7 = [0, 4, 7, 11] as const
+
+    it('dots each chord tone exactly once (Cmaj7 = 4 markers, not 8)', () => {
+      const { container } = render(
+        <PianoKeyboard
+          voicing="chord"
+          chordSemitones={CMAJ7}
+          scalePcs={[0, 4, 7, 11]}
+          rootPc={0}
+          startPc={0}
+          startOctave={4}
+        />,
+      )
+      // Scale mode would mark every octave occurrence (8 across 2 octaves);
+      // chord mode places exactly one dot per tone.
+      expect(queryAll(container, '[data-role="marker"]')).toHaveLength(4)
+    })
+
+    it('marks the root exactly once (not every octave)', () => {
+      const { container } = render(
+        <PianoKeyboard
+          voicing="chord"
+          chordSemitones={CMAJ7}
+          scalePcs={[0, 4, 7, 11]}
+          rootPc={0}
+          startPc={0}
+          startOctave={4}
+        />,
+      )
+      expect(queryAll(container, '[data-marker-for="root"]')).toHaveLength(1)
+      expect(queryAll(container, '[data-marker-for="scale"]')).toHaveLength(3)
+    })
+
+    it('Cmaj13 [0,4,7,11,14,21]: 6 distinct dots (no per-octave repeat)', () => {
+      const { container } = render(
+        <PianoKeyboard
+          voicing="chord"
+          chordSemitones={[0, 4, 7, 11, 14, 21]}
+          scalePcs={[0, 4, 7, 11, 2, 9]}
+          rootPc={0}
+          startPc={0}
+          startOctave={4}
+        />,
+      )
+      expect(queryAll(container, '[data-role="marker"]')).toHaveLength(6)
+      expect(queryAll(container, '[data-marker-for="root"]')).toHaveLength(1)
+    })
+
+    it('octave-folds a synthetic out-of-window tone so it still appears once', () => {
+      // offset 25 folds to abs 13; total still 2 distinct markers (root + folded).
+      const { container } = render(
+        <PianoKeyboard
+          voicing="chord"
+          chordSemitones={[0, 25]}
+          scalePcs={[0]}
+          rootPc={0}
+          startPc={0}
+          startOctave={4}
+        />,
+      )
+      expect(queryAll(container, '[data-role="marker"]')).toHaveLength(2)
+    })
+
+    it('places dots on the keys whose abs positions match (Cmaj7 white E/G/B + root C)', () => {
+      const { container } = render(
+        <PianoKeyboard
+          voicing="chord"
+          chordSemitones={CMAJ7}
+          scalePcs={[0, 4, 7, 11]}
+          rootPc={0}
+          startPc={0}
+          startOctave={4}
+        />,
+      )
+      // C E G B are all white keys in a C-anchored window, lower octave.
+      const dotted = queryAll(container, '[data-role="white-key"][data-state="root"], [data-role="white-key"][data-state="scale"]')
+      const notes = Array.from(dotted).map((el) => el.getAttribute('data-note'))
+      expect(notes).toEqual(['C4', 'E4', 'G4', 'B4'])
+    })
+
+    it('default voicing="scale" still repeats every octave (regression guard)', () => {
+      const { container } = render(
+        <PianoKeyboard scalePcs={[0, 4, 7, 11]} rootPc={0} startPc={0} startOctave={4} />,
+      )
+      // 4 pitch classes × 2 octaves = 8 markers (unchanged scale behaviour).
+      expect(queryAll(container, '[data-role="marker"]')).toHaveLength(8)
+    })
+
+    it('chordSemitones is ignored when voicing is "scale" (default)', () => {
+      const { container } = render(
+        <PianoKeyboard
+          chordSemitones={[0, 4, 7, 11, 14, 21]}
+          scalePcs={[0, 4, 7, 11]}
+          rootPc={0}
+          startPc={0}
+          startOctave={4}
+        />,
+      )
+      expect(queryAll(container, '[data-role="marker"]')).toHaveLength(8)
+    })
+  })
+
+  // Fix #3 — leading half black-key for orientation when the window starts
+  // on a white key a real piano shows a black key to the left of.
+  describe('leading half black-key', () => {
+    const sel = '[data-role="leading-black-key"]'
+
+    it('absent for startPc=0 (C) — C has no black key below it', () => {
+      const { container } = render(<PianoKeyboard scalePcs={[]} startPc={0} />)
+      expect(queryAll(container, sel)).toHaveLength(0)
+    })
+
+    it('absent for startPc=5 (F) — F has no black key below it', () => {
+      const { container } = render(<PianoKeyboard scalePcs={[]} startPc={5} />)
+      expect(queryAll(container, sel)).toHaveLength(0)
+    })
+
+    it.each([
+      [2, 'D', 'C#'],
+      [4, 'E', 'D#'],
+      [7, 'G', 'F#'],
+      [9, 'A', 'G#'],
+      [11, 'B', 'A#'],
+    ])('present for startPc=%i (%s) and is the black key just below (%s)', (startPc, _white, blackName) => {
+      const { container } = render(<PianoKeyboard scalePcs={[]} startPc={startPc} />)
+      const leading = queryAll(container, sel)
+      expect(leading).toHaveLength(1)
+      expect(leading[0]?.getAttribute('data-note')).toBe(blackName)
+    })
+
+    it('carries no scale/root dot and is excluded from chord dotting', () => {
+      // A-anchored window, A major triad as a chord — the leading G# must
+      // never be a marker target nor carry data-state.
+      const { container } = render(
+        <PianoKeyboard
+          voicing="chord"
+          chordSemitones={[0, 4, 7]}
+          scalePcs={[9, 1, 4]}
+          rootPc={9}
+          startPc={9}
+          startOctave={4}
+        />,
+      )
+      const leading = queryAll(container, sel)[0]
+      expect(leading).toBeTruthy()
+      expect(leading?.getAttribute('data-state')).not.toBe('root')
+      expect(leading?.getAttribute('data-state')).not.toBe('scale')
+      // It is not counted as a real black key either.
+      const blacks = Array.from(queryAll(container, '[data-role="black-key"]'))
+      expect(blacks.some((b) => b.getAttribute('data-role') === 'leading-black-key')).toBe(false)
+    })
+
+    it('does not change the real black-key count for D/E/G/A/B starts', () => {
+      // The leading key uses a distinct data-role, so [data-role="black-key"]
+      // counts are unchanged vs. before this fix. (Updated assertion: we now
+      // explicitly assert the leading key lives outside the black-key set.)
+      const { container } = render(<PianoKeyboard scalePcs={[]} startPc={2} />)
+      // D-anchored: 14 keys D E F G A B C D E F G A B C → 9 real black keys.
+      expect(queryAll(container, '[data-role="black-key"]')).toHaveLength(9)
+      expect(queryAll(container, '[data-role="leading-black-key"]')).toHaveLength(1)
+    })
+  })
 })

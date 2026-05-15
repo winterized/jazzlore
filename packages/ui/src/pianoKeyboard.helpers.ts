@@ -96,3 +96,97 @@ export function deriveBlackKeySpecs(octavePcs: readonly number[]): readonly Deri
 
   return result
 }
+
+/**
+ * The black-key name immediately below a white-key `startPc`, or `null` when
+ * the white key is preceded by another white key (C and F — their lower
+ * neighbour is B and E, half steps with no black key between).
+ *
+ * Used to draw the decorative leading half black-key for orientation when the
+ * 2-octave window starts on D, E, G, A or B. Throws if `startPc` is not a
+ * white-key pitch class (mirrors the other derive* helpers).
+ *
+ * Pure: same input → same output, no side effects.
+ */
+export function deriveLeadingBlackKeyName(startPc: number): string | null {
+  if (!WHITE_PC_SET.has(startPc)) throw new Error(NOT_WHITE_KEY_MSG(startPc))
+  const belowPc = (((startPc - 1) % 12) + 12) % 12
+  return BLACK_KEY_NAMES[belowPc] ?? null
+}
+
+/**
+ * Absolute semitone offset (from the leftmost white key) of each of the 14
+ * visible white keys, given their pitch-class sequence for one octave.
+ *
+ * White key 0 is the anchor (offset 0). Each subsequent key adds the ascending
+ * semitone gap to the previous white key (2 for whole steps, 1 for the E→F /
+ * B→C half steps), so the values are monotonically increasing and align with
+ * {@link resolveChordKeyPositions}'s `abs` coordinate. A black key sits one
+ * semitone above the white key it follows (`whiteAbs[globalWhiteIdx] + 1`).
+ *
+ * Pure: same input → same output, no side effects.
+ */
+export function deriveWhiteKeyAbsOffsets(octavePcs: readonly number[]): readonly number[] {
+  const offsets: number[] = [0]
+  let prev = octavePcs[0] ?? 0
+  for (let i = 1; i < 14; i++) {
+    const pc = octavePcs[i % 7]!
+    const gap = (((pc - prev) % 12) + 12) % 12
+    offsets.push(offsets[i - 1]! + gap)
+    prev = pc
+  }
+  return offsets
+}
+
+/**
+ * The role a resolved chord key plays: the chord's root, or any other tone.
+ */
+export type ChordKeyRole = 'root' | 'scale'
+
+/** A single resolved chord-tone placement within the 2-octave window. */
+export type ResolvedChordKey = {
+  /**
+   * Absolute semitone position from the leftmost white key (`startPc`),
+   * always 0..23 — i.e. inside the fixed 2-octave (24-semitone) window.
+   */
+  abs: number
+  /** `'root'` for the chord's root tone (offset 0), else `'scale'`. */
+  role: ChordKeyRole
+}
+
+/**
+ * Resolve a chord's ascending root-position semitone offsets to absolute key
+ * positions inside the fixed 2-octave (24-semitone) piano window.
+ *
+ * Unlike scale mode (which repeats a pitch-class pattern every octave), a
+ * chord is a *set of specific voices*: each tone is placed exactly once,
+ * ascending from the root, so a 13th's 9th sits at root+14 (not root+2).
+ *
+ * `chordSemitones` are root-relative offsets in ascending stack order, e.g.
+ * `[0, 4, 7, 11, 14, 21]` for a maj13; element 0 (offset 0) is the root.
+ *
+ * `r0 = (rootPc - startPc + 12) % 12` is the root's absolute position. Because
+ * the caller anchors `startPc` on the white key at or just below the root,
+ * `r0` is normally 0, 1 or 2; the modulo also handles a wrapped window
+ * (e.g. C against a B-anchored window → r0 = 1).
+ *
+ * **Octave-fold (Option A):** if `r0 + s` would fall past position 23 it is
+ * dropped one octave at a time (−12) until it lands once inside the window —
+ * keeps the card width constant and every tone always visible. All 27 curated
+ * chords fit without folding (widest spans 21 semitones < 24); the fold is a
+ * forward-looking fallback.
+ *
+ * Pure: same input → same output, no side effects.
+ */
+export function resolveChordKeyPositions(
+  chordSemitones: readonly number[],
+  rootPc: number,
+  startPc: number,
+): readonly ResolvedChordKey[] {
+  const r0 = (((rootPc - startPc) % 12) + 12) % 12
+  return chordSemitones.map((s) => {
+    let target = r0 + s
+    while (target > 23) target -= 12
+    return { abs: target, role: s === 0 ? ('root' as const) : ('scale' as const) }
+  })
+}
