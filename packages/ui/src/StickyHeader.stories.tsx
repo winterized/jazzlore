@@ -217,6 +217,62 @@ export const ScalesDesktopLight: Story = {
  * The story wraps the header in a tall page so you can actually scroll,
  * but also pre-applies data-scrolled via a decorator that fires a fake scroll.
  */
+// ─── Inline root picker — focused states ──────────────────────────────────────
+
+/** Inline picker with an unambiguous root active (C). */
+export const InlinePickerRootC: Story = {
+  name: 'Inline picker · C selected (unambiguous)',
+  args: {
+    title: 'C chords',
+    utilLink: { label: 'My chord collection', href: '/collection/chords' },
+    theme: 'dark',
+    rootOptions: ROOT_OPTIONS,
+    selectedRoot: 'C',
+    chipGroups: CHORDS_CHIP_GROUPS,
+  },
+  parameters: {
+    viewport: { defaultViewport: 'desktop' },
+  },
+}
+
+/** Inline picker with an ambiguous root active (F♯). The badge shows G♭. */
+export const InlinePickerRootFSharp: Story = {
+  name: 'Inline picker · F♯ selected (ambiguous)',
+  args: {
+    title: 'F♯ chords',
+    utilLink: { label: 'My chord collection', href: '/collection/chords' },
+    theme: 'light',
+    rootOptions: ROOT_OPTIONS,
+    selectedRoot: 'F#',
+    chipGroups: CHORDS_CHIP_GROUPS,
+  },
+  parameters: {
+    viewport: { defaultViewport: 'desktop' },
+  },
+}
+
+/**
+ * Demonstrates that flipped spelling state is independent per story.
+ * After a user clicks the D♭ badge to show C♯, clicking the C♯ button
+ * emits "C#". This story starts with the alternate value selected so you
+ * can verify the active highlight lands on the right button.
+ */
+export const InlinePickerFlippedAlternate: Story = {
+  name: 'Inline picker · C♯ active (via alternate)',
+  args: {
+    title: 'C♯ chords',
+    utilLink: { label: 'My chord collection', href: '/collection/chords' },
+    theme: 'dark',
+    rootOptions: ROOT_OPTIONS,
+    // C# is the alternate value of the Db option — the Db button should be active
+    selectedRoot: 'C#',
+    chipGroups: CHORDS_CHIP_GROUPS,
+  },
+  parameters: {
+    viewport: { defaultViewport: 'desktop' },
+  },
+}
+
 export const ScrolledState: Story = {
   name: 'Scrolled state (title shrinks)',
   args: {

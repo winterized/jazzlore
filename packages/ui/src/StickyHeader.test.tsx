@@ -96,9 +96,10 @@ describe('StickyHeader — rendering', () => {
     expect(screen.getByText('My collection')).toBeInTheDocument()
   })
 
-  it('renders the selected root in the picker stub', () => {
-    renderHeader({ selectedRoot: 'F#' })
-    expect(screen.getByLabelText(/selected root/i)).toHaveTextContent('F#')
+  it('renders the selected root as an active radio button in the inline picker', () => {
+    renderHeader({ selectedRoot: 'C' })
+    const radio = screen.getByRole('radio', { name: 'C' })
+    expect(radio).toHaveAttribute('aria-checked', 'true')
   })
 })
 

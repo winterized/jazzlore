@@ -1,5 +1,6 @@
 import { useEffect, useState, type ComponentType, type ReactNode } from 'react'
 import type { RootOption } from './RootPicker'
+import InlineRootPicker from './StickyHeader.inlineRootPicker'
 
 function getReducedMotion(): boolean {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false
@@ -131,7 +132,9 @@ export default function StickyHeader({
   utilLink,
   theme,
   onThemeToggle,
+  rootOptions,
   selectedRoot,
+  onRootChange,
   chipGroups,
   onChipActivate,
   chipNavLabel = 'Quick access',
@@ -186,17 +189,12 @@ export default function StickyHeader({
       >
         <h1 className={titleClasses}>{title}</h1>
 
-        {/* Root picker stub — Phase 2 replaces this with InlineRootPicker */}
-        <span
-          aria-label={`Selected root: ${selectedRoot}`}
-          className={[
-            'inline-flex h-8 items-center px-[10px] rounded-md',
-            'border border-stone-300 bg-white dark:border-stone-700 dark:bg-stone-900',
-            'text-[13px] font-medium text-stone-900 dark:text-stone-100',
-          ].join(' ')}
-        >
-          {selectedRoot}
-        </span>
+        {/* Desktop inline root picker (Phase 2) */}
+        <InlineRootPicker
+          rootOptions={rootOptions}
+          selectedRoot={selectedRoot}
+          onRootChange={onRootChange}
+        />
 
         {/* Spacer pushes util controls to the right */}
         <span className="flex-1" aria-hidden="true" />
