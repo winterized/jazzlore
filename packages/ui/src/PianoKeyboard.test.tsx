@@ -279,6 +279,28 @@ describe('PianoKeyboard', () => {
       expect(blacks.some((b) => b.getAttribute('data-role') === 'leading-black-key')).toBe(false)
     })
 
+    it('renders INSIDE the keyboard, over the first white key (no left protrusion)', () => {
+      // Regression guard: the leading key must overlay the left edge of the
+      // first white key (x=0, half a black-key wide), fully within the
+      // keyboard bounds — NOT a full key centred on x=0 hanging past the
+      // left edge.
+      const WHITE = 32
+      const BLACK_W = 20
+      const totalWidth = 14 * WHITE
+      const { container } = render(<PianoKeyboard scalePcs={[]} startPc={2} />)
+      const leading = queryAll(container, sel)[0]
+      expect(leading).toBeTruthy()
+      const x = Number(leading?.getAttribute('x'))
+      const w = Number(leading?.getAttribute('width'))
+      expect(x).toBeGreaterThanOrEqual(0)
+      expect(x + w).toBeLessThanOrEqual(totalWidth)
+      expect(x).toBe(0)
+      expect(w).toBe(BLACK_W / 2)
+      // viewBox must not be extended negative to show an off-canvas half.
+      const vb = queryAll(container, 'svg')[0]?.getAttribute('viewBox')
+      expect(vb).toBe(`0 0 ${totalWidth} 110`)
+    })
+
     it('does not change the real black-key count for D/E/G/A/B starts', () => {
       // The leading key uses a distinct data-role, so [data-role="black-key"]
       // counts are unchanged vs. before this fix. (Updated assertion: we now
