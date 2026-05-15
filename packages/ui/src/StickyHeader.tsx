@@ -1,24 +1,9 @@
-import { useEffect, useState, type ComponentType, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react'
 import type { RootOption } from './RootPicker'
 import InlineRootPicker from './StickyHeader.inlineRootPicker'
 import RootCompactButton from './StickyHeader.rootCompactButton'
-
-function getReducedMotion(): boolean {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
-}
-
-function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(getReducedMotion)
-  useEffect(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const handler = (e: MediaQueryListEvent) => setReduced(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
-  return reduced
-}
+import { usePrefersReducedMotion } from './StickyHeader.hooks'
+import ChipRow from './StickyHeader.chipRow'
 
 // ─── Public types ──────────────────────────────────────────────────────────────
 
@@ -51,60 +36,6 @@ function ThemeButton({ theme, onThemeToggle }: ThemeButtonProps) {
   )
 }
 
-// ─── Chip row stub ─────────────────────────────────────────────────────────────
-
-type ChipRowProps = {
-  chipGroups: ChipGroup[]
-  navLabel: string
-  onChipActivate?: (id: string) => void
-}
-
-function ChipRow({ chipGroups, navLabel, onChipActivate }: ChipRowProps) {
-  return (
-    <nav
-      aria-label={navLabel}
-      className={[
-        'flex items-center gap-[6px] overflow-x-auto',
-        'px-[14px] pb-[10px] md:px-[20px] md:pb-[12px]',
-        '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
-      ].join(' ')}
-    >
-      {chipGroups.map((group, gi) => (
-        <div key={group.label} className="contents">
-          {gi > 0 && (
-            <span
-              aria-hidden="true"
-              className="h-[14px] w-px shrink-0 bg-stone-200 dark:bg-stone-800"
-            />
-          )}
-          <span
-            aria-hidden="true"
-            className="shrink-0 px-[6px] text-[10px] font-semibold uppercase tracking-[0.08em] text-stone-500 dark:text-stone-500"
-          >
-            {group.label}
-          </span>
-          {group.chips.map((chip) => (
-            <button
-              key={chip.id}
-              type="button"
-              onClick={() => onChipActivate?.(chip.id)}
-              className={[
-                'inline-flex h-[26px] shrink-0 items-center px-[10px]',
-                'rounded-[13px] border border-stone-300 dark:border-stone-700',
-                'bg-transparent text-[12px] font-medium text-stone-500 dark:text-stone-400',
-                'hover:border-stone-400 hover:text-stone-900 dark:hover:border-stone-500 dark:hover:text-stone-100',
-                'whitespace-nowrap transition-all duration-[120ms]',
-              ].join(' ')}
-            >
-              {chip.label}
-            </button>
-          ))}
-        </div>
-      ))}
-    </nav>
-  )
-}
-
 // ─── Main component ────────────────────────────────────────────────────────────
 
 type Props = {
@@ -114,16 +45,17 @@ type Props = {
   utilLink: { label: string; href: string }
   theme: 'dark' | 'light'
   onThemeToggle: () => void
-  /** Final API. `rootOptions`/`onRootChange` are consumed by the real inline
-   *  picker in Phase 2 (Phase 1 renders a selectedRoot stub). */
+  /** `rootOptions`/`onRootChange` are consumed by the inline picker (desktop)
+   *  and the portalled bottom sheet (mobile). */
   rootOptions: readonly RootOption[]
   selectedRoot: string
   onRootChange: (v: string) => void
-  /** Final API. Real scroll-spy behavior lands in Phase 4. */
+  /** Scroll-spy chip row data. The ChipRow resolves anchor targets by id from
+   *  the document — each `chip.id` must match a DOM element's `id` attribute. */
   chipGroups: ChipGroup[]
   onChipActivate?: (id: string) => void
   /** Accessible name for the chip-row <nav>. Apps pass e.g. "Chord categories"
-   *  / "Scale categories" (Phase 6/7). */
+   *  / "Scale categories". */
   chipNavLabel?: string
 }
 
@@ -142,6 +74,29 @@ export default function StickyHeader({
 }: Props) {
   const [scrolled, setScrolled] = useState(false)
   const prefersReduced = usePrefersReducedMotion()
+
+  // Measure the header's rendered height so the ChipRow can use it as the
+  // scroll-spy threshold. Falls back to 80px (a reasonable constant) until
+  // the layout has been measured.
+  const headerRef = useRef<HTMLElement>(null)
+  const [headerHeight, setHeaderHeight] = useState(80)
+
+  useEffect(() => {
+    const header = headerRef.current
+    if (!header) return
+
+    // Measure immediately after mount.
+    setHeaderHeight(header.getBoundingClientRect().height)
+
+    // Re-measure if the header resizes (e.g., on breakpoint change).
+    // ResizeObserver is not available in all test environments — guard it.
+    if (typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(() => {
+      setHeaderHeight(header.getBoundingClientRect().height)
+    })
+    ro.observe(header)
+    return () => ro.disconnect()
+  }, [])
 
   useEffect(() => {
     const onScroll = () => {
@@ -172,6 +127,7 @@ export default function StickyHeader({
 
   return (
     <header
+      ref={headerRef}
       data-scrolled={scrolled ? 'true' : 'false'}
       className={[
         'sticky top-0 z-50',
@@ -235,8 +191,13 @@ export default function StickyHeader({
         <ThemeButton theme={theme} onThemeToggle={onThemeToggle} />
       </div>
 
-      {/* Row 2: chip row */}
-      <ChipRow chipGroups={chipGroups} navLabel={chipNavLabel} onChipActivate={onChipActivate} />
+      {/* Row 2: real scroll-spy chip row */}
+      <ChipRow
+        chipGroups={chipGroups}
+        navLabel={chipNavLabel}
+        onChipActivate={onChipActivate}
+        headerHeight={headerHeight}
+      />
     </header>
   )
 }

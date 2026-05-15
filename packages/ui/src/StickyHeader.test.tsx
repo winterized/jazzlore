@@ -231,17 +231,17 @@ describe('StickyHeader — scroll listener cleanup', () => {
 
     const { unmount } = renderHeader()
 
-    // There should be a scroll listener registered
+    // At least one scroll listener is registered (StickyHeader and ChipRow
+    // each register their own — so there may be more than 1).
     const addedScrollListeners = addSpy.mock.calls.filter(([event]) => event === 'scroll')
-    expect(addedScrollListeners).toHaveLength(1)
+    expect(addedScrollListeners.length).toBeGreaterThanOrEqual(1)
 
     unmount()
 
-    // Exactly one scroll add and one scroll remove (single useEffect, single
-    // handler captured in its closure — so add/remove counts proving 1:1 is
-    // sufficient evidence the listener doesn't leak).
+    // Every added listener must be removed — add:remove counts are equal,
+    // proving no listener leaks regardless of how many sub-components add one.
     const removedScrollListeners = removeSpy.mock.calls.filter(([event]) => event === 'scroll')
-    expect(removedScrollListeners).toHaveLength(1)
+    expect(removedScrollListeners).toHaveLength(addedScrollListeners.length)
 
     addSpy.mockRestore()
     removeSpy.mockRestore()

@@ -371,6 +371,169 @@ export const MobileSheetOpenLight: Story = {
   },
 }
 
+// ─── Scroll-spy tracking story (Phase 4) ──────────────────────────────────────
+
+/**
+ * A tall page with several id'd sections to demonstrate the scroll-spy chip row.
+ * As you scroll, the active chip auto-highlights and auto-centers in the row.
+ * Click any chip to jump to that section.
+ *
+ * Uses fullscreen layout so Storybook's iframe is scrollable.
+ */
+export const ScrollSpyTracking: Story = {
+  name: 'Scroll-spy · Chords tracking (scroll to see)',
+  args: {
+    title: 'C chords',
+    utilLink: { label: 'My chord collection', href: '/collection/chords' },
+    theme: 'dark',
+    rootOptions: ROOT_OPTIONS,
+    selectedRoot: 'C',
+    chipGroups: CHORDS_CHIP_GROUPS,
+    chipNavLabel: 'Chord categories',
+  },
+  render: function ScrollSpyRender(args) {
+    const [theme, setTheme] = useState<'light' | 'dark'>(args.theme)
+    const [root, setRoot] = useState(args.selectedRoot)
+    useEffect(() => setTheme(args.theme), [args.theme])
+    useEffect(() => setRoot(args.selectedRoot), [args.selectedRoot])
+
+    // All chip ids across all groups — used to create anchor sections.
+    const allChips = args.chipGroups.flatMap((g) => g.chips)
+
+    return (
+      <div style={{ minHeight: '100vh' }}>
+        <StickyHeader
+          {...args}
+          theme={theme}
+          onThemeToggle={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          selectedRoot={root}
+          onRootChange={setRoot}
+          LinkComponent={StubLink}
+          onChipActivate={(id) => {
+            // In the scales app this would expand the accordion; here we
+            // just log it so Storybook's actions panel shows the callback.
+            console.info('[StickyHeader] onChipActivate:', id)
+          }}
+        />
+        {/* Tall sections — one per chip so the scroll-spy has targets. */}
+        {allChips.map((chip, i) => (
+          <section
+            key={chip.id}
+            id={chip.id}
+            style={{
+              minHeight: '50vh',
+              padding: '40px 20px',
+              borderBottom: '1px solid #333',
+              background: i % 2 === 0 ? '#111' : '#0a0a0a',
+              scrollMarginTop: '120px',
+            }}
+          >
+            <h2
+              style={{
+                margin: 0,
+                fontSize: 24,
+                fontWeight: 700,
+                color: '#fff',
+                fontFamily: '-apple-system, sans-serif',
+              }}
+            >
+              {chip.label}
+            </h2>
+            <p style={{ color: '#666', marginTop: 12, fontFamily: '-apple-system, sans-serif' }}>
+              Section for chip <code style={{ color: '#f4a233' }}>{chip.id}</code> — scroll down
+              to see the next chip become active in the header row.
+            </p>
+          </section>
+        ))}
+      </div>
+    )
+  },
+  parameters: {
+    layout: 'fullscreen',
+  },
+}
+
+export const ScrollSpyTrackingLight: Story = {
+  name: 'Scroll-spy · Chords tracking · Light',
+  ...ScrollSpyTracking,
+  args: {
+    ...ScrollSpyTracking.args,
+    theme: 'light',
+  },
+  render: ScrollSpyTracking.render,
+  parameters: {
+    layout: 'fullscreen',
+  },
+}
+
+export const ScrollSpyScales: Story = {
+  name: 'Scroll-spy · Scales tracking (no category labels)',
+  args: {
+    title: 'C scales',
+    utilLink: { label: 'My scales', href: '/collection/scales' },
+    theme: 'dark',
+    rootOptions: ROOT_OPTIONS,
+    selectedRoot: 'C',
+    chipGroups: SCALES_CHIP_GROUPS,
+    chipNavLabel: 'Scale categories',
+  },
+  render: function ScrollSpyScalesRender(args) {
+    const [theme, setTheme] = useState<'light' | 'dark'>(args.theme)
+    const [root, setRoot] = useState(args.selectedRoot)
+    useEffect(() => setTheme(args.theme), [args.theme])
+    useEffect(() => setRoot(args.selectedRoot), [args.selectedRoot])
+
+    const allChips = args.chipGroups.flatMap((g) => g.chips)
+
+    return (
+      <div style={{ minHeight: '100vh' }}>
+        <StickyHeader
+          {...args}
+          theme={theme}
+          onThemeToggle={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          selectedRoot={root}
+          onRootChange={setRoot}
+          LinkComponent={StubLink}
+          onChipActivate={(id) => console.info('[StickyHeader] onChipActivate:', id)}
+        />
+        {allChips.map((chip, i) => (
+          <section
+            key={chip.id}
+            id={chip.id}
+            style={{
+              minHeight: '50vh',
+              padding: '40px 20px',
+              borderBottom: '1px solid #333',
+              background: i % 2 === 0 ? '#111' : '#0a0a0a',
+              scrollMarginTop: '120px',
+            }}
+          >
+            <h2
+              style={{
+                margin: 0,
+                fontSize: 24,
+                fontWeight: 700,
+                color: '#fff',
+                fontFamily: '-apple-system, sans-serif',
+              }}
+            >
+              {chip.label}
+            </h2>
+            <p style={{ color: '#666', marginTop: 12, fontFamily: '-apple-system, sans-serif' }}>
+              Scale group: <code style={{ color: '#f4a233' }}>{chip.id}</code>
+            </p>
+          </section>
+        ))}
+      </div>
+    )
+  },
+  parameters: {
+    layout: 'fullscreen',
+  },
+}
+
+// ─── Scrolled state story ──────────────────────────────────────────────────────
+
 /** Header after scrolling >24px: the title shrinks 18→15px and padding tightens. */
 export const ScrolledState: Story = {
   name: 'Scrolled state (title shrinks)',
