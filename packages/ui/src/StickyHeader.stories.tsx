@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { useEffect, useState, type ComponentType, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react'
 import StickyHeader, { type ChipGroup } from './StickyHeader'
+import RootSheet from './StickyHeader.rootSheet'
 import type { RootOption } from './RootPicker'
 
 // ─── Stub fixtures ─────────────────────────────────────────────────────────────
@@ -312,13 +313,14 @@ export const MobileSheetOpenDark: Story = {
   render: function SheetOpenRender(args) {
     const [theme, setTheme] = useState<'light' | 'dark'>(args.theme)
     const [root, setRoot] = useState(args.selectedRoot)
-    // Keep local state in sync with Storybook controls.
+    const [open, setOpen] = useState(true)
+    const triggerRef = useRef<HTMLButtonElement>(null)
     useEffect(() => setTheme(args.theme), [args.theme])
     useEffect(() => setRoot(args.selectedRoot), [args.selectedRoot])
-    // Render the header WITHOUT the compact button here — instead render the
-    // sheet directly open so Storybook shows it immediately.
+    // Render the header AND the RootSheet open directly so Storybook shows the
+    // sheet immediately (no manual interaction needed for visual review).
     return (
-      <div style={{ height: '200px', position: 'relative' }}>
+      <div style={{ minHeight: '100vh', position: 'relative' }}>
         <StickyHeader
           {...args}
           theme={theme}
@@ -327,24 +329,23 @@ export const MobileSheetOpenDark: Story = {
           onRootChange={setRoot}
           LinkComponent={StubLink}
         />
-        {/* Render the sheet open for visual review via the compact button path.
-            In the actual header the pill opens it; here we just click the pill. */}
+        <button ref={triggerRef} type="button" style={{ position: 'absolute', opacity: 0 }}>
+          trigger
+        </button>
+        <RootSheet
+          rootOptions={ROOT_OPTIONS}
+          selectedRoot={root}
+          onRootChange={(v) => {
+            setRoot(v)
+            setOpen(false)
+          }}
+          open={open}
+          onClose={() => setOpen(false)}
+          triggerRef={triggerRef}
+        />
       </div>
     )
   },
-  decorators: [
-    (Story) => (
-      <div
-        data-open-sheet
-        style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff' }}
-      >
-        <Story />
-        <p style={{ padding: '16px', color: '#555', fontSize: 13 }}>
-          Click the orange "F♯ ▾" pill at the top-right to open the root sheet.
-        </p>
-      </div>
-    ),
-  ],
   parameters: {
     viewport: { defaultViewport: 'mobile1' },
     layout: 'fullscreen',
@@ -358,16 +359,6 @@ export const MobileSheetOpenLight: Story = {
     theme: 'light',
   },
   render: MobileSheetOpenDark.render,
-  decorators: [
-    (Story) => (
-      <div style={{ minHeight: '100vh', background: '#f3f3f1', color: '#1a1a1a' }}>
-        <Story />
-        <p style={{ padding: '16px', color: '#999', fontSize: 13 }}>
-          Click the orange "F♯ ▾" pill at the top-right to open the root sheet.
-        </p>
-      </div>
-    ),
-  ],
   parameters: {
     viewport: { defaultViewport: 'mobile1' },
     layout: 'fullscreen',

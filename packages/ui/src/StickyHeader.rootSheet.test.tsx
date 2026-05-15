@@ -81,29 +81,23 @@ function renderSheet(
 // ─── Portal target ─────────────────────────────────────────────────────────────
 
 describe('RootSheet — portal target (guards the flagged bug)', () => {
-  it('when open, the dialog is contained by document.body', () => {
-    renderSheet({ open: true })
-    const dialog = screen.getByRole('dialog')
-    // Portals render directly into document.body, bypassing the RTL mounting
-    // container. Verifying document.body.contains() is the canonical check.
-    expect(document.body.contains(dialog)).toBe(true)
-  })
-
-  it('when open, the trigger button IS in the container but dialog is NOT (portal escapes)', () => {
-    renderSheet({ open: true })
+  it('portals the dialog directly onto document.body, escaping the React mount container', () => {
+    // This guards the explicitly-flagged bug: if createPortal is removed, the
+    // dialog renders inside the component tree (the RTL `container`), which
+    // would clip it to the sticky header's box. document.body.contains() alone
+    // is tautological (RTL mounts `container` in body), so we assert the
+    // *negative*: the dialog is NOT inside `container`, and its parent IS body.
+    const { container } = renderSheet({ open: true })
     const dialog = screen.getByRole('dialog')
     const trigger = screen.getByTestId('trigger')
-    // The trigger is a sibling of the sheet in the React tree but mounted in the
-    // RTL container. The portal bypasses that container — so the dialog's parent
-    // should be document.body (or a portal root attached to body), not the trigger's
-    // parent element. A portal escapes: dialog.parentElement !== trigger.parentElement.
-    // We use document.body.contains() only — no container.contains().
-    expect(document.body.contains(dialog)).toBe(true)
-    expect(document.body.contains(trigger)).toBe(true)
-    // The dialog must not be an ancestor of the trigger (no nesting in the header).
-    // We use screen queries only — no direct DOM traversal on container.
-    // The key assertion: screen finds the dialog globally (body-level), not scoped.
-    expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+    // eslint-disable-next-line testing-library/no-node-access -- structural portal guard: the whole point is asserting DOM ancestry
+    expect(dialog.parentElement).toBe(document.body)
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- ditto: must prove the dialog escaped the React mount container
+    expect(container.contains(dialog)).toBe(false)
+    // Sanity: the trigger (a normal child) DID render inside the container.
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- structural sanity counterpart
+    expect(container.contains(trigger)).toBe(true)
   })
 
   it('when closed, no dialog is rendered', () => {
