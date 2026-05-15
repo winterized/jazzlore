@@ -190,6 +190,12 @@ export default function StickyHeader({
       >
         <h1 className={titleClasses}>{title}</h1>
 
+        {/* Both pickers are always mounted and CSS-gated. a11y correctness
+            depends on `display:none` (sm:hidden / hidden) removing the
+            inactive picker from the accessibility tree AND tab order — so
+            only one role="radiogroup" is ever perceivable. Do NOT swap these
+            for visibility:hidden / opacity:0, which would expose a duplicate
+            "Root note" radiogroup to assistive tech. */}
         {/* Mobile compact pill (<640px) — portals sheet to document.body */}
         <div className="sm:hidden">
           <RootCompactButton

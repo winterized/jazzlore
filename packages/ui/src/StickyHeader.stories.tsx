@@ -329,7 +329,13 @@ export const MobileSheetOpenDark: Story = {
           onRootChange={setRoot}
           LinkComponent={StubLink}
         />
-        <button ref={triggerRef} type="button" style={{ position: 'absolute', opacity: 0 }}>
+        <button
+          ref={triggerRef}
+          type="button"
+          aria-hidden="true"
+          tabIndex={-1}
+          style={{ position: 'absolute', opacity: 0 }}
+        >
           trigger
         </button>
         <RootSheet

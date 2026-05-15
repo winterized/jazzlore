@@ -8,7 +8,7 @@
  * The decorative chevron ▾ is wrapped in aria-hidden="true".
  */
 
-import { useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import type { RootOption } from './RootPicker'
 import RootSheet from './StickyHeader.rootSheet'
 
@@ -21,6 +21,10 @@ type Props = {
 export default function RootCompactButton({ rootOptions, selectedRoot, onRootChange }: Props) {
   const [open, setOpen] = useState(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
+  // Stable identity: RootSheet's effect deps include onClose. An inline arrow
+  // would get a new reference on every render of this component, tearing down
+  // and re-attaching the sheet's document keydown/focus-trap mid-session.
+  const handleClose = useCallback(() => setOpen(false), [])
 
   // Find the display label for the currently selected root.
   const activeOption = rootOptions.find(
@@ -61,7 +65,7 @@ export default function RootCompactButton({ rootOptions, selectedRoot, onRootCha
         selectedRoot={selectedRoot}
         onRootChange={onRootChange}
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={handleClose}
         triggerRef={buttonRef}
       />
     </>

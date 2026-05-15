@@ -45,7 +45,7 @@ export default function RootSheet({
 
     // Focus the selected button (aria-checked="true"), or the first focusable
     // element as fallback.
-    const selected = sheet.querySelector<HTMLElement>('[aria-checked="true"]')
+    const selected = sheet.querySelector<HTMLElement>('button[aria-checked="true"]')
     const firstFocusable = sheet.querySelector<HTMLElement>(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
     )
