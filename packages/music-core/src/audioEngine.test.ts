@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Hoisted mock — must be set up before importing audioEngine
 const triggerAttackRelease = vi.fn()
@@ -31,12 +31,21 @@ vi.mock('tone', () => {
       }
     }),
     start: vi.fn().mockResolvedValue(undefined),
+    setContext: vi.fn(),
     Transport: { stop: vi.fn() },
     now: vi.fn().mockReturnValue(0),
   }
 })
 
-import { __resetForTests, ensureEngine, playChord, playScale, stopAll, unlockAudio } from './audioEngine'
+import {
+  __resetForTests,
+  ensureEngine,
+  playChord,
+  playScale,
+  primeAudio,
+  stopAll,
+  unlockAudio,
+} from './audioEngine'
 
 describe('audioEngine', () => {
   beforeEach(() => {
@@ -148,5 +157,97 @@ describe('playChord', () => {
     expect(calls[0]?.[0]).toBe('C4')
     expect(calls[1]?.[0]).toBe('Bb4')
     expect(calls[2]?.[0]).toBe('G4')
+  })
+})
+
+describe('primeAudio / iOS unlock', () => {
+  describe('without Web Audio (jsdom — no window.AudioContext)', () => {
+    beforeEach(() => {
+      vi.clearAllMocks()
+      __resetForTests()
+    })
+
+    it('primeAudio() is a safe no-op and does not throw', () => {
+      expect(() => primeAudio()).not.toThrow()
+    })
+
+    it('unlockAudio() still calls Tone.start and skips setContext when nothing was primed', async () => {
+      primeAudio()
+      await unlockAudio()
+      const Tone = await import('tone')
+      expect(Tone.start).toHaveBeenCalledTimes(1)
+      expect(Tone.setContext).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('with a stubbed AudioContext (the iOS gesture path)', () => {
+    type FakeCtx = {
+      state: 'suspended' | 'running'
+      destination: object
+      resume: ReturnType<typeof vi.fn>
+      createBuffer: ReturnType<typeof vi.fn>
+      createBufferSource: ReturnType<typeof vi.fn>
+    }
+    const ctxInstances: FakeCtx[] = []
+
+    // Factory (returns an object so `new FakeAudioContext()` yields it) — no
+    // class/`this` aliasing. Each instance pushes itself for assertions.
+    function FakeAudioContext(): FakeCtx {
+      const ctx: FakeCtx = {
+        state: 'suspended',
+        destination: {},
+        resume: vi.fn(() => {
+          ctx.state = 'running'
+          return Promise.resolve()
+        }),
+        createBuffer: vi.fn(() => ({})),
+        createBufferSource: vi.fn(() => ({ buffer: null, connect: vi.fn(), start: vi.fn() })),
+      }
+      ctxInstances.push(ctx)
+      return ctx
+    }
+    const lastCtx = (): FakeCtx | undefined => ctxInstances.at(-1)
+
+    beforeEach(() => {
+      vi.clearAllMocks()
+      __resetForTests()
+      ctxInstances.length = 0
+      vi.stubGlobal('AudioContext', FakeAudioContext)
+    })
+
+    afterEach(() => {
+      vi.unstubAllGlobals()
+    })
+
+    it('primeAudio() creates the context and resumes it (with the legacy silent-buffer kick)', () => {
+      primeAudio()
+      const ctx = lastCtx()
+      if (!ctx) throw new Error('expected primeAudio to create a context')
+      expect(ctx.resume).toHaveBeenCalledTimes(1)
+      expect(ctx.createBufferSource).toHaveBeenCalledTimes(1)
+    })
+
+    it('unlockAudio() binds Tone to the primed context exactly once, then starts', async () => {
+      primeAudio()
+      const ctx = lastCtx()
+      await unlockAudio()
+      const Tone = await import('tone')
+      expect(Tone.setContext).toHaveBeenCalledTimes(1)
+      expect(Tone.setContext).toHaveBeenCalledWith(ctx)
+      expect(Tone.start).toHaveBeenCalledTimes(1)
+      // A second unlock must NOT rebind — that would orphan the Sampler.
+      await unlockAudio()
+      expect(Tone.setContext).toHaveBeenCalledTimes(1)
+    })
+
+    it('primeAudio() re-resumes the existing context instead of recreating it', () => {
+      primeAudio()
+      const first = lastCtx()
+      if (!first) throw new Error('expected a context')
+      first.state = 'suspended' // simulate an iOS interruption (call, silent switch)
+      primeAudio()
+      expect(ctxInstances).toHaveLength(1) // same instance, not recreated
+      expect(first.resume).toHaveBeenCalledTimes(2)
+    })
   })
 })
