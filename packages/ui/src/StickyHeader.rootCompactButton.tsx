@@ -45,8 +45,8 @@ export default function RootCompactButton({ rootOptions, selectedRoot, onRootCha
         aria-expanded={open}
         onClick={() => setOpen(true)}
         className={[
-          'inline-flex items-center gap-[4px]',
-          'h-8 px-[10px] rounded-md',
+          'inline-flex items-center gap-[7px]',
+          'h-8 px-[14px] rounded-md',
           'bg-amber-500 border border-amber-500 text-stone-900',
           'text-[14px] font-bold leading-none',
           'transition-colors duration-[120ms]',
@@ -55,7 +55,7 @@ export default function RootCompactButton({ rootOptions, selectedRoot, onRootCha
         ].join(' ')}
       >
         <span>{displayLabel}</span>
-        <span aria-hidden="true" className="text-[9px] opacity-70">
+        <span aria-hidden="true" className="text-[12px] leading-none opacity-90">
           ▾
         </span>
       </button>
