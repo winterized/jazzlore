@@ -91,9 +91,10 @@ describe('playChord', () => {
   it('schedules each note staggered ~150 ms apart (startTime = i * 0.15)', async () => {
     // Tone.now() is mocked to return 0
     await playChord(['C4', 'E4', 'G4'])
-    // Each note i should start at now + i * 0.15
-    expect(triggerAttackRelease).toHaveBeenCalledTimes(3)
+    // n arpeggio calls + n block calls (block re-strike added 2026-05-16).
+    expect(triggerAttackRelease).toHaveBeenCalledTimes(6)
     const calls = triggerAttackRelease.mock.calls as [string, number, number][]
+    // First n are the arpeggio: note i starts at now + i * 0.15.
     expect(calls[0]?.[2]).toBeCloseTo(0, 5)       // note 0 starts at t=0
     expect(calls[1]?.[2]).toBeCloseTo(0.15, 5)     // note 1 starts at t=150 ms
     expect(calls[2]?.[2]).toBeCloseTo(0.30, 5)     // note 2 starts at t=300 ms
@@ -110,6 +111,21 @@ describe('playChord', () => {
     expect(calls[1]?.[1]).toBeCloseTo(0.75, 5)
     // note 2: duration = (3-2-1)*0.15 + 0.6 = 0 + 0.6 = 0.6
     expect(calls[2]?.[1]).toBeCloseTo(0.6, 5)
+  })
+
+  it('re-strikes all notes as a simultaneous block after the arpeggio', async () => {
+    // 3 notes → 3 arpeggio calls + 3 block calls = 6 total.
+    // The block re-attacks every note together at now + n*0.15 = 0.45 s,
+    // each for CHORD_BLOCK_S = 0.6 s. (now is mocked to 0.)
+    await playChord(['C4', 'E4', 'G4'])
+    const calls = triggerAttackRelease.mock.calls as [string, number, number][]
+    expect(calls).toHaveLength(6)
+    const block = calls.slice(3)
+    expect(block.map((c) => c[0])).toEqual(['C4', 'E4', 'G4'])
+    for (const c of block) {
+      expect(c[1]).toBeCloseTo(0.6, 5) // block duration
+      expect(c[2]).toBeCloseTo(0.45, 5) // all struck together at n*0.15
+    }
   })
 
   it('calls stopAll() before scheduling so re-clicking another chord stops previous playback', async () => {
