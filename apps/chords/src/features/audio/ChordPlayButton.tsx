@@ -18,7 +18,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
-import { playChord, unlockAudio, withOctaves } from '@jazzlore/music-core'
+import { playChord, primeAudio, unlockAudio, withOctaves } from '@jazzlore/music-core'
 
 /** How long (ms) to keep the playing state after scheduling completes.
  *  Must exceed the max arp-then-block wall time. For a 7-note chord:
@@ -57,6 +57,11 @@ export default function ChordPlayButton({ primary, notes }: Props) {
   }, [])
 
   const onClick = async (): Promise<void> => {
+    // MUST be first and synchronous: iOS only unmutes the AudioContext if
+    // resume() happens in the user-gesture task, before the lazy Tone import
+    // is awaited below.
+    primeAudio()
+
     // Clear any pending auto-release from a previous click.
     if (timerRef.current !== null) {
       clearTimeout(timerRef.current)

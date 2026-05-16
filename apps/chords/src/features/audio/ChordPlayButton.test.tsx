@@ -14,10 +14,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 // at module scope are not yet initialised when the factory runs.
 // vi.hoisted() lifts the factory call into the same hoisted position so the
 // mock references resolve correctly.
-const { mockPlayChord, mockUnlockAudio, mockStopAll } = vi.hoisted(() => ({
+const { mockPlayChord, mockUnlockAudio, mockStopAll, mockPrimeAudio } = vi.hoisted(() => ({
   mockPlayChord: vi.fn().mockResolvedValue(undefined),
   mockUnlockAudio: vi.fn().mockResolvedValue(undefined),
   mockStopAll: vi.fn(),
+  mockPrimeAudio: vi.fn(),
 }))
 
 vi.mock('@jazzlore/music-core', async (importOriginal) => {
@@ -27,6 +28,7 @@ vi.mock('@jazzlore/music-core', async (importOriginal) => {
     playChord: mockPlayChord,
     unlockAudio: mockUnlockAudio,
     stopAll: mockStopAll,
+    primeAudio: mockPrimeAudio,
   }
 })
 
@@ -97,6 +99,16 @@ describe('ChordPlayButton — click triggers playChord', () => {
     const unlockOrder = mockUnlockAudio.mock.invocationCallOrder[0] ?? 0
     const playOrder = mockPlayChord.mock.invocationCallOrder[0] ?? 0
     expect(unlockOrder).toBeLessThan(playOrder)
+  })
+
+  it('calls primeAudio before unlockAudio (iOS gesture unlock must run first)', async () => {
+    mockPrimeAudio.mockClear()
+    renderCmaj7()
+    await userEvent.click(screen.getByRole('button', { name: /Play Cmaj7/i }))
+    expect(mockPrimeAudio).toHaveBeenCalledOnce()
+    const primeOrder = mockPrimeAudio.mock.invocationCallOrder[0] ?? 0
+    const unlockOrder = mockUnlockAudio.mock.invocationCallOrder[0] ?? 0
+    expect(primeOrder).toBeLessThan(unlockOrder)
   })
 })
 

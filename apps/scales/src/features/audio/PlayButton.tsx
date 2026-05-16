@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { playScale, stopAll, unlockAudio } from '@jazzlore/music-core'
+import { playScale, primeAudio, stopAll, unlockAudio } from '@jazzlore/music-core'
 
 type Props = {
   notes: string[]
@@ -9,6 +9,10 @@ type Props = {
 export default function PlayButton({ notes, ariaLabel }: Props) {
   const [loading, setLoading] = useState(false)
   const onClick = async (): Promise<void> => {
+    // MUST be the first statement and run synchronously: iOS only unmutes the
+    // AudioContext if resume() happens in the user-gesture task, before the
+    // lazy Tone import is awaited below.
+    primeAudio()
     setLoading(true)
     try {
       stopAll()

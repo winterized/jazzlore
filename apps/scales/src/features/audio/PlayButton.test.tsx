@@ -2,14 +2,16 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
-const { playScale, stopAll, unlockAudio } = vi.hoisted(() => ({
+const { playScale, primeAudio, stopAll, unlockAudio } = vi.hoisted(() => ({
   playScale: vi.fn().mockResolvedValue(undefined),
+  primeAudio: vi.fn(),
   stopAll: vi.fn(),
   unlockAudio: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('@jazzlore/music-core', () => ({
   playScale,
+  primeAudio,
   stopAll,
   unlockAudio,
   // ensureEngine is called internally by playScale, not by the component.
@@ -25,6 +27,17 @@ describe('PlayButton', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Play Ionian' }))
     expect(unlockAudio).toHaveBeenCalled()
     expect(playScale).toHaveBeenCalledWith(['C4', 'D4', 'E4'])
+  })
+
+  it('calls primeAudio before unlockAudio (iOS gesture unlock must run first)', async () => {
+    primeAudio.mockClear()
+    unlockAudio.mockClear()
+    render(<PlayButton notes={['C4']} ariaLabel="Play Ionian" />)
+    await userEvent.click(screen.getByRole('button', { name: 'Play Ionian' }))
+    expect(primeAudio).toHaveBeenCalledOnce()
+    const primeOrder = primeAudio.mock.invocationCallOrder[0] ?? 0
+    const unlockOrder = unlockAudio.mock.invocationCallOrder[0] ?? 0
+    expect(primeOrder).toBeLessThan(unlockOrder)
   })
 
   it('shows a play affordance (▶), not a music note (♪), when idle', () => {

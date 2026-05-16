@@ -28,6 +28,48 @@ let engine: EngineInstance | null = null
 let kind: EngineKind = null
 let loadPromise: Promise<EngineKind> | null = null
 
+// iOS (Safari AND Chrome iOS — every iOS browser is WebKit) only lets an
+// AudioContext leave the 'suspended' state if resume() runs synchronously
+// inside the user-gesture task. Our Tone.js import is intentionally lazy
+// (a ~75 KB network fetch), and `await import('tone')` crosses a macrotask
+// boundary, so by the time Tone.start() ran the gesture was gone and the
+// context stayed muted — every scheduled note silent. Fix: create + resume a
+// raw AudioContext *synchronously* in the click handler (primeAudio, no
+// await), then bind Tone to that already-running context once it loads.
+let primedCtx: AudioContext | null = null
+let toneBoundToPrimed = false
+
+/**
+ * Call this **synchronously as the first statement** of a play button's click
+ * handler, before any `await`. It creates and resumes the AudioContext within
+ * the user gesture so iOS actually unmutes it. Safe no-op where Web Audio is
+ * unavailable (SSR / jsdom). Idempotent: later calls just re-resume (handles
+ * iOS re-suspending the context after an interruption such as a phone call).
+ */
+export function primeAudio(): void {
+  if (typeof window === 'undefined') return
+  const w = window as unknown as {
+    AudioContext?: typeof AudioContext
+    webkitAudioContext?: typeof AudioContext
+  }
+  const Ctx = w.AudioContext ?? w.webkitAudioContext
+  if (!Ctx) return
+  if (!primedCtx) {
+    primedCtx = new Ctx()
+    // Legacy iOS kick: playing a 1-sample silent buffer flips the context to
+    // 'running' on older iOS where resume() alone is insufficient.
+    try {
+      const src = primedCtx.createBufferSource()
+      src.buffer = primedCtx.createBuffer(1, 1, 22050)
+      src.connect(primedCtx.destination)
+      src.start(0)
+    } catch {
+      // Some engines throw on createBuffer here; the resume() below still runs.
+    }
+  }
+  if (primedCtx.state !== 'running') void primedCtx.resume()
+}
+
 // Lazy-load Tone.js: ~75 KB gz that we only need after a user gesture.
 // Caching the in-flight promise ensures concurrent callers share one fetch.
 let tonePromise: Promise<typeof import('tone')> | null = null
@@ -77,9 +119,19 @@ export async function ensureEngine(): Promise<EngineKind> {
   return loadPromise
 }
 
-/** Must be called inside a user-gesture handler on iOS Safari. */
+/**
+ * Must be called inside a user-gesture handler on iOS, paired with an earlier
+ * synchronous {@link primeAudio} call in the same handler.
+ */
 export async function unlockAudio(): Promise<void> {
   const Tone = await loadTone()
+  // Bind Tone to the gesture-unlocked context BEFORE any Tone node exists
+  // (the Sampler is created later, in ensureEngine). One-shot: rebinding after
+  // nodes are created would orphan the Sampler from the audible context.
+  if (primedCtx && !toneBoundToPrimed) {
+    Tone.setContext(primedCtx)
+    toneBoundToPrimed = true
+  }
   await Tone.start()
 }
 
@@ -171,4 +223,6 @@ export function __resetForTests(): void {
   kind = null
   loadPromise = null
   tonePromise = null
+  primedCtx = null
+  toneBoundToPrimed = false
 }
