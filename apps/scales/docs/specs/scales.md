@@ -335,6 +335,10 @@ A Claude Design handoff (`design_handoff_sticky_header/`) introduced a shared st
 
 Full rationale and the phased plan live in `.claude/plans/temporal-bouncing-bubble.md`; pixel spec in `design_handoff_sticky_header/README.md`.
 
+## 2-column card grid on large desktops (2026-05-16)
+
+Each expanded family's scale list is a responsive grid: 1 column by default, **2 columns at `2xl` (≥1536px)** — a shared breakpoint with the chords app for cross-site consistency (see `apps/chords/docs/chords.md` for the measured rationale). The family accordion header (`<h2>`) spans full width above its grid; an odd count leaves one trailing empty cell (`align-items: start` — not filled/centered/stretched, by design; revisit only on user feedback). The family-level scroll-spy anchor is the `<h2 id="group-…">` above the grid, so it is unaffected by the inner 2-col layout. Sub-breakpoint rendering is byte-identical to the prior single-column layout (MD5-gated).
+
 ## Acceptance criteria (v1 ships when…)
 
 - [ ] All 12 roots selectable
