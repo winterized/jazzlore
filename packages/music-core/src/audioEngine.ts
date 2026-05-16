@@ -39,6 +39,34 @@ let loadPromise: Promise<EngineKind> | null = null
 let primedCtx: AudioContext | null = null
 let toneBoundToPrimed = false
 
+// ── Temporary on-device audio diagnostics ──────────────────────────────────
+// iOS has no easy devtools; this lets the play buttons alert() a one-line
+// state snapshot when the URL has ?audiodebug=1. Bump AUDIO_BUILD on each
+// diagnostic deploy so a stale iOS cache is immediately obvious.
+const AUDIO_BUILD = 'audiodbg-1'
+let lastAudioError = ''
+let toneCtxState = 'n/a'
+let toneRawState = 'n/a'
+function recordAudioError(stage: string, e: unknown): void {
+  lastAudioError = `${stage}:${e instanceof Error ? `${e.name} ${e.message}` : String(e)}`
+}
+export function audioDebugSummary(): string {
+  const w =
+    typeof window !== 'undefined'
+      ? (window as unknown as { AudioContext?: unknown; webkitAudioContext?: unknown })
+      : {}
+  return [
+    `build=${AUDIO_BUILD}`,
+    `AC=${typeof w.AudioContext !== 'undefined'}/wk=${typeof w.webkitAudioContext !== 'undefined'}`,
+    `primed=${primedCtx ? primedCtx.state : 'none'}`,
+    `bound=${toneBoundToPrimed}`,
+    `toneCtx=${toneCtxState}`,
+    `rawCtx=${toneRawState}`,
+    `engine=${kind ?? 'none'}`,
+    `err=${lastAudioError || 'none'}`,
+  ].join(' ')
+}
+
 /**
  * Call this **synchronously as the first statement** of a play button's click
  * handler, before any `await`. It creates and resumes the AudioContext within
@@ -48,26 +76,30 @@ let toneBoundToPrimed = false
  */
 export function primeAudio(): void {
   if (typeof window === 'undefined') return
-  const w = window as unknown as {
-    AudioContext?: typeof AudioContext
-    webkitAudioContext?: typeof AudioContext
-  }
-  const Ctx = w.AudioContext ?? w.webkitAudioContext
-  if (!Ctx) return
-  if (!primedCtx) {
-    primedCtx = new Ctx()
-    // Legacy iOS kick: playing a 1-sample silent buffer flips the context to
-    // 'running' on older iOS where resume() alone is insufficient.
-    try {
-      const src = primedCtx.createBufferSource()
-      src.buffer = primedCtx.createBuffer(1, 1, 22050)
-      src.connect(primedCtx.destination)
-      src.start(0)
-    } catch {
-      // Some engines throw on createBuffer here; the resume() below still runs.
+  try {
+    const w = window as unknown as {
+      AudioContext?: typeof AudioContext
+      webkitAudioContext?: typeof AudioContext
     }
+    const Ctx = w.AudioContext ?? w.webkitAudioContext
+    if (!Ctx) return
+    if (!primedCtx) {
+      primedCtx = new Ctx()
+      // Legacy iOS kick: playing a 1-sample silent buffer flips the context to
+      // 'running' on older iOS where resume() alone is insufficient.
+      try {
+        const src = primedCtx.createBufferSource()
+        src.buffer = primedCtx.createBuffer(1, 1, 22050)
+        src.connect(primedCtx.destination)
+        src.start(0)
+      } catch {
+        // Some engines throw on createBuffer here; the resume() below still runs.
+      }
+    }
+    if (primedCtx.state !== 'running') void primedCtx.resume()
+  } catch (e) {
+    recordAudioError('prime', e)
   }
-  if (primedCtx.state !== 'running') void primedCtx.resume()
 }
 
 // Lazy-load Tone.js: ~75 KB gz that we only need after a user gesture.
@@ -124,15 +156,28 @@ export async function ensureEngine(): Promise<EngineKind> {
  * synchronous {@link primeAudio} call in the same handler.
  */
 export async function unlockAudio(): Promise<void> {
-  const Tone = await loadTone()
-  // Bind Tone to the gesture-unlocked context BEFORE any Tone node exists
-  // (the Sampler is created later, in ensureEngine). One-shot: rebinding after
-  // nodes are created would orphan the Sampler from the audible context.
-  if (primedCtx && !toneBoundToPrimed) {
-    Tone.setContext(primedCtx)
-    toneBoundToPrimed = true
+  try {
+    const Tone = await loadTone()
+    // Bind Tone to the gesture-unlocked context BEFORE any Tone node exists
+    // (the Sampler is created later, in ensureEngine). One-shot: rebinding
+    // after nodes are created would orphan the Sampler from the audible ctx.
+    if (primedCtx && !toneBoundToPrimed) {
+      Tone.setContext(primedCtx)
+      toneBoundToPrimed = true
+    }
+    await Tone.start()
+    // Diagnostics only — guarded so the unit-test 'tone' mock (no getContext)
+    // is unaffected.
+    const getCtx = (Tone as unknown as { getContext?: () => unknown }).getContext
+    if (typeof getCtx === 'function') {
+      const ctx = getCtx() as { state?: string; rawContext?: { state?: string } }
+      toneCtxState = ctx.state ?? 'n/a'
+      toneRawState = ctx.rawContext?.state ?? 'n/a'
+    }
+  } catch (e) {
+    recordAudioError('unlock', e)
+    throw e
   }
-  await Tone.start()
 }
 
 /** Plays a list of notes ascending at 120 BPM, quarter notes. Stops any in-flight playback first. */
@@ -225,4 +270,7 @@ export function __resetForTests(): void {
   tonePromise = null
   primedCtx = null
   toneBoundToPrimed = false
+  lastAudioError = ''
+  toneCtxState = 'n/a'
+  toneRawState = 'n/a'
 }
