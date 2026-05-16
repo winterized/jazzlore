@@ -32,6 +32,7 @@ vi.mock('tone', () => {
     }),
     start: vi.fn().mockResolvedValue(undefined),
     setContext: vi.fn(),
+    getContext: vi.fn(() => ({ state: 'running', rawContext: { state: 'running' } })),
     Transport: { stop: vi.fn() },
     now: vi.fn().mockReturnValue(0),
   }
