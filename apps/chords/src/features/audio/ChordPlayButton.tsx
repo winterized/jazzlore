@@ -4,10 +4,10 @@
  * Mirrors scales' PlayButton pattern with these additions:
  * - `aria-busy` reflects in-flight state (this is a momentary action, not a
  *   toggle — aria-pressed would be misleading semantics).
- * - Auto-release timer: the button returns to idle ~2 s after scheduling
- *   finishes, matching the audible duration of an arp-then-block 7-note chord.
- *   Formula: (n-1) * 150 + 600 ms ≤ 1500 ms. We use a fixed 2 s ceiling so the
- *   idle state returns even if notes.length varies.
+ * - Auto-release timer: the button returns to idle after the audible duration
+ *   of an arp-then-block chord. Formula: (n+1) * 150 + 1800 ms ≈ 3000 ms for a
+ *   7-note chord. We use a fixed 3.5 s ceiling so the idle state returns even
+ *   as notes.length varies.
  * - Tap-to-restart: the button is NOT disabled while playing. A second click
  *   interrupts the current chord and starts the new one — playChord internally
  *   calls stopAll, so re-entrancy is correct by construction.
@@ -20,10 +20,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { playChord, unlockAudio, withOctaves } from '@jazzlore/music-core'
 
-/** How long (ms) to keep aria-pressed=true after scheduling completes.
- *  Slightly exceeds the max arp-then-block wall time for 7 notes:
- *  (7-1)*150 + 600 = 1500 ms. 2000 gives a comfortable margin. */
-const AUTO_RELEASE_MS = 2000
+/** How long (ms) to keep the playing state after scheduling completes.
+ *  Must exceed the max arp-then-block wall time. For a 7-note chord:
+ *  (n+1)*150 + 1800 = 8*150 + 1800 = 3000 ms. 3500 gives a margin. */
+const AUTO_RELEASE_MS = 3500
 
 /** Normalise Unicode accidentals (♭ / ♯) to ASCII (b / #) for playChord. */
 function toAsciiNotes(notes: string[]): string[] {

@@ -142,7 +142,7 @@ describe('ChordPlayButton — in-flight state', () => {
       resolvePlay()
     })
     await act(async () => {
-      vi.advanceTimersByTime(2500)
+      vi.advanceTimersByTime(3600)
     })
 
     expect(btn).toHaveAttribute('aria-busy', 'false')
@@ -176,7 +176,7 @@ describe('ChordPlayButton — in-flight state', () => {
       resolvePlay()
     })
     await act(async () => {
-      vi.advanceTimersByTime(2500)
+      vi.advanceTimersByTime(3600)
     })
 
     // Back to idle: shows ▶
@@ -197,7 +197,7 @@ describe('ChordPlayButton — auto-release timer', () => {
 
   it('returns to idle after the auto-release timer fires (real playChord resolves immediately)', async () => {
     // playChord resolves immediately (scheduling is done), button stays pressed
-    // until the 2000 ms auto-release fires
+    // until the 3500 ms auto-release fires
     mockPlayChord.mockResolvedValue(undefined)
     mockUnlockAudio.mockResolvedValue(undefined)
 
@@ -221,9 +221,9 @@ describe('ChordPlayButton — auto-release timer', () => {
     // Scheduling is done; the auto-release timer has been set but not fired.
     expect(btn).toHaveAttribute('aria-busy', 'true')
 
-    // Advance past the 2000 ms auto-release
+    // Advance past the 3500 ms auto-release
     await act(async () => {
-      vi.advanceTimersByTime(2100)
+      vi.advanceTimersByTime(3600)
     })
 
     expect(btn).toHaveAttribute('aria-busy', 'false')
