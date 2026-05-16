@@ -186,27 +186,9 @@ export default function StickyHeader({
         {/* Spacer pushes util controls to the right */}
         <span className="flex-1" aria-hidden="true" />
 
-        {/* Util pill — DESKTOP ONLY. The design handoff's mobile Row-1-right is
-            just the compact "C ▾" pill + theme toggle (README mobile anatomy
-            table; mobile mockups 05–08 carry no util pill). Gated with the same
-            `sm:` (640px) breakpoint + always-mounted/CSS-`hidden` pattern as the
-            dual root pickers above, so a11y/tab-order stay correct and the
-            frozen prop API is untouched (internal class-only tweak). */}
-        <LinkComponent
-          href={utilLink.href}
-          className={[
-            'hidden sm:inline-flex h-8 items-center rounded-md px-3',
-            'border border-stone-300 bg-white hover:bg-stone-200',
-            'dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800',
-            'text-[13px] font-medium text-stone-900 dark:text-stone-100',
-            'whitespace-nowrap transition-colors duration-[120ms]',
-          ].join(' ')}
-        >
-          {utilLink.label}
-        </LinkComponent>
-
-        {/* Header search — between the root picker and the theme toggle, both
-            viewports. Listbox portals out so the sticky header can't clip it. */}
+        {/* Header search — sits LEFT of the collection link, before the theme
+            toggle, on every viewport. Listbox portals out so the sticky
+            header can't clip it. */}
         <SearchBox
           results={searchResults}
           onQueryChange={onSearchQueryChange}
@@ -221,6 +203,48 @@ export default function StickyHeader({
           label={searchLabel}
           placeholder={searchPlaceholder}
         />
+
+        {/* "My collection" link. Both variants always mounted + CSS-gated
+            (display:none) so only one is in the a11y tree / tab order — same
+            pattern as the dual root pickers. The visually-hidden label is the
+            link's accessible name on mobile (icon-only). */}
+        <LinkComponent
+          href={utilLink.href}
+          className={[
+            'sm:hidden inline-flex h-8 w-8 items-center justify-center rounded-md',
+            'border border-stone-300 bg-white hover:bg-stone-200',
+            'dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800',
+            'text-stone-900 dark:text-stone-100',
+            'transition-colors duration-[120ms]',
+          ].join(' ')}
+        >
+          <span className="sr-only">{utilLink.label}</span>
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            aria-hidden="true"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M6 4h12a1 1 0 0 1 1 1v15l-7-4-7 4V5a1 1 0 0 1 1-1z" />
+          </svg>
+        </LinkComponent>
+        <LinkComponent
+          href={utilLink.href}
+          className={[
+            'hidden sm:inline-flex h-8 items-center rounded-md px-3',
+            'border border-stone-300 bg-white hover:bg-stone-200',
+            'dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800',
+            'text-[13px] font-medium text-stone-900 dark:text-stone-100',
+            'whitespace-nowrap transition-colors duration-[120ms]',
+          ].join(' ')}
+        >
+          {utilLink.label}
+        </LinkComponent>
 
         {/* Theme toggle */}
         <ThemeButton theme={theme} onThemeToggle={onThemeToggle} />

@@ -90,10 +90,12 @@ describe('ChordsPage — invalid slug redirect', () => {
 
 describe('ChordsPage — navigation links', () => {
   it('has a "My chord collection" link pointing to /collection/chords', () => {
+    // Mobile-icon + desktop-text variants are both mounted (jsdom can't
+    // evaluate the responsive CSS gating) — every variant must route there.
     renderAt('/chords/C')
-    expect(
-      screen.getByRole('link', { name: /my chord collection/i }),
-    ).toHaveAttribute('href', '/collection/chords')
+    const links = screen.getAllByRole('link', { name: /my chord collection/i })
+    expect(links.length).toBeGreaterThan(0)
+    for (const l of links) expect(l).toHaveAttribute('href', '/collection/chords')
   })
 })
 

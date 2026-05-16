@@ -1,4 +1,4 @@
-import { render, screen, act } from '@testing-library/react'
+import { render, screen, act, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import type { ComponentType, ReactNode } from 'react'
@@ -91,9 +91,10 @@ describe('StickyHeader — rendering', () => {
     expect(screen.getByText('C6')).toBeInTheDocument()
   })
 
-  it('renders the util link label', () => {
+  it('renders the util link label (desktop text + mobile sr-only)', () => {
     renderHeader({ utilLink: { label: 'My collection', href: '/collection' } })
-    expect(screen.getByText('My collection')).toBeInTheDocument()
+    // Two variants → the label appears twice (visible pill + sr-only icon).
+    expect(screen.getAllByText('My collection').length).toBeGreaterThan(0)
   })
 
   it('renders the selected root as an active radio button in the inline picker', () => {
@@ -108,8 +109,8 @@ describe('StickyHeader — rendering', () => {
 describe('StickyHeader — util pill uses injected LinkComponent', () => {
   it('renders the custom LinkComponent for the util link', () => {
     renderHeader({ LinkComponent: CustomLink })
-    // The injected component uses data-testid="custom-link"
-    expect(screen.getByTestId('custom-link')).toBeInTheDocument()
+    // The injected component uses data-testid="custom-link" (both variants).
+    expect(screen.getAllByTestId('custom-link')).toHaveLength(2)
   })
 
   it('does NOT render a bare <a> element produced by the header itself', () => {
@@ -122,31 +123,42 @@ describe('StickyHeader — util pill uses injected LinkComponent', () => {
     }
   })
 
-  it('passes the href and label to the LinkComponent', () => {
+  it('passes the href and label to BOTH LinkComponent variants', () => {
     renderHeader({
       LinkComponent: CustomLink,
       utilLink: { label: 'My scales', href: '/scales' },
     })
-    const link = screen.getByTestId('custom-link')
-    expect(link).toHaveAttribute('href', '/scales')
-    expect(link).toHaveTextContent('My scales')
+    // Two variants are mounted (mobile icon + desktop text).
+    const links = screen.getAllByTestId('custom-link')
+    expect(links).toHaveLength(2)
+    for (const l of links) {
+      expect(l).toHaveAttribute('href', '/scales')
+      // Desktop: visible text. Mobile: sr-only span — both carry the label.
+      expect(l).toHaveTextContent('My scales')
+    }
   })
 
-  // Design-match regression (Phase 9): the handoff's mobile Row-1-right is
-  // ONLY the compact root pill + theme toggle — the util pill is desktop-only
-  // (README mobile anatomy table; mobile mockups 05–08 carry no util pill).
-  // The pill is always mounted (a11y/SSR-stable) but CSS-gated to ≥640px,
-  // same `hidden`/`sm:` pattern as the dual root pickers. jsdom can't evaluate
-  // the media query, so assert the class contract instead — this fails loudly
-  // if the desktop-only gating is ever dropped and the pill leaks onto mobile.
-  it('gates the util pill to desktop only (hidden below the sm breakpoint)', () => {
+  // The collection link is now on EVERY viewport (was desktop-only): a text
+  // pill ≥640px, an icon-only link <640px. Both always mounted + CSS-gated
+  // (same `hidden`/`sm:` pattern as the dual root pickers); jsdom can't
+  // evaluate the media query so assert the class + structure contract.
+  it('renders the collection link as a desktop text pill and a mobile icon', () => {
     renderHeader({
       LinkComponent: CustomLink,
       utilLink: { label: 'My scales', href: '/scales' },
     })
-    const link = screen.getByTestId('custom-link')
-    expect(link).toHaveClass('hidden')
-    expect(link).toHaveClass('sm:inline-flex')
+    const links = screen.getAllByTestId('custom-link')
+    const desktop = links.find((l) => l.className.includes('sm:inline-flex'))
+    const mobile = links.find((l) => l.className.includes('sm:hidden'))
+    if (!desktop || !mobile) throw new Error('expected both util link variants')
+    // Desktop: hidden below sm, visible text.
+    expect(desktop).toHaveClass('hidden')
+    expect(desktop).toHaveClass('sm:inline-flex')
+    expect(desktop).toHaveTextContent('My scales')
+    // Mobile: hidden ≥sm, icon-only but still carries the accessible name
+    // (sr-only span found via a Testing Library query, not node access).
+    expect(mobile).toHaveClass('sm:hidden')
+    expect(within(mobile).getByText('My scales')).toBeInTheDocument()
   })
 })
 
