@@ -299,6 +299,16 @@ describe('PianoKeyboard', () => {
       // viewBox must not be extended negative to show an off-canvas half.
       const vb = queryAll(container, 'svg')[0]?.getAttribute('viewBox')
       expect(vb).toBe(`0 0 ${totalWidth} 110`)
+      // Paint order: SVG paints in document order. The leading key sits over
+      // the first white key (x 0..10 ⊂ white-key-0 0..32), so it MUST come
+      // after every white key in the DOM or the opaque white paints over it
+      // (the bug: it was emitted before {whites} and was invisible).
+      const roles = Array.from(queryAll(container, '[data-role]')).map((el) =>
+        el.getAttribute('data-role'),
+      )
+      const lastWhiteIdx = roles.lastIndexOf('white-key')
+      const leadingIdx = roles.indexOf('leading-black-key')
+      expect(leadingIdx).toBeGreaterThan(lastWhiteIdx)
     })
 
     it('does not change the real black-key count for D/E/G/A/B starts', () => {

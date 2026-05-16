@@ -244,9 +244,12 @@ export default function PianoKeyboard({
       role="img"
       aria-label={`piano keyboard with highlighted ${voicing === 'chord' ? 'chord' : 'scale'} notes`}
     >
-      {leadingBlack}
       {whites}
       {blacks}
+      {/* After whites/blacks: SVG paints in document order, so the leading
+          half-key must come after the white keys or the opaque first white
+          key covers it. */}
+      {leadingBlack}
       {markers}
       {labels}
     </svg>
