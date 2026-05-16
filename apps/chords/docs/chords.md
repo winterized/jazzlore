@@ -172,6 +172,10 @@ A Claude Design handoff (`design_handoff_sticky_header/`) introduced a shared st
 
 Everything else in v1 (card layout, notation, keyboard, audio, save/collection, print, routing) is unchanged. Full rationale and the phased plan live in `.claude/plans/temporal-bouncing-bubble.md`; pixel spec in `design_handoff_sticky_header/README.md`.
 
+## 2-column card grid on large desktops (2026-05-16)
+
+The grouped card list is a responsive grid: 1 column by default, **2 columns at `2xl` (≥1536px)**. Breakpoint chosen by measuring the deployed card — no max-width, so the comfortable size is the keyboard's native 448px beside the fixed 192px score; two comfortable columns need ≈1432px, and staying above the existing 1280 e2e/screenshot-baseline width keeps sub-breakpoint rendering byte-identical (MD5-gated). Each chord group is its own grid (`<ul>`), so it starts a new row with its section divider spanning full width above it; an odd group leaves one trailing empty cell (`align-items: start` — not filled/centered/stretched, by design; revisit only on user feedback). Accepted/known: at 2-col the scroll-spy active chip biases to the right-column card of the topmost row past the threshold (load-state active chip becomes the 2nd chord) — coherent, only at ≥1536, presentational-only, not mitigated.
+
 ## Acceptance criteria (v1 ships when…)
 
 - [ ] All 12 roots selectable, enharmonic toggle working

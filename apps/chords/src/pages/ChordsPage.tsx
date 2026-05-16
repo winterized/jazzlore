@@ -146,7 +146,12 @@ export default function ChordsPage() {
         {CHORD_GROUPS.map((group) => (
           <section key={group.label} aria-label={group.label}>
             <SectionDivider label={group.label} />
-            <ul className="flex flex-col gap-[8px] md:gap-[10px]">
+            {/* Per-group grid: 1 col, → 2 cols at 2xl (1536px). Each group is
+                its own grid so it starts a new row, the divider above spans
+                full width, and an odd count leaves one trailing empty cell
+                (align-items:start — no fill/stretch, by design). 1-col grid
+                with the same gap is byte-identical to the prior flex-col. */}
+            <ul className="grid grid-cols-1 gap-[8px] md:gap-[10px] 2xl:grid-cols-2">
               {group.chordIds.map((id) => {
                 const def = chordById.get(id)
                 if (!def) return null
