@@ -48,15 +48,15 @@ export default function RootCompactButton({ rootOptions, selectedRoot, onRootCha
           'inline-flex items-center gap-[7px]',
           'h-8 px-[14px] rounded-md',
           'bg-amber-500 border border-amber-500 text-stone-900',
-          'text-[14px] font-bold leading-none',
+          'text-[14px] font-extrabold leading-none',
           'transition-colors duration-[120ms]',
           'hover:bg-amber-400',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1',
         ].join(' ')}
       >
         <span>{displayLabel}</span>
-        <span aria-hidden="true" className="text-[12px] leading-none opacity-90">
-          ▾
+        <span aria-hidden="true" className="text-[16px] leading-none">
+          ▼
         </span>
       </button>
 
