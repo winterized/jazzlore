@@ -63,6 +63,7 @@ All scripts delegate to workspaces via `pnpm -F`:
 6. **Accessibility is not optional.** Keyboard navigation, semantic HTML, ARIA, color contrast ≥ WCAG AA.
 7. **Mobile-first.** Tailwind breakpoints up from default → `md:` → `lg:`.
 8. **Conventional commits** with the trailer `Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>`.
+9. **iOS audio:** any control that plays sound MUST call `primeAudio()` from `@jazzlore/music-core` as the first synchronous statement of its click handler (before any `await`/`setState`). It promotes the iOS media session (`navigator.audioSession`, with a pre-16.4 silent-`<audio>` fallback) and unlocks the AudioContext in the gesture. Skipping it makes audio silent on iPhone — and this is **not catchable by CI/headless**; only an on-device iOS test proves audio works.
 
 ## Quality bars (per app)
 
