@@ -28,71 +28,98 @@ let engine: EngineInstance | null = null
 let kind: EngineKind = null
 let loadPromise: Promise<EngineKind> | null = null
 
-// iOS (Safari AND Chrome iOS — every iOS browser is WebKit) only lets an
-// AudioContext leave the 'suspended' state if resume() runs synchronously
-// inside the user-gesture task. Our Tone.js import is intentionally lazy
-// (a ~75 KB network fetch), and `await import('tone')` crosses a macrotask
-// boundary, so by the time Tone.start() ran the gesture was gone and the
-// context stayed muted — every scheduled note silent. Fix: create + resume a
-// raw AudioContext *synchronously* in the click handler (primeAudio, no
-// await), then bind Tone to that already-running context once it loads.
+// iOS audio needs THREE things, all inside the user-gesture task:
+//  1. A media "playback" audio session. Otherwise iOS routes WebAudio to an
+//     "ambient" session that the hardware mute switch silences and that
+//     follows RINGER (not media) volume — inaudible even when NOT in silent
+//     mode if the ringer is low. Confirmed on-device to be the actual cause.
+//  2. The AudioContext created + resumed in the gesture (Tone is lazily
+//     imported, so awaiting that import before resume() loses the gesture).
+//  3. Tone bound to that already-running context (see unlockAudio).
+// primeAudio() does (1) and (2) synchronously; it MUST be the first thing a
+// play handler runs, before any await.
 let primedCtx: AudioContext | null = null
 let toneBoundToPrimed = false
 
-// ── Temporary on-device audio diagnostics ──────────────────────────────────
-// iOS has no easy devtools; this lets the play buttons alert() a one-line
-// state snapshot when the URL has ?audiodebug=1. Bump AUDIO_BUILD on each
-// diagnostic deploy so a stale iOS cache is immediately obvious.
-const AUDIO_BUILD = 'audiodbg-2'
-let lastAudioError = ''
-let toneCtxState = 'n/a'
-let toneRawState = 'n/a'
-let audioSessionInfo = 'n/a'
-function recordAudioError(stage: string, e: unknown): void {
-  lastAudioError = `${stage}:${e instanceof Error ? `${e.name} ${e.message}` : String(e)}`
+// Pre-16.4 iOS has no navigator.audioSession; playing a short SILENT inline
+// audio clip within the gesture is the long-standing way to promote the page
+// to a media-playback session. One reused element + one lazily-built clip.
+let unlockEl: HTMLAudioElement | null = null
+let silentUrl: string | null = null
+function silentClipUrl(): string | null {
+  if (silentUrl) return silentUrl
+  if (typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') return null
+  const rate = 8000
+  const n = 800 // ~0.1 s of digital silence
+  const buf = new ArrayBuffer(44 + n * 2)
+  const dv = new DataView(buf)
+  const str = (o: number, s: string): void => {
+    for (let i = 0; i < s.length; i++) dv.setUint8(o + i, s.charCodeAt(i))
+  }
+  str(0, 'RIFF')
+  dv.setUint32(4, 36 + n * 2, true)
+  str(8, 'WAVE')
+  str(12, 'fmt ')
+  dv.setUint32(16, 16, true)
+  dv.setUint16(20, 1, true)
+  dv.setUint16(22, 1, true)
+  dv.setUint32(24, rate, true)
+  dv.setUint32(28, rate * 2, true)
+  dv.setUint16(32, 2, true)
+  dv.setUint16(34, 16, true)
+  str(36, 'data')
+  dv.setUint32(40, n * 2, true)
+  silentUrl = URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }))
+  return silentUrl
 }
-export function audioDebugSummary(): string {
-  const w =
-    typeof window !== 'undefined'
-      ? (window as unknown as { AudioContext?: unknown; webkitAudioContext?: unknown })
-      : {}
-  return [
-    `build=${AUDIO_BUILD}`,
-    `AC=${typeof w.AudioContext !== 'undefined'}/wk=${typeof w.webkitAudioContext !== 'undefined'}`,
-    `primed=${primedCtx ? primedCtx.state : 'none'}`,
-    `bound=${toneBoundToPrimed}`,
-    `toneCtx=${toneCtxState}`,
-    `rawCtx=${toneRawState}`,
-    `engine=${kind ?? 'none'}`,
-    `as=${audioSessionInfo}`,
-    `err=${lastAudioError || 'none'}`,
-  ].join(' ')
+
+/** Pre-16.4 iOS fallback. Fully self-contained: a failure here must NEVER
+ *  prevent the AudioContext unlock that runs after it. */
+function promoteMediaSessionFallback(): void {
+  try {
+    if (typeof Audio !== 'function') return
+    if (!unlockEl) {
+      const url = silentClipUrl()
+      if (!url) return
+      unlockEl = new Audio(url)
+      unlockEl.loop = true
+    }
+    const p: unknown = unlockEl.play()
+    if (p && typeof (p as Promise<void>).catch === 'function') {
+      ;(p as Promise<void>).catch(() => undefined)
+    }
+  } catch {
+    // best-effort
+  }
 }
 
 /**
  * Call this **synchronously as the first statement** of a play button's click
- * handler, before any `await`. It creates and resumes the AudioContext within
- * the user gesture so iOS actually unmutes it. Safe no-op where Web Audio is
- * unavailable (SSR / jsdom). Idempotent: later calls just re-resume (handles
- * iOS re-suspending the context after an interruption such as a phone call).
+ * handler, before any `await`. Promotes the iOS audio session to playback and
+ * creates + resumes the AudioContext within the user gesture. Safe no-op where
+ * Web Audio is unavailable (SSR / jsdom). Idempotent: later calls just
+ * re-resume (handles iOS re-suspending after an interruption like a call).
  */
 export function primeAudio(): void {
   if (typeof window === 'undefined') return
+
+  // (1) Promote the audio session — INDEPENDENT try so a fallback hiccup can
+  // never prevent the context unlock in (2).
   try {
-    // iOS >=16.4: WebAudio defaults to an "ambient" audio session that the
-    // hardware mute switch silences and that follows RINGER (not media)
-    // volume — so sound is inaudible even when NOT in silent mode if the
-    // ringer volume is low. Promote to a "playback" session: audible
-    // regardless of the silent switch, on the media volume channel. Must run
-    // in the gesture; no-op where unsupported (older iOS / other browsers).
     const navAS = (navigator as unknown as { audioSession?: { type: string } }).audioSession
     if (navAS) {
+      // iOS >=16.4 / supporting browsers: the clean official switch.
       navAS.type = 'playback'
-      audioSessionInfo = `set/${navAS.type}`
     } else {
-      audioSessionInfo = 'unsupported'
+      // iOS <16.4: a silent inline clip promotes the media session.
+      promoteMediaSessionFallback()
     }
+  } catch {
+    // session promotion is best-effort
+  }
 
+  // (2) Create + resume the AudioContext in the gesture.
+  try {
     const w = window as unknown as {
       AudioContext?: typeof AudioContext
       webkitAudioContext?: typeof AudioContext
@@ -101,7 +128,7 @@ export function primeAudio(): void {
     if (!Ctx) return
     if (!primedCtx) {
       primedCtx = new Ctx()
-      // Legacy iOS kick: playing a 1-sample silent buffer flips the context to
+      // Legacy iOS kick: a 1-sample silent buffer flips the context to
       // 'running' on older iOS where resume() alone is insufficient.
       try {
         const src = primedCtx.createBufferSource()
@@ -109,12 +136,12 @@ export function primeAudio(): void {
         src.connect(primedCtx.destination)
         src.start(0)
       } catch {
-        // Some engines throw on createBuffer here; the resume() below still runs.
+        // Some engines throw on createBuffer here; resume() below still runs.
       }
     }
     if (primedCtx.state !== 'running') void primedCtx.resume()
-  } catch (e) {
-    recordAudioError('prime', e)
+  } catch {
+    // context unlock is best-effort; never break the play handler
   }
 }
 
@@ -172,28 +199,15 @@ export async function ensureEngine(): Promise<EngineKind> {
  * synchronous {@link primeAudio} call in the same handler.
  */
 export async function unlockAudio(): Promise<void> {
-  try {
-    const Tone = await loadTone()
-    // Bind Tone to the gesture-unlocked context BEFORE any Tone node exists
-    // (the Sampler is created later, in ensureEngine). One-shot: rebinding
-    // after nodes are created would orphan the Sampler from the audible ctx.
-    if (primedCtx && !toneBoundToPrimed) {
-      Tone.setContext(primedCtx)
-      toneBoundToPrimed = true
-    }
-    await Tone.start()
-    // Diagnostics only — guarded so the unit-test 'tone' mock (no getContext)
-    // is unaffected.
-    const getCtx = (Tone as unknown as { getContext?: () => unknown }).getContext
-    if (typeof getCtx === 'function') {
-      const ctx = getCtx() as { state?: string; rawContext?: { state?: string } }
-      toneCtxState = ctx.state ?? 'n/a'
-      toneRawState = ctx.rawContext?.state ?? 'n/a'
-    }
-  } catch (e) {
-    recordAudioError('unlock', e)
-    throw e
+  const Tone = await loadTone()
+  // Bind Tone to the gesture-unlocked context BEFORE any Tone node exists
+  // (the Sampler is created later, in ensureEngine). One-shot: rebinding
+  // after nodes are created would orphan the Sampler from the audible ctx.
+  if (primedCtx && !toneBoundToPrimed) {
+    Tone.setContext(primedCtx)
+    toneBoundToPrimed = true
   }
+  await Tone.start()
 }
 
 /** Plays a list of notes ascending at 120 BPM, quarter notes. Stops any in-flight playback first. */
@@ -286,8 +300,6 @@ export function __resetForTests(): void {
   tonePromise = null
   primedCtx = null
   toneBoundToPrimed = false
-  lastAudioError = ''
-  toneCtxState = 'n/a'
-  toneRawState = 'n/a'
-  audioSessionInfo = 'n/a'
+  unlockEl = null
+  silentUrl = null
 }

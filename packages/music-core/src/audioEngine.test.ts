@@ -32,7 +32,6 @@ vi.mock('tone', () => {
     }),
     start: vi.fn().mockResolvedValue(undefined),
     setContext: vi.fn(),
-    getContext: vi.fn(() => ({ state: 'running', rawContext: { state: 'running' } })),
     Transport: { stop: vi.fn() },
     now: vi.fn().mockReturnValue(0),
   }
@@ -249,6 +248,36 @@ describe('primeAudio / iOS unlock', () => {
       primeAudio()
       expect(ctxInstances).toHaveLength(1) // same instance, not recreated
       expect(first.resume).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  describe('iOS audio session (the confirmed fix)', () => {
+    beforeEach(() => {
+      vi.clearAllMocks()
+      __resetForTests()
+    })
+    afterEach(() => {
+      vi.unstubAllGlobals()
+    })
+
+    it('promotes the session to "playback" when navigator.audioSession exists (iOS >=16.4)', () => {
+      const session = { type: 'auto' }
+      vi.stubGlobal('navigator', { audioSession: session })
+      primeAudio()
+      expect(session.type).toBe('playback')
+    })
+
+    it('falls back to playing a silent inline <audio> when audioSession is unsupported (iOS <16.4)', () => {
+      // jsdom navigator has no audioSession → the pre-16.4 fallback path.
+      const play = vi.fn().mockResolvedValue(undefined)
+      class FakeAudio {
+        loop = false
+        play = play
+      }
+      vi.stubGlobal('Audio', FakeAudio)
+      vi.stubGlobal('URL', { createObjectURL: () => 'blob:silent' })
+      primeAudio()
+      expect(play).toHaveBeenCalledTimes(1)
     })
   })
 })

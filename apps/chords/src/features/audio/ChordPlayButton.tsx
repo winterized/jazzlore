@@ -18,7 +18,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
-import { audioDebugSummary, playChord, primeAudio, unlockAudio, withOctaves } from '@jazzlore/music-core'
+import { playChord, primeAudio, unlockAudio, withOctaves } from '@jazzlore/music-core'
 
 /** How long (ms) to keep the playing state after scheduling completes.
  *  Must exceed the max arp-then-block wall time. For a 7-note chord:
@@ -61,9 +61,6 @@ export default function ChordPlayButton({ primary, notes }: Props) {
     // resume() happens in the user-gesture task, before the lazy Tone import
     // is awaited below.
     primeAudio()
-    const dbg =
-      typeof window !== 'undefined' &&
-      new URLSearchParams(window.location.search).has('audiodebug')
 
     // Clear any pending auto-release from a previous click.
     if (timerRef.current !== null) {
@@ -78,7 +75,6 @@ export default function ChordPlayButton({ primary, notes }: Props) {
       const ascii = toAsciiNotes(octaved)
       await playChord(ascii)
     } finally {
-      if (dbg) window.alert(audioDebugSummary())
       // playChord resolves when notes are *scheduled*, not when they finish
       // sounding. Start the auto-release timer so the button returns to idle
       // once the audible duration has elapsed.

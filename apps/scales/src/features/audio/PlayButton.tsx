@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { audioDebugSummary, playScale, primeAudio, stopAll, unlockAudio } from '@jazzlore/music-core'
+import { playScale, primeAudio, stopAll, unlockAudio } from '@jazzlore/music-core'
 
 type Props = {
   notes: string[]
@@ -13,9 +13,6 @@ export default function PlayButton({ notes, ariaLabel }: Props) {
     // AudioContext if resume() happens in the user-gesture task, before the
     // lazy Tone import is awaited below.
     primeAudio()
-    const dbg =
-      typeof window !== 'undefined' &&
-      new URLSearchParams(window.location.search).has('audiodebug')
     setLoading(true)
     try {
       stopAll()
@@ -23,7 +20,6 @@ export default function PlayButton({ notes, ariaLabel }: Props) {
       await playScale(notes)
     } finally {
       setLoading(false)
-      if (dbg) window.alert(audioDebugSummary())
     }
   }
   return (
