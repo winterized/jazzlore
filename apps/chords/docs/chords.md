@@ -70,9 +70,9 @@ A single ordering must be decided. Options:
 Recommendation: **option 1 (by chord size)** for v1 — most predictable, easiest to navigate when looking up a specific chord. To be confirmed in brainstorming.
 
 ### Score (notation) rendering
-- Reuses the abcjs wrapper from `packages/ui` (or `apps/scales/src/features/scales/ScaleScore.tsx` — to be promoted to shared)
-- Display in root position, treble clef, one octave
-- For chords spanning more than one octave (some 11s and 13s), see open question
+- Reuses the `<AbcScore>` wrapper from `packages/ui` (promoted from `apps/scales`; shared between both apps)
+- Display in root position, treble clef, folded to ≤2 octaves using the same octave-fold as the piano keyboard — notation and keyboard always agree (resolved 2026-05-16)
+- Notes beyond the 2-octave window are dropped one octave via `while offset > 23 offset -= 12`, identical to the keyboard's `resolveChordKeyPositions` fold; all 27 curated chords fit naturally within 2 octaves (widest span = maj13/13 at 21 semitones)
 
 ### Piano keyboard rendering
 Same component as scales (`<PianoKeyboard />` in `packages/ui`), opted into chord
@@ -155,7 +155,7 @@ All nine open questions from v0.1 were resolved in the brainstorming and plannin
 
 1. **Chord ordering:** Option 1 — by chord size (triads → 6ths → 7ths → 9ths/11ths/13ths). Most predictable for lookup.
 2. **Default playback mode:** Arpeggiated (root upward), then a brief block at the end. Single mode in v1 (no per-chord toggle).
-3. **Grand staff for extended chords:** Treble-only; let notes stack high. Consistency wins for v1.
+3. **Grand staff / score octave span for extended chords:** Treble-only. Notes do not stack arbitrarily high — the score folds to ≤2 octaves using the same fold as the piano keyboard (resolved 2026-05-16: `buildChordAbc` mirrors `resolveChordKeyPositions`; score and keyboard always agree).
 4. **Sticky chord-symbol header:** No sticky header in v1. The flat list is scrollable; revisit if UX testing reveals orientation problems.
 5. **Combined collection view:** No `/collection` combined route in v1. Only `/collection/chords` exists. Scales keeps `/collection/scales`.
 6. **Chord symbol display:** `Cmaj7` style (modern jazz lead-sheet convention). No delta or M variants.

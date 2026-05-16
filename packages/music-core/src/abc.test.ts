@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { buildAbcTune, buildChordAbc, noteToAbc, notesToAbcVoice } from './abc'
+import { chordNotes } from './chord'
+import type { ChordDefinition } from './chord-types'
 import { pitchClass } from './music'
 
 describe('noteToAbc', () => {
@@ -114,7 +116,7 @@ describe('buildChordAbc', () => {
   })
 
   it('F# major triad — sharps render as ^ prefix', () => {
-    // F♯4 A♯4 — then C♯ wraps past A♯ (order 0 ≤ 5), so C♯ lands in octave 5 (lowercase)
+    // Each offset is reconstructed mod-12 ascending from the root then octave-derived, so C♯ resolves to octave 5 (lowercase `c`).
     const abc = buildChordAbc(['F♯', 'A♯', 'C♯'])
     expect(abc).toContain('^F')
     expect(abc).toContain('^A')
@@ -200,7 +202,7 @@ function decodeChordAbcPositions(abc: string): number[] {
     const marks = m[3] ?? ''
     const isLower = letter >= 'a' && letter <= 'z'
     let octave = isLower ? 5 : 4
-    if (marks[0] === "'") octave += marks.length
+    if (marks[0] === "'") octave += marks.length // each `'` = +1 octave above the base, each `,` = −1 (marks.length is the count)
     else if (marks[0] === ',') octave -= marks.length
     const accSuffix =
       accidental === '^^' ? '##' : accidental === '__' ? 'bb' : accidental === '^' ? '#' : accidental === '_' ? 'b' : ''
@@ -246,6 +248,29 @@ describe('buildChordAbc — folds to ≤2 octaves matching the piano keyboard', 
     // intervals [0,4,10,13,15,18,20].
     const notes = ['C', 'E', 'B♭', 'D♭', 'D♯', 'F♯', 'A♭']
     const abc = buildChordAbc(notes)!
+    const pos = decodeChordAbcPositions(abc)
+    const rootAbs = pos[0]!
+    const offsets = pos.map((p) => p - rootAbs)
+    expect(offsets).toEqual(keyboardFoldedOffsets([0, 4, 10, 13, 15, 18, 20]))
+    // Total staff span ≤ 24 semitones (2 octaves).
+    expect(Math.max(...offsets) - Math.min(...offsets)).toBeLessThanOrEqual(24)
+  })
+
+  it('F♯7alt — non-C root: score↔keyboard invariant holds across all roots', () => {
+    // Drives the fold invariant for a non-C root: chordNotes resolves enharmonic
+    // spellings for F♯ (e.g. G♯♯ for ♯9, B♯ for ♯11), buildChordAbc must still
+    // place the noteheads at the same root-relative offsets the keyboard uses.
+    // The keyboard fold is root-relative so the expected offsets are the same
+    // [0,4,10,13,15,18,20] regardless of root.
+    const def7alt: ChordDefinition = {
+      id: '7alt',
+      primarySuffix: '7alt',
+      fullName: 'altered dominant',
+      intervals: [0, 4, 10, 13, 15, 18, 20],
+      tonalIntervals: ['1P', '3M', '7m', '9m', '9A', '11A', '13m'],
+    }
+    const voicing = chordNotes('F♯', def7alt)
+    const abc = buildChordAbc([...voicing.notes])!
     const pos = decodeChordAbcPositions(abc)
     const rootAbs = pos[0]!
     const offsets = pos.map((p) => p - rootAbs)
