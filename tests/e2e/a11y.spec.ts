@@ -84,6 +84,17 @@ for (const pageUnderTest of PAGES) {
 
       await expectNoAxeViolations(page, `${pageUnderTest.name} dark`)
     })
+
+    test('search combobox + open listbox — 0 axe violations', async ({ page }) => {
+      await page.goto(pageUnderTest.path)
+      await expect(page.getByRole('heading', { name: /C (chords|scales)/i })).toBeVisible()
+      const search = page.getByRole('combobox', { name: /^Search (chords|scales)$/ })
+      await search.fill(pageUnderTest.name === 'chords' ? 'dim' : 'locr')
+      // Listbox is open with options → audit the combobox pattern.
+      await expect(page.getByRole('listbox')).toBeVisible()
+      await expect(page.getByRole('option').first()).toBeVisible()
+      await expectNoAxeViolations(page, `${pageUnderTest.name} search open`)
+    })
   })
 }
 

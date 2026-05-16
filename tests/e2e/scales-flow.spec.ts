@@ -126,3 +126,29 @@ test('chip click on already-open family keeps it open (expand-only, no toggle-of
   // It must stay open — no toggle-off.
   await expect(modesAccordionBtn).toHaveAttribute('aria-expanded', 'true')
 })
+
+test('header search scrolls to the exact scale and expands its collapsed family', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/scales/C')
+
+  // "Locrian ♮2" lives in "Modes of melodic minor" — collapsed by default.
+  const mmBtn = page.locator('[aria-controls="family-modes-of-melodic-minor"]')
+  await expect(mmBtn).toHaveAttribute('aria-expanded', 'false')
+
+  const search = page.getByRole('combobox', { name: 'Search scales' })
+  await search.fill('locrian ♮2')
+  const option = page.getByRole('option', { name: /Locrian ♮2/ })
+  await expect(option).toBeVisible()
+  await option.click()
+
+  // The family auto-expands and the exact scale row is scrolled into view.
+  await expect(mmBtn).toHaveAttribute('aria-expanded', 'true')
+  await expect(page.locator('#scale-locrian-nat2')).toBeInViewport()
+
+  // The family scroll-spy chip is pinned active (chips are family-level).
+  const chipNav = page.getByRole('navigation', { name: 'Scale categories' })
+  await expect(
+    chipNav.getByRole('button', { name: 'Modes of melodic minor', exact: true }),
+  ).toHaveAttribute('aria-current', 'true')
+})

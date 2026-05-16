@@ -12,7 +12,7 @@
  * - Purely presentational; no forbidden imports (music-core / tonal / tone / abcjs).
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { usePrefersReducedMotion } from './StickyHeader.hooks'
 import {
   centerScrollLeft,
@@ -37,14 +37,16 @@ export type ChipRowProps = {
   headerHeight: number
 }
 
+/** Imperative handle so the header search can pin a chip active using the
+ *  exact same optimistic-set + spy-lock path as a real chip click. */
+export type ChipRowHandle = { activate: (id: string) => void }
+
 // ─── Component ─────────────────────────────────────────────────────────────────
 
-export default function ChipRow({
-  chipGroups,
-  navLabel,
-  onChipActivate,
-  headerHeight,
-}: ChipRowProps) {
+const ChipRow = forwardRef<ChipRowHandle, ChipRowProps>(function ChipRow(
+  { chipGroups, navLabel, onChipActivate, headerHeight },
+  ref,
+) {
   const prefersReduced = usePrefersReducedMotion()
   const scrollBehavior: ScrollBehavior = prefersReduced ? 'instant' : 'smooth'
 
@@ -136,11 +138,12 @@ export default function ChipRow({
 
   // ── Click handler ─────────────────────────────────────────────────────────────
 
-  function handleChipClick(id: string) {
+  // Optimistically mark a chip active and suppress scroll-spy overrides for
+  // the settle window. Shared by chip clicks AND the header-search pin so both
+  // get the identical, proven behaviour.
+  function pinActive(id: string) {
     // Gate the spy lock BEFORE the state update so the auto-center effect
     // that fires immediately after setActiveId cannot race with scroll events.
-    // Then optimistically mark the clicked chip active; the lock suppresses any
-    // scroll events fired by the resulting scrollIntoView for CLICK_SETTLE_MS.
     spyLockedRef.current = true
     if (lockTimerRef.current !== null) clearTimeout(lockTimerRef.current)
     lockTimerRef.current = setTimeout(() => {
@@ -148,6 +151,14 @@ export default function ChipRow({
       lockTimerRef.current = null
     }, CLICK_SETTLE_MS)
     setActiveId(id)
+  }
+
+  // Search-driven activation: pin the chip exactly like a click, but the app
+  // (or StickyHeader) owns the scroll, so we do NOT scrollIntoView here.
+  useImperativeHandle(ref, () => ({ activate: pinActive }))
+
+  function handleChipClick(id: string) {
+    pinActive(id)
     const el = document.getElementById(id)
     if (el && typeof el.scrollIntoView === 'function') {
       el.scrollIntoView({ behavior: scrollBehavior, block: 'start' })
@@ -239,4 +250,6 @@ export default function ChipRow({
       ))}
     </nav>
   )
-}
+})
+
+export default ChipRow
