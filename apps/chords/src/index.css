@@ -67,6 +67,27 @@
     justify-self: stretch;
   }
 }
+/* >=1280 (xl): each card is half-width inside the 2-col grid, so reproduce
+   the 480–767 compact layout (mini-score on the header row, full-width
+   keyboard below) — a half-width 1280 card == a full 640-viewport card.
+   Scoped to .chord-card-grid so the always-full-width collection page (no
+   such ancestor) keeps the wide >=768 layout, and gated behind 1280 so
+   everything below the breakpoint stays byte-identical. .chord-card-grid
+   .chord-row/.chord-score are (0,2,0) — they outweigh the >=768 (0,1,0)
+   rules. column-gap stays the base 0.75rem (never overridden). */
+@media (min-width: 1280px) {
+  .chord-card-grid .chord-row {
+    grid-template-columns: 1fr auto auto;
+    row-gap: 0.75rem;
+    grid-template-areas:
+      'info score actions'
+      'kbd kbd kbd';
+  }
+  .chord-card-grid .chord-score {
+    width: auto;
+    justify-self: end;
+  }
+}
 .chord-info {
   grid-area: info;
 }

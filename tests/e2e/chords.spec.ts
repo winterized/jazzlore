@@ -104,8 +104,9 @@ test('body sections are rendered with category dividers', async ({ page }) => {
 })
 
 test('chip click scrolls to matching chord card below the header', async ({ page }) => {
-  // Use a larger viewport to ensure desktop layout (inline root picker)
-  await page.setViewportSize({ width: 1280, height: 800 })
+  // Desktop layout (inline root picker) but single-column: 1024 keeps
+  // single-column scroll-spy (2-col scroll-spy is guarded in grid-layout.spec.ts).
+  await page.setViewportSize({ width: 1024, height: 800 })
   // Reduced motion → ChipRow's auto-center + scrollIntoView are instant
   // (no smooth animation to race Playwright's actionability under the
   // 4-worker parallel-load the full suite runs at). Deterministic.
@@ -126,7 +127,8 @@ test('chip click scrolls to matching chord card below the header', async ({ page
 })
 
 test('scroll-spy: after scrolling past all TRIADS the active chip changes', async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 800 })
+  // 1024 keeps single-column scroll-spy (2-col scroll-spy is guarded in grid-layout.spec.ts).
+  await page.setViewportSize({ width: 1024, height: 800 })
   // Reduced motion → instant scroll/auto-center so the clicked chip doesn't
   // move under Playwright mid-click when the full suite runs in parallel
   // (this test passed solo but flaked under 4-worker load — root cause was
