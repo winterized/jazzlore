@@ -30,9 +30,13 @@ type Props = {
   rootNote: string
   /** Full chord definition from the curated list. */
   definition: ChordDefinition
+  /** True when rendered inside the multi-column card grid (ChordsPage). At
+   *  ≥1280 the card is then half-width and adopts the compact layout. The
+   *  collection page omits this → unchanged full-width layout at all widths. */
+  inGrid?: boolean
 }
 
-export default function ChordRow({ rootNote, definition }: Props) {
+export default function ChordRow({ rootNote, definition, inGrid = false }: Props) {
   // Memoise the music-core round-trip so changing the root in Phase 7 doesn't
   // re-derive 27 chords on every render. Helpers are pure; the cache key is
   // exactly (rootNote, definition).
@@ -62,12 +66,19 @@ export default function ChordRow({ rootNote, definition }: Props) {
   // breakpoint: ≥768 reproduces the original info|actions / score|keyboard
   // layout; 480–767 puts a compact mini-score on the header row (reclaiming
   // the ~114px the stacked score wasted); <480 keeps the stacked fallback.
+  // When in the multi-column grid (inGrid), at ≥1280 each card is half-width
+  // so the .chord-card-grid override reverts it to the 480–767 compact layout
+  // — a half-width 1280 card == a full 640-viewport card.
   // abcjs renders at a fixed staffwidth, so a single instance can't be both
-  // sizes via CSS — use a compact 170 ONLY in the 480–767 inline band, and
-  // the original 320 at <480 and ≥768 so those stay byte-identical. The hook
-  // re-renders only when crossing the band edges, not per resize.
+  // sizes via CSS — use the compact 170 wherever the compact layout applies
+  // (480–767, OR inGrid ≥1280), else the original 320. Below 1280 the second
+  // query is false so behaviour (and bytes) are unchanged on both pages; the
+  // collection page never passes inGrid so it keeps 320 at all widths. The
+  // hook re-renders only when crossing the band edges, not per resize.
   const isHeaderScore = useMediaQuery('(min-width: 480px) and (max-width: 767.98px)')
-  const scoreStaffwidth = isHeaderScore ? 170 : 320
+  const isGridXl = useMediaQuery('(min-width: 1280px)')
+  const compactScore = isHeaderScore || (inGrid && isGridXl)
+  const scoreStaffwidth = compactScore ? 170 : 320
 
   // Flat grid children in source order info → actions → score → keyboard
   // (a11y/tab/print order); grid-area placement is purely CSS.

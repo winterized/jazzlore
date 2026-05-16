@@ -52,11 +52,12 @@ export default function ScaleList({ root, expanded, onExpandedChange }: Props) {
               </button>
             </h2>
             {isOpen && (
-              // Per-family grid: 1 col, → 2 cols at 2xl (1536px). The family
+              // Per-family grid: 1 col, → 2 cols at xl (1280px) — shared
+              // breakpoint with chords for cross-site consistency. The family
               // header (<h2>) is above this panel so it spans full width; an
               // odd count leaves one trailing empty cell (align-items:start,
               // by design). gap-3 == the prior space-y-3 rhythm in 1 col.
-              <div id={panelId} className="mt-2 grid grid-cols-1 gap-3 2xl:grid-cols-2">
+              <div id={panelId} className="mt-2 grid grid-cols-1 gap-3 xl:grid-cols-2">
                 {scales.map((scale) => (
                   <ScaleRow
                     key={scale.id}

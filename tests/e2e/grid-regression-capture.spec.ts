@@ -10,10 +10,10 @@
  * Output dir is env-controlled (`GRID_CAP_DIR`) so PRE/POST/determinism runs
  * land in separate gitignored folders under `baselines/` and can be md5-diffed.
  *
- * Sub-breakpoint viewports (390/1024/1280/1535) are the MD5-gated set — they
- * must be byte-identical PRE vs POST (layout unchanged below 2xl/1536). The
- * 1536/1920 set is the at/above-breakpoint visual confirmation (NOT md5-gated;
- * 2-col is expected there).
+ * Sub-breakpoint viewports (390/1024/1279) are the MD5-gated set — they
+ * must be byte-identical PRE vs POST (layout unchanged below xl/1280). The
+ * 1280/1536/1920 set is the at/above-breakpoint visual confirmation (NOT
+ * md5-gated; 2-col is expected there).
  */
 
 import { test, expect, type Page } from '@playwright/test'
@@ -24,12 +24,12 @@ type Theme = 'light' | 'dark'
 
 type Viewport = { w: number; h: number; gated: boolean }
 const VIEWPORTS: readonly Viewport[] = [
-  { w: 390, h: 844, gated: true }, // mobile
-  { w: 1024, h: 832, gated: true }, // small desktop
-  { w: 1280, h: 832, gated: true }, // existing desktop preset — the C3 anchor
-  { w: 1535, h: 832, gated: true }, // one px below 2xl — exact flip boundary
-  { w: 1536, h: 900, gated: false }, // at breakpoint — 2-col expected
-  { w: 1920, h: 1080, gated: false }, // wide — 2-col expected
+  { w: 390, h: 844, gated: true }, // mobile — stacked, below xl
+  { w: 1024, h: 832, gated: true }, // small desktop — single-col, below xl
+  { w: 1279, h: 832, gated: true }, // one px below xl — exact flip boundary
+  { w: 1280, h: 900, gated: false }, // at xl — 2-col expected
+  { w: 1536, h: 900, gated: false }, // wide — 2-col expected
+  { w: 1920, h: 1080, gated: false }, // wider — 2-col expected
 ]
 
 const BASE_URL = {
