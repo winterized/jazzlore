@@ -76,6 +76,8 @@ export default function SearchBox({
   const choose = (r: SearchResult): void => {
     onSelect(r.id)
     setOpen(false)
+    // Blur so mobile closes the keyboard + un-zooms; desktop drops focus too.
+    inputRef.current?.blur()
   }
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
@@ -117,6 +119,11 @@ export default function SearchBox({
         aria-autocomplete="list"
         aria-activedescendant={activeId}
         autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck={false}
+        inputMode="search"
+        enterKeyHint="search"
         placeholder={placeholder}
         value={query}
         onChange={(e) => {
@@ -130,8 +137,10 @@ export default function SearchBox({
         onBlur={() => setOpen(false)}
         onKeyDown={onKeyDown}
         className={[
-          'h-8 w-[130px] sm:w-[200px] rounded-md px-[10px]',
-          'border border-stone-300 bg-white text-[13px] text-stone-900',
+          // text-[16px]: ≥16px stops iOS Safari auto-zooming on focus (which
+          // shifted the viewport so the suggestion popover's left was cut off).
+          'h-8 w-[124px] sm:w-[200px] rounded-md px-[10px]',
+          'border border-stone-300 bg-white text-[16px] text-stone-900',
           'placeholder:text-stone-400',
           'dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:placeholder:text-stone-500',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500',

@@ -148,7 +148,23 @@ test('header search scrolls to the exact scale and expands its collapsed family'
 
   // The family scroll-spy chip is pinned active (chips are family-level).
   const chipNav = page.getByRole('navigation', { name: 'Scale categories' })
-  await expect(
-    chipNav.getByRole('button', { name: 'Modes of melodic minor', exact: true }),
-  ).toHaveAttribute('aria-current', 'true')
+  const mmChip = chipNav.getByRole('button', { name: 'Modes of melodic minor', exact: true })
+  await expect(mmChip).toHaveAttribute('aria-current', 'true')
+  // Bug 2: input blurred. Bug 3: chip stays after the scroll settles.
+  await expect(page.getByRole('combobox', { name: 'Search scales' })).not.toBeFocused()
+  await page.waitForTimeout(1500)
+  await expect(mmChip).toHaveAttribute('aria-current', 'true')
+})
+
+test('the "My scales" collection link is reachable on mobile (icon) and desktop (text)', async ({
+  page,
+}) => {
+  // Mobile: icon-only link, but still has its accessible name.
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/scales/C')
+  await expect(page.getByRole('link', { name: /My scales/i })).toBeVisible()
+
+  // Desktop: full text pill.
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await expect(page.getByRole('link', { name: /My scales/i })).toBeVisible()
 })

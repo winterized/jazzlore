@@ -169,8 +169,17 @@ test('header search: type "dim" → result list → click scrolls to the chord +
   await expect(halfDim).toBeVisible()
   await halfDim.click()
 
-  // Scrolls to that exact chord; the scroll-spy chip follows for free.
+  // Scrolls to that exact chord; the scroll-spy chip pins.
   await expect(page.locator('#chord-m7b5')).toBeInViewport()
+  await expect(page.locator('[data-chip-id="chord-m7b5"]')).toHaveAttribute(
+    'aria-current',
+    'true',
+  )
+  // Bug 2: selecting blurs the search input.
+  await expect(page.getByRole('combobox', { name: 'Search chords' })).not.toBeFocused()
+  // Bug 3: after the scroll settles (past the 800ms pin-lock) the chip must
+  // STAY on the searched chord — not snap back to the previous one.
+  await page.waitForTimeout(1500)
   await expect(page.locator('[data-chip-id="chord-m7b5"]')).toHaveAttribute(
     'aria-current',
     'true',

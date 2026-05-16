@@ -38,12 +38,13 @@ describe('ScalesPage routing', () => {
 
   it('exposes a "My scales" link to the collection page', () => {
     // Without this entry point the saved-scales / print flow is unreachable
-    // from the UI even though the route exists.
+    // from the UI even though the route exists. Two variants are mounted
+    // (mobile icon + desktop text); jsdom can't evaluate the CSS gating so
+    // both are present — assert every variant points at the collection route.
     renderAt('/scales/C')
-    expect(screen.getByRole('link', { name: /my scales/i })).toHaveAttribute(
-      'href',
-      '/collection/scales',
-    )
+    const links = screen.getAllByRole('link', { name: /my scales/i })
+    expect(links.length).toBeGreaterThan(0)
+    for (const l of links) expect(l).toHaveAttribute('href', '/collection/scales')
   })
 
   it('renders the page title in the sticky header', () => {

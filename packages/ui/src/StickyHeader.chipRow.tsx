@@ -22,10 +22,11 @@ import {
 } from './stickyHeader.helpers'
 import type { ChipGroup } from './StickyHeader'
 
-/** How long after a chip click the scroll-spy is suppressed so the
- *  click-initiated scroll can settle without overriding the clicked chip.
- *  Comfortably exceeds a smooth scrollIntoView; harmless under instant. */
-const CLICK_SETTLE_MS = 800
+/** A click/search pin holds the active chip until the programmatic scroll
+ *  has STOPPED for this long (no scroll events) AND the user then scrolls
+ *  again. So a pinned chip never snaps back on its own after the jump — it
+ *  only yields to a genuine user scroll. */
+const SCROLL_IDLE_MS = 150
 
 // ─── Props ─────────────────────────────────────────────────────────────────────
 
@@ -58,19 +59,18 @@ const ChipRow = forwardRef<ChipRowHandle, ChipRowProps>(function ChipRow(
 
   const rowRef = useRef<HTMLElement>(null)
 
-  // After a chip click we scroll the page to that section. The resulting
-  // scroll events would make the spy recompute and transiently override the
-  // clicked chip (it bounces through intermediate sections, or lands on a
-  // neighbour if the target settles a hair past the threshold). Suppress
-  // spy-driven overrides for a short settle window after a click; genuine
-  // user scrolling afterwards resumes normal scroll-spy. Boolean+timer (not a
-  // Date.now() comparison) so the click handler stays purity-rule clean.
+  // A pin (chip click / search select) suppresses scroll-spy while the
+  // programmatic scroll runs, then keeps the pinned chip until the user
+  // scrolls again — so it never snaps back to a neighbour on its own once the
+  // jump finishes. `armedRef` flips true once the scroll has been idle for
+  // SCROLL_IDLE_MS; the first scroll after that is user-initiated → release.
   const spyLockedRef = useRef(false)
-  const lockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const armedRef = useRef(false)
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(
     () => () => {
-      if (lockTimerRef.current !== null) clearTimeout(lockTimerRef.current)
+      if (idleTimerRef.current !== null) clearTimeout(idleTimerRef.current)
     },
     [],
   )
@@ -91,9 +91,27 @@ const ChipRow = forwardRef<ChipRowHandle, ChipRowProps>(function ChipRow(
 
       if (targets.length === 0) return
 
-      // Within the post-click settle window, the clicked chip stays active —
-      // don't let the in-flight scroll override it.
-      if (spyLockedRef.current) return
+      // Pin handling: while the programmatic scroll is still moving (not yet
+      // "armed"), keep deferring — reset the idle timer and ignore spy so the
+      // pinned chip stays put. Once the scroll has been idle for
+      // SCROLL_IDLE_MS the pin is armed; the NEXT scroll is user-initiated, so
+      // release the lock and resume normal scroll-spy from here on.
+      if (spyLockedRef.current) {
+        if (!armedRef.current) {
+          if (idleTimerRef.current !== null) clearTimeout(idleTimerRef.current)
+          idleTimerRef.current = setTimeout(() => {
+            armedRef.current = true
+            idleTimerRef.current = null
+          }, SCROLL_IDLE_MS)
+          return
+        }
+        spyLockedRef.current = false
+        armedRef.current = false
+        if (idleTimerRef.current !== null) {
+          clearTimeout(idleTimerRef.current)
+          idleTimerRef.current = null
+        }
+      }
 
       const newActive = resolveActiveChip(targets, headerHeight)
       if (newActive !== null) setActiveId(newActive)
@@ -138,18 +156,21 @@ const ChipRow = forwardRef<ChipRowHandle, ChipRowProps>(function ChipRow(
 
   // ── Click handler ─────────────────────────────────────────────────────────────
 
-  // Optimistically mark a chip active and suppress scroll-spy overrides for
-  // the settle window. Shared by chip clicks AND the header-search pin so both
-  // get the identical, proven behaviour.
+  // Optimistically mark a chip active and hold it: spy is suppressed until
+  // the programmatic scroll goes idle (armed) and the user then scrolls.
+  // Shared by chip clicks AND the header-search pin for identical behaviour.
   function pinActive(id: string) {
-    // Gate the spy lock BEFORE the state update so the auto-center effect
-    // that fires immediately after setActiveId cannot race with scroll events.
+    // Gate the lock BEFORE the state update so the auto-center effect that
+    // fires right after setActiveId cannot race with scroll events.
     spyLockedRef.current = true
-    if (lockTimerRef.current !== null) clearTimeout(lockTimerRef.current)
-    lockTimerRef.current = setTimeout(() => {
-      spyLockedRef.current = false
-      lockTimerRef.current = null
-    }, CLICK_SETTLE_MS)
+    armedRef.current = false
+    if (idleTimerRef.current !== null) clearTimeout(idleTimerRef.current)
+    // If no scroll happens at all (target already in view), arm after the
+    // idle window so a later user scroll can still release the pin.
+    idleTimerRef.current = setTimeout(() => {
+      armedRef.current = true
+      idleTimerRef.current = null
+    }, SCROLL_IDLE_MS)
     setActiveId(id)
   }
 
