@@ -35,10 +35,11 @@ const TEST_DEFINITIONS: readonly ChordDefinition[] = [
   { id: 'maj13',   primarySuffix: 'maj13',  fullName: 'major 13th',            intervals: [0,4,7,11,14,21], tonalIntervals: ['1P','3M','5P','7M','9M','13M'] },
   { id: '13',      primarySuffix: '13',     fullName: 'dominant 13th',         intervals: [0,4,7,10,14,21], tonalIntervals: ['1P','3M','5P','7m','9M','13M'] },
   { id: '7b13',    primarySuffix: '7♭13',   fullName: 'dominant 7♭13',         intervals: [0,4,7,10,13,20], tonalIntervals: ['1P','3M','5P','7m','9m','13m'] },
-  // 7alt: the tritone is spelled as augmented 4th (F♯ over C), not diminished 5th (G♭),
-  // matching the altered-scale convention where the note functions as ♯4/♭5 but
-  // is displayed as ♯4 (raised 4th) in this chord stack.
-  { id: '7alt',    primarySuffix: '7alt',   fullName: 'altered dominant',      intervals: [0,4,6,10,13,15,20], tonalIntervals: ['1P','3M','4A','7m','9m','9A','13m'] },
+  // 7alt: the standard altered-dominant tone set (NO natural 5th), re-spelled
+  // as a clean ascending stack 1 3 ♭7 ♭9 ♯9 ♯11 ♭13. The tritone is the ♯11
+  // ('11A' = F♯ over C), a true 11th rather than a ♯4 — the 7 pitch classes
+  // are unchanged, only the spelling/order changed so the stack ascends.
+  { id: '7alt',    primarySuffix: '7alt',   fullName: 'altered dominant',      intervals: [0,4,10,13,15,18,20], tonalIntervals: ['1P','3M','7m','9m','9A','11A','13m'] },
 ]
 
 const find = (id: string): ChordDefinition => {
@@ -60,8 +61,11 @@ describe('chordNotes — explicit pin tests', () => {
     expect(chordNotes('C', find('13')).notes).toEqual(['C', 'E', 'G', 'B♭', 'D', 'A'])
   })
 
-  it('C7alt is the 7-note altered stack: [C, E, F♯, B♭, D♭, D♯, A♭]', () => {
-    expect(chordNotes('C', find('7alt')).notes).toEqual(['C', 'E', 'F♯', 'B♭', 'D♭', 'D♯', 'A♭'])
+  it('C7alt is the clean ascending altered stack: [C, E, B♭, D♭, D♯, F♯, A♭]', () => {
+    // Re-spelled 1 3 ♭7 ♭9 ♯9 ♯11 ♭13 — same 7 pitch classes as the old
+    // 1 3 ♯4 ♭7 ♭9 ♯9 ♭13, but the ♯11 (F♯) now sits after ♯9 so the stack
+    // ascends. Computed via Tonal transpose of ['1P','3M','7m','9m','9A','11A','13m'].
+    expect(chordNotes('C', find('7alt')).notes).toEqual(['C', 'E', 'B♭', 'D♭', 'D♯', 'F♯', 'A♭'])
   })
 
   it('Cmaj7 baseline: [C, E, G, B]', () => {
@@ -203,9 +207,9 @@ const FIXTURES: readonly Fixture[] = [
   { id: '7b13',    root: 'C',  notes: ['C', 'E', 'G', 'B♭', 'D♭', 'A♭'] },
   { id: '7b13',    root: 'F♯', notes: ['F♯', 'A♯', 'C♯', 'E', 'G', 'D'] },
   { id: '7b13',    root: 'B♭', notes: ['B♭', 'D', 'F', 'A♭', 'C♭', 'G♭'] },
-  { id: '7alt',    root: 'C',  notes: ['C', 'E', 'F♯', 'B♭', 'D♭', 'D♯', 'A♭'] },
-  { id: '7alt',    root: 'F♯', notes: ['F♯', 'A♯', 'B♯', 'E', 'G', 'G♯♯', 'D'] },
-  { id: '7alt',    root: 'B♭', notes: ['B♭', 'D', 'E', 'A♭', 'C♭', 'C♯', 'G♭'] },
+  { id: '7alt',    root: 'C',  notes: ['C', 'E', 'B♭', 'D♭', 'D♯', 'F♯', 'A♭'] },
+  { id: '7alt',    root: 'F♯', notes: ['F♯', 'A♯', 'E', 'G', 'G♯♯', 'B♯', 'D'] },
+  { id: '7alt',    root: 'B♭', notes: ['B♭', 'D', 'A♭', 'C♭', 'C♯', 'E', 'G♭'] },
 ]
 
 describe('chordNotes — parameterized 81 cases (27 chords × 3 roots)', () => {

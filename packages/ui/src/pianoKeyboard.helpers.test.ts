@@ -165,9 +165,11 @@ describe('resolveChordKeyPositions', () => {
     expect(res.map((r) => r.abs)).toEqual([1, 8])
   })
 
-  it('7alt [0,4,6,10,13,15,20] (root C): 7 distinct tones all in window', () => {
-    const res = resolveChordKeyPositions([0, 4, 6, 10, 13, 15, 20], 0, 0)
-    expect(res.map((r) => r.abs)).toEqual([0, 4, 6, 10, 13, 15, 20])
+  it('7alt [0,4,10,13,15,18,20] (root C): 7 distinct tones all in window', () => {
+    // Re-spelled clean ascending altered stack 1 3 ♭7 ♭9 ♯9 ♯11 ♭13 — same 7
+    // pitch classes as before, all ≤23 so the 2-octave window holds them.
+    const res = resolveChordKeyPositions([0, 4, 10, 13, 15, 18, 20], 0, 0)
+    expect(res.map((r) => r.abs)).toEqual([0, 4, 10, 13, 15, 18, 20])
     expect(new Set(res.map((r) => r.abs)).size).toBe(7)
     expect(res.filter((r) => r.role === 'root')).toHaveLength(1)
   })

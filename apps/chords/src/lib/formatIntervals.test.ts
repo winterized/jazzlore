@@ -42,9 +42,9 @@ describe('formatIntervals', () => {
     expect(formatIntervals(['1P', '3M', '5P', '7m', '9A'])).toBe('1 3 5 ♭7 ♯9')
   })
 
-  it('formats 7alt (7-note chord with augmented 4th): 1P 3M 4A 7m 9m 9A 13m → "1 3 ♯11 ♭7 ♭9 ♯9 ♭13"', () => {
-    expect(formatIntervals(['1P', '3M', '4A', '7m', '9m', '9A', '13m'])).toBe(
-      '1 3 ♯11 ♭7 ♭9 ♯9 ♭13',
+  it('formats 7alt (clean ascending altered stack): 1P 3M 7m 9m 9A 11A 13m → "1 3 ♭7 ♭9 ♯9 ♯11 ♭13"', () => {
+    expect(formatIntervals(['1P', '3M', '7m', '9m', '9A', '11A', '13m'])).toBe(
+      '1 3 ♭7 ♭9 ♯9 ♯11 ♭13',
     )
   })
 

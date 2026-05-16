@@ -52,6 +52,9 @@ export const CURATED_CHORDS: readonly ChordDefinition[] = [
   { id: 'maj13',   primarySuffix: 'maj13',   alternateSuffix: 'Δ13',         fullName: 'major 13th',          intervals: [0,4,7,11,14,21],      tonalIntervals: ['1P','3M','5P','7M','9M','13M'] },
   { id: '13',      primarySuffix: '13',      fullName: 'dominant 13th',       intervals: [0,4,7,10,14,21],      tonalIntervals: ['1P','3M','5P','7m','9M','13M'] },
   { id: '7b13',    primarySuffix: '7♭13',    fullName: 'dominant 7♭13',       intervals: [0,4,7,10,13,20],      tonalIntervals: ['1P','3M','5P','7m','9m','13m'] },
-  // 7alt: tritone spelled as augmented 4th (F♯ over C), matching altered-scale convention.
-  { id: '7alt',    primarySuffix: '7alt',    fullName: 'altered dominant',    intervals: [0,4,6,10,13,15,20],   tonalIntervals: ['1P','3M','4A','7m','9m','9A','13m'] },
+  // 7alt: the standard altered-dominant tone set (NO natural 5th), re-spelled
+  // as a clean ascending stack 1 3 ♭7 ♭9 ♯9 ♯11 ♭13. The tritone is the ♯11
+  // (true 11th, '11A' = F♯ over C), not a ♯4 — same 7 pitch classes as before,
+  // just respelled so the score reads upward without a backward jump.
+  { id: '7alt',    primarySuffix: '7alt',    fullName: 'altered dominant',    intervals: [0,4,10,13,15,18,20],   tonalIntervals: ['1P','3M','7m','9m','9A','11A','13m'] },
 ]

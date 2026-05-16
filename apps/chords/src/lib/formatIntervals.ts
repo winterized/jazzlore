@@ -37,7 +37,7 @@ const TONAL_TO_DISPLAY: Record<string, string> = {
  *
  * @example
  *   formatIntervals(['1P','3M','5P','7m']) // '1 3 5 ♭7'
- *   formatIntervals(['1P','3M','4A','7m','9m','9A','13m']) // '1 3 ♯11 ♭7 ♭9 ♯9 ♭13'
+ *   formatIntervals(['1P','3M','7m','9m','9A','11A','13m']) // '1 3 ♭7 ♭9 ♯9 ♯11 ♭13'
  */
 export function formatIntervals(tonalIntervals: readonly string[]): string {
   return tonalIntervals
