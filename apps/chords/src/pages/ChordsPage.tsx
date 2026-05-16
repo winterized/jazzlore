@@ -1,4 +1,4 @@
-import { useEffect, useMemo, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router'
 import { StickyHeader, type RootOption, type ChipGroup } from '@jazzlore/ui'
 import {
@@ -7,12 +7,14 @@ import {
   formatRoot,
   formatPrimarySymbol,
   isAmbiguous,
+  prefersReducedMotion,
   rootFromSlug,
   slugFromRoot,
   type ChordDefinition,
 } from '@jazzlore/music-core'
 import { useTheme } from '../lib/useTheme'
 import ChordRow from '../features/chords/ChordRow'
+import { searchChords } from '../lib/searchChords'
 import { CURATED_CHORDS } from '../data/curated'
 import { CHORD_GROUPS } from '../data/chordGroups'
 
@@ -122,6 +124,23 @@ export default function ChordsPage() {
     }
   }, [root])
 
+  // ── Header search ─────────────────────────────────────────────────────────
+  const [searchQuery, setSearchQuery] = useState('')
+  const searchResults = useMemo(
+    () => searchChords(searchQuery, rootDisplay),
+    [searchQuery, rootDisplay],
+  )
+  // Chord cards are always mounted (no accordion) → scroll immediately; the
+  // scroll-spy chip updates for free as the page scrolls.
+  const handleSearchSelect = useCallback((domId: string) => {
+    const el = document.getElementById(domId)
+    if (!el) return
+    el.scrollIntoView({
+      behavior: prefersReducedMotion() ? 'instant' : 'smooth',
+      block: 'start',
+    })
+  }, [])
+
   if (!root) return <Navigate to="/chords/C" replace />
 
   // ── Render ──────────────────────────────────────────────────────────────────
@@ -140,6 +159,11 @@ export default function ChordsPage() {
         chipGroups={chipGroups}
         chipNavLabel="Chord categories"
         // onChipActivate not needed — chords app has no accordions to expand
+        searchResults={searchResults}
+        onSearchQueryChange={setSearchQuery}
+        onSearchSelect={handleSearchSelect}
+        searchLabel="Search chords"
+        searchPlaceholder="Search chords…"
       />
 
       <main className="min-h-screen bg-stone-100 px-[14px] pt-4 pb-[80px] text-stone-900 md:px-[20px] md:pt-6 dark:bg-stone-950 dark:text-stone-100">

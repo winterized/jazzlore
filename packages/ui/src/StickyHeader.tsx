@@ -3,12 +3,14 @@ import type { RootOption } from './RootPicker'
 import InlineRootPicker from './StickyHeader.inlineRootPicker'
 import RootCompactButton from './StickyHeader.rootCompactButton'
 import { usePrefersReducedMotion } from './StickyHeader.hooks'
-import ChipRow from './StickyHeader.chipRow'
+import ChipRow, { type ChipRowHandle } from './StickyHeader.chipRow'
+import SearchBox, { type SearchResult } from './StickyHeader.searchBox'
 
 // ─── Public types ──────────────────────────────────────────────────────────────
 
 export type Chip = { id: string; label: string }
 export type ChipGroup = { label: string; chips: Chip[] }
+export type { SearchResult }
 
 // ─── Internal sub-components ──────────────────────────────────────────────────
 
@@ -62,6 +64,14 @@ type Props = {
   /** Accessible name for the chip-row <nav>. Apps pass e.g. "Chord categories"
    *  / "Scale categories". */
   chipNavLabel?: string
+  /** Header search. The app computes `searchResults` from the emitted query
+   *  (it owns the domain data) and scrolls to the chosen id; the scroll-spy
+   *  chip updates for free. `result.id` must be a DOM element id. */
+  searchResults?: SearchResult[]
+  onSearchQueryChange?: (q: string) => void
+  onSearchSelect?: (id: string) => void
+  searchLabel?: string
+  searchPlaceholder?: string
 }
 
 export default function StickyHeader({
@@ -76,6 +86,11 @@ export default function StickyHeader({
   chipGroups,
   onChipActivate,
   chipNavLabel = 'Quick access',
+  searchResults = [],
+  onSearchQueryChange = () => {},
+  onSearchSelect = () => {},
+  searchLabel = 'Search',
+  searchPlaceholder,
 }: Props) {
   const [scrolled, setScrolled] = useState(false)
   const prefersReduced = usePrefersReducedMotion()
@@ -84,6 +99,7 @@ export default function StickyHeader({
   // scroll-spy threshold. Falls back to 80px (a reasonable constant) until
   // the layout has been measured.
   const headerRef = useRef<HTMLElement>(null)
+  const chipRowRef = useRef<ChipRowHandle>(null)
   const [headerHeight, setHeaderHeight] = useState(80)
 
   useEffect(() => {
@@ -189,12 +205,30 @@ export default function StickyHeader({
           {utilLink.label}
         </LinkComponent>
 
+        {/* Header search — between the root picker and the theme toggle, both
+            viewports. Listbox portals out so the sticky header can't clip it. */}
+        <SearchBox
+          results={searchResults}
+          onQueryChange={onSearchQueryChange}
+          onSelect={(id) => {
+            // App scrolls/expands; pin the scroll-spy chip via the same
+            // optimistic+lock path a chip click uses. Scales pass the family
+            // chip in `chipId` (scroll target is the scale row, ≠ a chip).
+            onSearchSelect(id)
+            const r = searchResults.find((x) => x.id === id)
+            chipRowRef.current?.activate(r?.chipId ?? id)
+          }}
+          label={searchLabel}
+          placeholder={searchPlaceholder}
+        />
+
         {/* Theme toggle */}
         <ThemeButton theme={theme} onThemeToggle={onThemeToggle} />
       </div>
 
       {/* Row 2: real scroll-spy chip row */}
       <ChipRow
+        ref={chipRowRef}
         chipGroups={chipGroups}
         navLabel={chipNavLabel}
         onChipActivate={onChipActivate}

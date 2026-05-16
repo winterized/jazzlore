@@ -152,3 +152,27 @@ test('scroll-spy: after scrolling past all TRIADS the active chip changes', asyn
   await expect(maj7Chip).toHaveAttribute('aria-current', 'true')
   await expect(firstChip).not.toHaveAttribute('aria-current', 'true')
 })
+
+test('header search: type "dim" → result list → click scrolls to the chord + chip updates', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/chords/C')
+
+  const search = page.getByRole('combobox', { name: 'Search chords' })
+  await search.fill('dim')
+
+  // Full-name, root-prefixed suggestions (the user's example).
+  await expect(page.getByRole('listbox', { name: 'Search chords' })).toBeVisible()
+  const halfDim = page.getByRole('option', { name: /C half-diminished 7th/ })
+  await expect(halfDim).toBeVisible()
+  await halfDim.click()
+
+  // Scrolls to that exact chord; the scroll-spy chip follows for free.
+  await expect(page.locator('#chord-m7b5')).toBeInViewport()
+  await expect(page.locator('[data-chip-id="chord-m7b5"]')).toHaveAttribute(
+    'aria-current',
+    'true',
+  )
+})

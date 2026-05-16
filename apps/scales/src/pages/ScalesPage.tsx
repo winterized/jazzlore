@@ -1,16 +1,18 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router'
 import { StickyHeader, type ChipGroup, type RootOption } from '@jazzlore/ui'
 import ScaleList, { type FamilyId } from '../features/scales/ScaleList'
-import { FAMILIES } from '../features/scales/data/curated'
+import { CURATED_SCALES, FAMILIES } from '../features/scales/data/curated'
 import {
   DEFAULT_ROOTS,
   alternateSpelling,
   formatRoot,
   isAmbiguous,
+  prefersReducedMotion,
   rootFromSlug,
   slugFromRoot,
 } from '@jazzlore/music-core'
+import { searchScales } from '../lib/searchScales'
 import { useTheme } from '../lib/useTheme'
 
 // Module-scope adapter: keeps packages/ui router-free while giving
@@ -80,6 +82,45 @@ export default function ScalesPage() {
     setExpanded((prev) => (prev[familyId] ? prev : { ...prev, [familyId]: true }))
   }, [])
 
+  // ── Header search ─────────────────────────────────────────────────────────
+  const [searchQuery, setSearchQuery] = useState('')
+  const searchResults = useMemo(() => searchScales(searchQuery), [searchQuery])
+
+  // `scale-<id>` → its family, so a search hit can expand the (maybe collapsed)
+  // accordion before we scroll to the row.
+  const scaleFamily = useMemo(
+    () => new Map(CURATED_SCALES.map((s) => [`scale-${s.id}`, s.family])),
+    [],
+  )
+
+  // Pending scroll target lives in a ref (no setState in the effect); a tick
+  // bumped from the handler (an event — lint-clean) drives the effect, and so
+  // does `expanded` (the family just opened → the row mounts).
+  const pendingScrollRef = useRef<string | null>(null)
+  const [scrollTick, setScrollTick] = useState(0)
+
+  const handleSearchSelect = useCallback(
+    (domId: string) => {
+      const fam = scaleFamily.get(domId)
+      if (fam) setExpanded((prev) => (prev[fam] ? prev : { ...prev, [fam]: true }))
+      pendingScrollRef.current = domId
+      setScrollTick((t) => t + 1)
+    },
+    [scaleFamily],
+  )
+
+  useEffect(() => {
+    const id = pendingScrollRef.current
+    if (!id) return
+    const el = document.getElementById(id)
+    if (!el) return // family not expanded/rendered yet — the next run gets it
+    el.scrollIntoView({
+      behavior: prefersReducedMotion() ? 'instant' : 'smooth',
+      block: 'start',
+    })
+    pendingScrollRef.current = null
+  }, [scrollTick, expanded])
+
   if (!root) return <Navigate to="/scales/C" replace />
 
   return (
@@ -96,6 +137,11 @@ export default function ScalesPage() {
         chipGroups={chipGroups}
         chipNavLabel="Scale categories"
         onChipActivate={handleChipActivate}
+        searchResults={searchResults}
+        onSearchQueryChange={setSearchQuery}
+        onSearchSelect={handleSearchSelect}
+        searchLabel="Search scales"
+        searchPlaceholder="Search scales…"
       />
       <main className="min-h-screen bg-stone-100 p-4 text-stone-900 dark:bg-stone-950 dark:text-stone-100 md:p-8">
         <ScaleList

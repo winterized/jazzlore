@@ -59,12 +59,20 @@ export default function ScaleList({ root, expanded, onExpandedChange }: Props) {
               // by design). gap-3 == the prior space-y-3 rhythm in 1 col.
               <div id={panelId} className="mt-2 grid grid-cols-1 gap-3 xl:grid-cols-2">
                 {scales.map((scale) => (
-                  <ScaleRow
+                  // Per-scale scroll anchor for header search. Layout-inert
+                  // (scroll-margin-top only) so it is not a new grid styling
+                  // concern; the grid cell is this wrapper.
+                  <div
                     key={scale.id}
-                    scale={scale}
-                    root={root}
-                    notes={notesForScale(root, scale)}
-                  />
+                    id={`scale-${scale.id}`}
+                    className="scroll-mt-[140px] md:scroll-mt-[220px]"
+                  >
+                    <ScaleRow
+                      scale={scale}
+                      root={root}
+                      notes={notesForScale(root, scale)}
+                    />
+                  </div>
                 ))}
               </div>
             )}
