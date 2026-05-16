@@ -97,7 +97,12 @@ export async function playScale(noteNames: string[]): Promise<void> {
 }
 
 const CHORD_STAGGER_S = 0.15 // ~150 ms between each arpeggio note
-const CHORD_BLOCK_S = 0.6 // ~600 ms all-sustain phase at the end
+// The final arpeggio note is held this many steps (the others ring for 1
+// step) — a slight broadening before the block. User feedback 2026-05-16.
+const CHORD_LAST_NOTE_STEPS = 2
+// ~1.8 s — the closing block chord rings out. 3× the original 0.6 s, per
+// user feedback 2026-05-16.
+const CHORD_BLOCK_S = 1.8
 
 /**
  * Plays a chord with an arp-then-block envelope.
@@ -110,15 +115,17 @@ const CHORD_BLOCK_S = 0.6 // ~600 ms all-sustain phase at the end
  * @returns A Promise that resolves once all notes have been **scheduled** on the
  *   Tone.js timeline. It does **not** wait for playback to finish. Callers that
  *   want to react when the audio actually ends must set their own timer for
- *   `(n - 1) * 150 + 600 ms`.
+ *   `(n + 1) * 150 + 1800 ms`.
  *
  * Timing for n notes:
- *   - Arpeggio: note i attacks at `now + i * 0.15 s` and rings through the roll.
- *   - Block: once the arpeggio completes, ALL notes are re-struck together
- *     (a fresh simultaneous attack) at `now + n * 0.15 s` for 0.6 s. A decayed
- *     sustain tail is inaudible on a piano sampler, so the block must be a real
- *     re-attack, not just the arpeggio notes ringing on.
- *   - Total wall time ≈ `n * 150 + 600 ms` (≈1.5 – 2 s for 4-7 note chords)
+ *   - Arpeggio: note i attacks at `now + i * 0.15 s`. Notes 0..n-2 ring for one
+ *     step (0.15 s); the FINAL note is held twice as long (0.30 s) for a slight
+ *     broadening before the block.
+ *   - Block: once the (lengthened) final arpeggio note finishes, ALL notes are
+ *     re-struck together (a fresh simultaneous attack) at
+ *     `now + (n + 1) * 0.15 s` for 1.8 s. A decayed sustain tail is inaudible
+ *     on a piano sampler, so the block must be a real re-attack.
+ *   - Total wall time ≈ `(n + 1) * 150 + 1800 ms` (≈3 s for a 7-note chord)
  *
  * Re-entrancy: stops any in-flight playback first (matching `playScale`
  * semantics) — UNLESS `notes` is empty. An empty array is a true no-op: it
@@ -138,16 +145,17 @@ export async function playChord(
   const now = Tone.now()
   const active = engine
   const n = notes.length
-  // Arpeggio: each note struck in sequence, ringing through the roll.
+  // Arpeggio: each note rings for one step; the FINAL note is held
+  // CHORD_LAST_NOTE_STEPS× as long for a slight broadening before the block.
   notes.forEach((note, i) => {
     const startTime = now + i * CHORD_STAGGER_S
-    const duration = (n - i - 1) * CHORD_STAGGER_S + CHORD_BLOCK_S
-    active.triggerAttackRelease(note, duration, startTime)
+    const steps = i === n - 1 ? CHORD_LAST_NOTE_STEPS : 1
+    active.triggerAttackRelease(note, steps * CHORD_STAGGER_S, startTime)
   })
-  // Block: re-strike all notes together once the arpeggio completes so the
-  // chord lands as a distinct simultaneous hit (the arpeggio's sustain tail
-  // has decayed by now on a piano sampler and is effectively inaudible).
-  const blockStart = now + n * CHORD_STAGGER_S
+  // Block: re-strike all notes together once the lengthened final arpeggio
+  // note finishes, so the chord lands as a distinct simultaneous hit (the
+  // arpeggio tail has decayed by now on a piano sampler and is inaudible).
+  const blockStart = now + (n - 1) * CHORD_STAGGER_S + CHORD_LAST_NOTE_STEPS * CHORD_STAGGER_S
   notes.forEach((note) => {
     active.triggerAttackRelease(note, CHORD_BLOCK_S, blockStart)
   })

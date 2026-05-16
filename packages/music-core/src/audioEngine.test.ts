@@ -100,32 +100,33 @@ describe('playChord', () => {
     expect(calls[2]?.[2]).toBeCloseTo(0.30, 5)     // note 2 starts at t=300 ms
   })
 
-  it('each note duration extends to the block end so all sustain together', async () => {
-    // For 3 notes: block ends at (3-1)*0.15 + 0.6 = 0.9 s from now (t=0)
-    // note i duration = (n-i-1)*0.15 + 0.6
+  it('arpeggio notes ring one step; the final note is held twice as long', async () => {
+    // Notes 0..n-2 ring CHORD_STAGGER_S (0.15 s); the last is held 2× (0.30 s).
     await playChord(['C4', 'E4', 'G4'])
     const calls = triggerAttackRelease.mock.calls as [string, number, number][]
-    // note 0: duration = (3-0-1)*0.15 + 0.6 = 0.30 + 0.6 = 0.9
-    expect(calls[0]?.[1]).toBeCloseTo(0.9, 5)
-    // note 1: duration = (3-1-1)*0.15 + 0.6 = 0.15 + 0.6 = 0.75
-    expect(calls[1]?.[1]).toBeCloseTo(0.75, 5)
-    // note 2: duration = (3-2-1)*0.15 + 0.6 = 0 + 0.6 = 0.6
-    expect(calls[2]?.[1]).toBeCloseTo(0.6, 5)
+    const arp = calls.slice(0, 3)
+    expect(arp[0]?.[1]).toBeCloseTo(0.15, 5) // note 0: one step
+    expect(arp[1]?.[1]).toBeCloseTo(0.15, 5) // note 1: one step
+    expect(arp[2]?.[1]).toBeCloseTo(0.3, 5) // last note: twice as long
+    // Requirement (user 2026-05-16): last arpeggio note = 2× the previous ones.
+    expect(arp[2]![1]).toBeCloseTo(2 * arp[1]![1], 5)
   })
 
   it('re-strikes all notes as a simultaneous block after the arpeggio', async () => {
-    // 3 notes → 3 arpeggio calls + 3 block calls = 6 total.
-    // The block re-attacks every note together at now + n*0.15 = 0.45 s,
-    // each for CHORD_BLOCK_S = 0.6 s. (now is mocked to 0.)
+    // 3 notes → 3 arpeggio calls + 3 block calls = 6 total. The final arp note
+    // (i=2) is held 2 steps, so the block starts at (n-1)*0.15 + 2*0.15 =
+    // 0.30 + 0.30 = 0.60 s, each for CHORD_BLOCK_S = 1.8 s. (now mocked to 0.)
     await playChord(['C4', 'E4', 'G4'])
     const calls = triggerAttackRelease.mock.calls as [string, number, number][]
     expect(calls).toHaveLength(6)
     const block = calls.slice(3)
     expect(block.map((c) => c[0])).toEqual(['C4', 'E4', 'G4'])
     for (const c of block) {
-      expect(c[1]).toBeCloseTo(0.6, 5) // block duration
-      expect(c[2]).toBeCloseTo(0.45, 5) // all struck together at n*0.15
+      expect(c[1]).toBeCloseTo(1.8, 5) // block duration
+      expect(c[2]).toBeCloseTo(0.6, 5) // struck together after the held last note
     }
+    // Requirement (user 2026-05-16): block lasts 3× the original 0.6 s.
+    expect(block[0]![1]).toBeCloseTo(3 * 0.6, 5)
   })
 
   it('calls stopAll() before scheduling so re-clicking another chord stops previous playback', async () => {
