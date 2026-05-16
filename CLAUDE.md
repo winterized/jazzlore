@@ -64,6 +64,8 @@ All scripts delegate to workspaces via `pnpm -F`:
 7. **Mobile-first.** Tailwind breakpoints up from default → `md:` → `lg:`.
 8. **Conventional commits** with the trailer `Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>`.
 9. **iOS audio:** any control that plays sound MUST call `primeAudio()` from `@jazzlore/music-core` as the first synchronous statement of its click handler (before any `await`/`setState`). It promotes the iOS media session (`navigator.audioSession`, with a pre-16.4 silent-`<audio>` fallback) and unlocks the AudioContext in the gesture. Skipping it makes audio silent on iPhone — and this is **not catchable by CI/headless**; only an on-device iOS test proves audio works.
+10. **Text inputs ≥16px.** Any focusable `<input>`/`<textarea>` uses `text-[16px]` (or larger) — a smaller font makes iOS Safari auto-zoom on focus, shifting the viewport. Add `autoCorrect`/`autoCapitalize="off"` + `spellCheck={false}` (+ `inputMode`) for search/code-style fields.
+11. **Dual-variant CSS-gated controls → test with `getAllBy`/`within`.** The a11y pattern here mounts both responsive variants and hides one via Tailwind (`hidden`/`sm:` — e.g. the dual root pickers, the mobile-icon vs desktop-text collection link). jsdom doesn't evaluate those media classes, so such an element appears **twice** in unit tests: never `getBy*` it (throws on multiple) — use `getAllBy*` (assert each) or scope with `within(...)`. Real-browser e2e is unaffected.
 
 ## Quality bars (per app)
 
