@@ -5,7 +5,7 @@
  * - `aria-busy` reflects in-flight state (this is a momentary action, not a
  *   toggle — aria-pressed would be misleading semantics).
  * - Auto-release timer: the button returns to idle after the audible duration
- *   of an arp-then-block chord. Formula: (n+1) * 150 + 1800 ms ≈ 3000 ms for a
+ *   of an arp-then-block chord. Formula: (n-1) * 200 + 1700 ms ≈ 2900 ms for a
  *   7-note chord. We use a fixed 3.5 s ceiling so the idle state returns even
  *   as notes.length varies.
  * - Tap-to-restart: the button is NOT disabled while playing. A second click
@@ -22,7 +22,7 @@ import { playChord, unlockAudio, withOctaves } from '@jazzlore/music-core'
 
 /** How long (ms) to keep the playing state after scheduling completes.
  *  Must exceed the max arp-then-block wall time. For a 7-note chord:
- *  (n+1)*150 + 1800 = 8*150 + 1800 = 3000 ms. 3500 gives a margin. */
+ *  (n-1)*200 + 1700 = 6*200 + 1700 = 2900 ms. 3500 gives a margin. */
 const AUTO_RELEASE_MS = 3500
 
 /** Normalise Unicode accidentals (♭ / ♯) to ASCII (b / #) for playChord. */
