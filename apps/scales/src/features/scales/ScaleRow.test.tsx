@@ -58,6 +58,16 @@ describe('ScaleRow', () => {
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument()
   })
 
+  it('orders the action buttons sound-then-favorite (consistent with chords)', () => {
+    render(<ScaleRow scale={ionian} root="Bb" notes={['Bb', 'C', 'D', 'Eb', 'F', 'G', 'A']} />)
+    const labels = screen.getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? '')
+    const playIdx = labels.findIndex((l) => /^Play /.test(l))
+    const starIdx = labels.findIndex((l) => /save/i.test(l))
+    expect(playIdx).toBeGreaterThanOrEqual(0)
+    expect(starIdx).toBeGreaterThanOrEqual(0)
+    expect(playIdx).toBeLessThan(starIdx) // play (sound) before star (favorite)
+  })
+
   it('renders note names visually above interval numbers', () => {
     // The note-name row anchors the scale to its current root and reads
     // first; intervals are the abstract structure underneath.

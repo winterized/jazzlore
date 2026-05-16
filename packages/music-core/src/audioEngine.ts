@@ -113,10 +113,12 @@ const CHORD_BLOCK_S = 0.6 // ~600 ms all-sustain phase at the end
  *   `(n - 1) * 150 + 600 ms`.
  *
  * Timing for n notes:
- *   - Note i attacks at `now + i * 0.15 s`
- *   - Note i sustains until the block end: `now + (n-1) * 0.15 + 0.6 s`
- *   - All notes release together at that same block end time
- *   - Total wall time ≈ `(n-1) * 150 + 600 ms` (≈1.5 – 2 s for 4-7 note chords)
+ *   - Arpeggio: note i attacks at `now + i * 0.15 s` and rings through the roll.
+ *   - Block: once the arpeggio completes, ALL notes are re-struck together
+ *     (a fresh simultaneous attack) at `now + n * 0.15 s` for 0.6 s. A decayed
+ *     sustain tail is inaudible on a piano sampler, so the block must be a real
+ *     re-attack, not just the arpeggio notes ringing on.
+ *   - Total wall time ≈ `n * 150 + 600 ms` (≈1.5 – 2 s for 4-7 note chords)
  *
  * Re-entrancy: stops any in-flight playback first (matching `playScale`
  * semantics) — UNLESS `notes` is empty. An empty array is a true no-op: it
@@ -136,10 +138,18 @@ export async function playChord(
   const now = Tone.now()
   const active = engine
   const n = notes.length
+  // Arpeggio: each note struck in sequence, ringing through the roll.
   notes.forEach((note, i) => {
     const startTime = now + i * CHORD_STAGGER_S
     const duration = (n - i - 1) * CHORD_STAGGER_S + CHORD_BLOCK_S
     active.triggerAttackRelease(note, duration, startTime)
+  })
+  // Block: re-strike all notes together once the arpeggio completes so the
+  // chord lands as a distinct simultaneous hit (the arpeggio's sustain tail
+  // has decayed by now on a piano sampler and is effectively inaudible).
+  const blockStart = now + n * CHORD_STAGGER_S
+  notes.forEach((note) => {
+    active.triggerAttackRelease(note, CHORD_BLOCK_S, blockStart)
   })
 }
 

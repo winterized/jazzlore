@@ -27,7 +27,7 @@ export default function PlayButton({ notes, ariaLabel }: Props) {
       aria-busy={loading}
       className="rounded-md border border-stone-300 bg-white px-3 py-1 text-sm hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-70 dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800"
     >
-      <span aria-hidden="true">{loading ? '…' : '♪'}</span>
+      <span aria-hidden="true">{loading ? '…' : '▶'}</span>
     </button>
   )
 }

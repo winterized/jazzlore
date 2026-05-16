@@ -23,14 +23,15 @@ export default function ScaleRow({ scale, root, notes }: Props) {
             <p className="scale-alias text-sm text-stone-600 dark:text-stone-400">{scale.alias}</p>
           )}
         </div>
+        {/* Order: sound then favorite — consistent with the chords app. */}
         <div className="flex items-center gap-2">
-          <StarButton rootNote={root} scaleId={scale.id} />
           {playbackNotes.length > 0 && (
             <PlayButton
               notes={playbackNotes}
               ariaLabel={`Play ${scale.name} on ${formatRoot(root)}`}
             />
           )}
+          <StarButton rootNote={root} scaleId={scale.id} />
         </div>
       </header>
       <p className="scale-notes font-mono text-sm text-stone-700 dark:text-stone-200">

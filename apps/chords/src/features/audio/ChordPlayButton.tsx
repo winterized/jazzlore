@@ -88,7 +88,7 @@ export default function ChordPlayButton({ primary, notes }: Props) {
       aria-busy={playing}
       className={`rounded-md border border-stone-300 bg-white px-3 py-1 text-sm hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800 ${FOCUS_RING}`}
     >
-      <span aria-hidden="true">{playing ? '…' : '♪'}</span>
+      <span aria-hidden="true">{playing ? '…' : '▶'}</span>
     </button>
   )
 }

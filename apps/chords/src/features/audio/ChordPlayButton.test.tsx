@@ -148,7 +148,7 @@ describe('ChordPlayButton — in-flight state', () => {
     expect(btn).toHaveAttribute('aria-busy', 'false')
   })
 
-  it('shows "…" icon while playing and "♪" icon when idle', async () => {
+  it('shows "…" icon while playing and "▶" icon when idle', async () => {
     let resolvePlay!: () => void
     mockPlayChord.mockReturnValueOnce(
       new Promise<void>((resolve) => {
@@ -160,8 +160,9 @@ describe('ChordPlayButton — in-flight state', () => {
     renderCmaj7()
     const btn = screen.getByRole('button', { name: /Play Cmaj7/i })
 
-    // Idle: shows ♪
-    expect(btn).toHaveTextContent('♪')
+    // Idle: shows ▶ (play affordance, not a music note)
+    expect(btn).toHaveTextContent('▶')
+    expect(btn).not.toHaveTextContent('♪')
 
     fireEvent.click(btn)
     await act(async () => {
@@ -178,8 +179,8 @@ describe('ChordPlayButton — in-flight state', () => {
       vi.advanceTimersByTime(2500)
     })
 
-    // Back to idle: shows ♪
-    expect(btn).toHaveTextContent('♪')
+    // Back to idle: shows ▶
+    expect(btn).toHaveTextContent('▶')
   })
 })
 

@@ -26,4 +26,11 @@ describe('PlayButton', () => {
     expect(unlockAudio).toHaveBeenCalled()
     expect(playScale).toHaveBeenCalledWith(['C4', 'D4', 'E4'])
   })
+
+  it('shows a play affordance (▶), not a music note (♪), when idle', () => {
+    render(<PlayButton notes={['C4', 'D4', 'E4']} ariaLabel="Play Ionian" />)
+    const btn = screen.getByRole('button', { name: 'Play Ionian' })
+    expect(btn).toHaveTextContent('▶')
+    expect(btn).not.toHaveTextContent('♪')
+  })
 })
