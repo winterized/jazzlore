@@ -43,10 +43,11 @@ let toneBoundToPrimed = false
 // iOS has no easy devtools; this lets the play buttons alert() a one-line
 // state snapshot when the URL has ?audiodebug=1. Bump AUDIO_BUILD on each
 // diagnostic deploy so a stale iOS cache is immediately obvious.
-const AUDIO_BUILD = 'audiodbg-1'
+const AUDIO_BUILD = 'audiodbg-2'
 let lastAudioError = ''
 let toneCtxState = 'n/a'
 let toneRawState = 'n/a'
+let audioSessionInfo = 'n/a'
 function recordAudioError(stage: string, e: unknown): void {
   lastAudioError = `${stage}:${e instanceof Error ? `${e.name} ${e.message}` : String(e)}`
 }
@@ -63,6 +64,7 @@ export function audioDebugSummary(): string {
     `toneCtx=${toneCtxState}`,
     `rawCtx=${toneRawState}`,
     `engine=${kind ?? 'none'}`,
+    `as=${audioSessionInfo}`,
     `err=${lastAudioError || 'none'}`,
   ].join(' ')
 }
@@ -77,6 +79,20 @@ export function audioDebugSummary(): string {
 export function primeAudio(): void {
   if (typeof window === 'undefined') return
   try {
+    // iOS >=16.4: WebAudio defaults to an "ambient" audio session that the
+    // hardware mute switch silences and that follows RINGER (not media)
+    // volume — so sound is inaudible even when NOT in silent mode if the
+    // ringer volume is low. Promote to a "playback" session: audible
+    // regardless of the silent switch, on the media volume channel. Must run
+    // in the gesture; no-op where unsupported (older iOS / other browsers).
+    const navAS = (navigator as unknown as { audioSession?: { type: string } }).audioSession
+    if (navAS) {
+      navAS.type = 'playback'
+      audioSessionInfo = `set/${navAS.type}`
+    } else {
+      audioSessionInfo = 'unsupported'
+    }
+
     const w = window as unknown as {
       AudioContext?: typeof AudioContext
       webkitAudioContext?: typeof AudioContext
@@ -273,4 +289,5 @@ export function __resetForTests(): void {
   lastAudioError = ''
   toneCtxState = 'n/a'
   toneRawState = 'n/a'
+  audioSessionInfo = 'n/a'
 }
