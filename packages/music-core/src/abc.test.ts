@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { buildAbcTune, buildChordAbc, noteToAbc, notesToAbcVoice } from './abc'
+import { chordNotes } from './chord'
+import type { ChordDefinition } from './chord-types'
+import { pitchClass } from './music'
 
 describe('noteToAbc', () => {
   it('uppercase letter for octave 4', () => {
@@ -113,7 +116,7 @@ describe('buildChordAbc', () => {
   })
 
   it('F# major triad — sharps render as ^ prefix', () => {
-    // F♯4 A♯4 — then C♯ wraps past A♯ (order 0 ≤ 5), so C♯ lands in octave 5 (lowercase)
+    // Each offset is reconstructed mod-12 ascending from the root then octave-derived, so C♯ resolves to octave 5 (lowercase `c`).
     const abc = buildChordAbc(['F♯', 'A♯', 'C♯'])
     expect(abc).toContain('^F')
     expect(abc).toContain('^A')
@@ -163,5 +166,141 @@ describe('buildChordAbc', () => {
     // Same as above but using the true Unicode glyph instead of stacked ♭♭.
     const abc = buildChordAbc(['C', 'E♭', 'G♭', 'A𝄫'])
     expect(abc).toContain('__A')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Octave-fold invariant: the score must match the piano keyboard.
+//
+// The keyboard (packages/ui/src/pianoKeyboard.helpers.ts →
+// resolveChordKeyPositions) places each chord tone at its root-relative
+// semitone offset, folded with `while offset>23 offset-=12`, anchored at the
+// root (r0 = 0 when startPc == rootPc). buildChordAbc must place the noteheads
+// at the SAME semitone positions so the rendered score never exceeds 2
+// octaves and reads identically to the keyboard.
+//
+// We re-implement the keyboard fold here (NOT importing @jazzlore/ui — that
+// would create a dependency cycle and music-core has no UI deps) so the
+// expected positions are derived from the formula, not hand-typed.
+// ---------------------------------------------------------------------------
+
+/**
+ * Decode a buildChordAbc string into the absolute semitone position of every
+ * notehead, in chord order. abcjs octave conventions: uppercase letter =
+ * octave 4, lowercase = octave 5, `'` raises an octave, `,` lowers one. The
+ * `^`/`_`/`^^`/`__` prefixes are accidentals (pitch-class shift, no octave
+ * change). Position = pitchClass(noteName) + 12 * octave.
+ */
+function decodeChordAbcPositions(abc: string): number[] {
+  const body = abc.slice(abc.lastIndexOf('[') + 1, abc.lastIndexOf(']'))
+  const tokenRe = /(\^\^|__|\^|_)?([A-Ga-g])((?:,|')*)/g
+  const positions: number[] = []
+  let m: RegExpExecArray | null
+  while ((m = tokenRe.exec(body)) !== null) {
+    const accidental = m[1] ?? ''
+    const letter = m[2]!
+    const marks = m[3] ?? ''
+    const isLower = letter >= 'a' && letter <= 'z'
+    let octave = isLower ? 5 : 4
+    if (marks[0] === "'") octave += marks.length // each `'` = +1 octave above the base, each `,` = −1 (marks.length is the count)
+    else if (marks[0] === ',') octave -= marks.length
+    const accSuffix =
+      accidental === '^^' ? '##' : accidental === '__' ? 'bb' : accidental === '^' ? '#' : accidental === '_' ? 'b' : ''
+    const pc = pitchClass(letter.toUpperCase() + accSuffix)
+    positions.push(pc + 12 * octave)
+  }
+  return positions
+}
+
+/**
+ * Keyboard fold reference: given a chord's ascending root-relative semitone
+ * offsets (element 0 = root, 0), return each tone's folded offset
+ * (`while offset>23 offset-=12`). Mirrors resolveChordKeyPositions with r0=0.
+ */
+function keyboardFoldedOffsets(intervals: readonly number[]): number[] {
+  return intervals.map((s) => {
+    let t = s
+    while (t > 23) t -= 12
+    return t
+  })
+}
+
+describe('buildChordAbc — folds to ≤2 octaves matching the piano keyboard', () => {
+  it('simple chords are unchanged (≤1 octave): C major', () => {
+    const abc = buildChordAbc(['C', 'E', 'G'])!
+    // root C in octave 4 (uppercase, no marks), E and G ascending in octave 4.
+    expect(abc).toBe('X:1\nM:none\nL:1/1\nK:C\n[CEG]')
+    const pos = decodeChordAbcPositions(abc)
+    const rootAbs = pos[0]!
+    expect(pos.map((p) => p - rootAbs)).toEqual(keyboardFoldedOffsets([0, 4, 7]))
+  })
+
+  it('simple chords are unchanged (≤1 octave): Cmaj7', () => {
+    const abc = buildChordAbc(['C', 'E', 'G', 'B'])!
+    expect(abc).toBe('X:1\nM:none\nL:1/1\nK:C\n[CEGB]')
+    const pos = decodeChordAbcPositions(abc)
+    const rootAbs = pos[0]!
+    expect(pos.map((p) => p - rootAbs)).toEqual(keyboardFoldedOffsets([0, 4, 7, 11]))
+  })
+
+  it('7alt (new spelling) folds to ≤2 octaves and matches the keyboard', () => {
+    // New 7alt spelling: chordNotes('C', 7alt) = [C,E,B♭,D♭,D♯,F♯,A♭],
+    // intervals [0,4,10,13,15,18,20].
+    const notes = ['C', 'E', 'B♭', 'D♭', 'D♯', 'F♯', 'A♭']
+    const abc = buildChordAbc(notes)!
+    const pos = decodeChordAbcPositions(abc)
+    const rootAbs = pos[0]!
+    const offsets = pos.map((p) => p - rootAbs)
+    expect(offsets).toEqual(keyboardFoldedOffsets([0, 4, 10, 13, 15, 18, 20]))
+    // Total staff span ≤ 24 semitones (2 octaves).
+    expect(Math.max(...offsets) - Math.min(...offsets)).toBeLessThanOrEqual(24)
+  })
+
+  it('F♯7alt — non-C root: score↔keyboard invariant holds across all roots', () => {
+    // Drives the fold invariant for a non-C root: chordNotes resolves enharmonic
+    // spellings for F♯ (e.g. G♯♯ for ♯9, B♯ for ♯11), buildChordAbc must still
+    // place the noteheads at the same root-relative offsets the keyboard uses.
+    // The keyboard fold is root-relative so the expected offsets are the same
+    // [0,4,10,13,15,18,20] regardless of root.
+    const def7alt: ChordDefinition = {
+      id: '7alt',
+      primarySuffix: '7alt',
+      fullName: 'altered dominant',
+      intervals: [0, 4, 10, 13, 15, 18, 20],
+      tonalIntervals: ['1P', '3M', '7m', '9m', '9A', '11A', '13m'],
+    }
+    const voicing = chordNotes('F♯', def7alt)
+    const abc = buildChordAbc([...voicing.notes])!
+    const pos = decodeChordAbcPositions(abc)
+    const rootAbs = pos[0]!
+    const offsets = pos.map((p) => p - rootAbs)
+    expect(offsets).toEqual(keyboardFoldedOffsets([0, 4, 10, 13, 15, 18, 20]))
+    // Total staff span ≤ 24 semitones (2 octaves).
+    expect(Math.max(...offsets) - Math.min(...offsets)).toBeLessThanOrEqual(24)
+  })
+
+  it('maj13 folds to ≤2 octaves and matches the keyboard', () => {
+    // chordNotes('C', maj13) = [C,E,G,B,D,A], intervals [0,4,7,11,14,21].
+    const abc = buildChordAbc(['C', 'E', 'G', 'B', 'D', 'A'])!
+    const pos = decodeChordAbcPositions(abc)
+    const rootAbs = pos[0]!
+    const offsets = pos.map((p) => p - rootAbs)
+    expect(offsets).toEqual(keyboardFoldedOffsets([0, 4, 7, 11, 14, 21]))
+    expect(Math.max(...offsets) - Math.min(...offsets)).toBeLessThanOrEqual(24)
+  })
+
+  it('dominant 13 folds to ≤2 octaves and matches the keyboard', () => {
+    // chordNotes('C', 13) = [C,E,G,B♭,D,A], intervals [0,4,7,10,14,21].
+    const abc = buildChordAbc(['C', 'E', 'G', 'B♭', 'D', 'A'])!
+    const pos = decodeChordAbcPositions(abc)
+    const rootAbs = pos[0]!
+    const offsets = pos.map((p) => p - rootAbs)
+    expect(offsets).toEqual(keyboardFoldedOffsets([0, 4, 7, 10, 14, 21]))
+    expect(Math.max(...offsets) - Math.min(...offsets)).toBeLessThanOrEqual(24)
+  })
+
+  it('still produces a syntactically valid ABC envelope', () => {
+    const abc = buildChordAbc(['C', 'E', 'B♭', 'D♭', 'D♯', 'F♯', 'A♭'])!
+    expect(abc).toMatch(/^X:1\nM:none\nL:1\/1\nK:C\n\[[^\]]+\]$/)
   })
 })

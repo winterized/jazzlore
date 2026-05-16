@@ -1,3 +1,5 @@
+import { pitchClass } from './music'
+
 /** Pitch order within an octave — C is the boundary in scientific pitch notation. */
 const PITCH_ORDER: Record<string, number> = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6 }
 
@@ -96,10 +98,20 @@ function normaliseNote(note: string): string {
  * (`[CEG]` syntax), ready to pass to abcjs.renderAbc.
  *
  * Notes are accepted with either Unicode (♯/♭) or ASCII (#/b) accidentals.
- * The root note is placed in `octave` (default 4). Subsequent notes are
- * assigned to ascending octaves: whenever a note's pitch order is ≤ the
- * previous note's, the octave increments by 1 so the chord reads upward on
- * the staff without any crossing voices.
+ * The root note (the first element) is placed in `octave` (default 4).
+ *
+ * **Octave-fold — matches the piano keyboard.** The chord is laid out at the
+ * SAME semitone positions the keyboard uses
+ * (`packages/ui/src/pianoKeyboard.helpers.ts → resolveChordKeyPositions`):
+ * each note's root-relative semitone offset is reconstructed as the smallest
+ * value ≥ the previous note's offset that is congruent (mod 12) to the note's
+ * pitch class relative to the root — this rebuilds the ascending chord stack
+ * the keyboard receives via its `intervals` array (so a 13th's 9th sits at
+ * +14, not +2). The offset is then folded into the fixed 2-octave window with
+ * `while (offset > 23) offset -= 12`, identical to the keyboard's fold. Each
+ * notehead's staff octave is derived from that folded offset, so the rendered
+ * score never exceeds 2 octaves and reads identically to the keyboard dots.
+ * Chords that already fit in ≤2 octaves (triads, 7ths) are unchanged.
  *
  * Headers:
  *   X:1     reference number
@@ -114,20 +126,30 @@ export function buildChordAbc(notes: string[], octave = 4): string | null {
 
   const normalised = notes.map(normaliseNote)
 
-  const orderOf = (n: string): number => {
-    const head = n[0]
-    if (!head) throw new Error(`empty note token`)
-    const o = PITCH_ORDER[head]
-    if (o === undefined) throw new Error(`unknown note letter "${head}" in token "${n}"`)
-    return o
-  }
+  const rootName = normalised[0]!
+  const rootPc = pitchClass(rootName)
+  // Absolute pitch reference for the root, in pitch-class semitones.
+  const rootMidi = rootPc + octave * 12
 
-  let oct = octave
-  let prevOrder = -1
-  const tokens = normalised.map((n) => {
-    const order = orderOf(n)
-    if (prevOrder !== -1 && order <= prevOrder) oct += 1
-    prevOrder = order
+  let prevOffset = 0
+  const tokens = normalised.map((n, i) => {
+    let offset: number
+    if (i === 0) {
+      offset = 0
+    } else {
+      // Smallest offset ≥ prevOffset that is congruent (mod 12) to this note's
+      // pitch class relative to the root — rebuilds the ascending chord stack.
+      const rel = (((pitchClass(n) - rootPc) % 12) + 12) % 12
+      offset = prevOffset + (((rel - prevOffset) % 12) + 12) % 12
+      // Keyboard fold: keep every tone inside the 2-octave (24-semitone) window.
+      while (offset > 23) offset -= 12
+    }
+    prevOffset = offset
+    const target = rootMidi + offset
+    // Choose the staff octave so the notehead lands on `target`. abcjs places
+    // by (letter, octave); pitchClass(n) gives this note's own class so the
+    // rounding resolves the correct octave even across enharmonic spellings.
+    const oct = Math.round((target - pitchClass(n)) / 12)
     return noteToAbc(n, oct)
   })
 
