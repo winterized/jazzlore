@@ -73,10 +73,13 @@
     padding: 8px !important;
   }
 
-  /* Make the chord card a column layout in print */
-  .chord-row header {
-    flex-direction: column !important;
-    gap: 4px !important;
+  /* The card is a CSS grid on screen (.chord-row in index.css). For print,
+     neutralise the grid so its children stack as blocks in source order
+     (info → score → keyboard; .chord-actions is print:hidden). */
+  .chord-row {
+    display: block !important;
+  }
+  .chord-info {
     margin-bottom: 4px !important;
   }
 
@@ -98,10 +101,10 @@
    * Matches scales' print.css, which intentionally lets the 2-column A4 grid
    * column size the score. */
 
-  /* Body layout: stack score + keyboard vertically in print */
-  .chord-body {
-    flex-direction: column !important;
-    gap: 4px !important;
+  /* (.chord-body removed — flat grid now.) Print spacing for the surviving
+     stacked children. */
+  .chord-score,
+  .chord-keyboard {
     margin-top: 4px !important;
   }
 

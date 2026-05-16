@@ -19,6 +19,7 @@ import {
 import type { ChordDefinition } from '@jazzlore/music-core'
 import { formatIntervals } from '../../lib/formatIntervals'
 import { rootToStartPc } from '../../lib/rootToStartPc'
+import { useMediaQuery } from '../../lib/useMediaQuery'
 import ChordPlayButton from '../audio/ChordPlayButton'
 import ChordSymbolDisplay from './ChordSymbolDisplay'
 import StarButton from './StarButton'
@@ -57,45 +58,53 @@ export default function ChordRow({ rootNote, definition }: Props) {
 
   const { primary, alternate, rootPc, startPc, chordSemitones, intervalsLabel, notesLabel, abc, playNotes } = derived
 
-  // data-testid (rather than getByRole('article')) anchors the test count
-  // against future layout that might wrap row content in nested articles.
+  // The card is a CSS grid (`.chord-row` rule in index.css) that reflows by
+  // breakpoint: ≥768 reproduces the original info|actions / score|keyboard
+  // layout; 480–767 puts a compact mini-score on the header row (reclaiming
+  // the ~114px the stacked score wasted); <480 keeps the stacked fallback.
+  // abcjs renders at a fixed staffwidth, so a single instance can't be both
+  // sizes via CSS — use a compact 170 ONLY in the 480–767 inline band, and
+  // the original 320 at <480 and ≥768 so those stay byte-identical. The hook
+  // re-renders only when crossing the band edges, not per resize.
+  const isHeaderScore = useMediaQuery('(min-width: 480px) and (max-width: 767.98px)')
+  const scoreStaffwidth = isHeaderScore ? 170 : 320
+
+  // Flat grid children in source order info → actions → score → keyboard
+  // (a11y/tab/print order); grid-area placement is purely CSS.
+  // data-testid anchors the test count regardless of layout.
   return (
     <article data-testid="chord-row" className="chord-row rounded-lg border border-stone-200 p-4 dark:border-stone-700">
-      <header className="mb-2 flex items-start justify-between gap-3">
-        <div className="flex gap-4">
-          <ChordSymbolDisplay primary={primary} alternate={alternate} />
-          <div>
-            <p className="chord-full-name text-sm font-medium text-stone-700 dark:text-stone-300">
-              {definition.fullName}
-            </p>
-            <p className="chord-notes font-mono text-sm text-stone-700 dark:text-stone-200">
-              {notesLabel}
-            </p>
-            <p className="chord-intervals font-mono text-sm text-stone-600 dark:text-stone-400">
-              {intervalsLabel}
-            </p>
-          </div>
+      <div className="chord-info flex gap-4">
+        <ChordSymbolDisplay primary={primary} alternate={alternate} />
+        <div>
+          <p className="chord-full-name text-sm font-medium text-stone-700 dark:text-stone-300">
+            {definition.fullName}
+          </p>
+          <p className="chord-notes font-mono text-sm text-stone-700 dark:text-stone-200">
+            {notesLabel}
+          </p>
+          <p className="chord-intervals font-mono text-sm text-stone-600 dark:text-stone-400">
+            {intervalsLabel}
+          </p>
         </div>
-        {/* Play and star buttons are hidden in print via print:hidden */}
-        <div className="flex shrink-0 items-center gap-2 print:hidden">
-          <ChordPlayButton primary={primary} notes={playNotes} />
-          <StarButton rootNote={rootNote} chordId={definition.id} primary={primary} />
+      </div>
+      {/* Play and star buttons are hidden in print via print:hidden */}
+      <div className="chord-actions flex shrink-0 items-center gap-2 print:hidden">
+        <ChordPlayButton primary={primary} notes={playNotes} />
+        <StarButton rootNote={rootNote} chordId={definition.id} primary={primary} />
+      </div>
+      {abc !== null && (
+        <div className="chord-score">
+          <AbcScore abc={abc} staffwidth={scoreStaffwidth} />
         </div>
-      </header>
-      <div className="chord-body mt-3 flex flex-col gap-3 md:flex-row">
-        {abc !== null && (
-          <div className="chord-score w-full md:w-48 md:shrink-0">
-            <AbcScore abc={abc} />
-          </div>
-        )}
-        <div className="chord-keyboard min-w-0 flex-1">
-          <PianoKeyboard
-            voicing="chord"
-            chordSemitones={chordSemitones}
-            rootPc={rootPc}
-            startPc={startPc}
-          />
-        </div>
+      )}
+      <div className="chord-keyboard min-w-0">
+        <PianoKeyboard
+          voicing="chord"
+          chordSemitones={chordSemitones}
+          rootPc={rootPc}
+          startPc={startPc}
+        />
       </div>
     </article>
   )
