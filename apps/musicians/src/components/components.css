@@ -898,7 +898,11 @@
 }
 .mu3 .journey .blb {
   font-size: 10.5px;
-  color: var(--muted);
+  /* --text-soft, not --muted: this 10.5px blurb composites on the rendered
+     .journey surface #333333 (card+line+page blend), where dark --muted
+     #928b80 is only 3.74:1 (sub-AA). --text-soft clears AA with margin:
+     dark #d9d2c1 = 8.39:1, light #3a342c ≥ 10.9:1 on the same surface. */
+  color: var(--text-soft);
   margin-top: 3px;
   line-height: 1.4;
 }

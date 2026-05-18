@@ -22,7 +22,10 @@
        active/selected signifiers, and any CTA where `--accent-fg` sits on
        an accent background (that bg must be `--accent-strong`).
      • `--dim` was sub-AA wherever it was used as text → retargeted to the
-       `--muted` values (both themes), measured AA on every surface.
+       `--muted` values (both themes), measured AA on the flat token
+       surfaces it paints text on (bg/paper/card — NOT a blanket "every
+       surface": the .journey card's composited #333333 is the documented
+       exception, handled via --text-soft on .journey .blb in components.css).
    Derived by measuring WCAG ratios against the ACTUAL surfaces each token
    paints on (see commit body / final summary for the ratio table).
    Downstream phases (C/D/E) must NOT edit this block; usages select the
@@ -144,9 +147,12 @@
     --card-hover: #1d1d1d;
     --text: #f4eede;
     --text-soft: #d9d2c1;
-    /* --muted nudged from pass-5 #8a8378 (4.1:1 on the .journey card+line
-       blend #242424 — sub-AA for 10.5px body text) to #928b80: ≥4.6:1 on
-       every surface --muted paints text on, minimal neutral-warm-grey drift. */
+    /* --muted nudged from pass-5 #8a8378 to #928b80 (minimal neutral-warm-grey
+       drift) — clears AA on the flat token surfaces it paints text on
+       (bg/paper/card). It does NOT clear AA on the .journey card's *rendered*
+       surface, which composites card+line+page to ≈#333333 where #928b80 is
+       only 3.74:1; .journey .blb therefore uses --text-soft there (8.39:1
+       dark) instead of --muted (see components.css). Not "every surface". */
     --muted: #928b80;
     /* --dim retargeted to the --muted value: pass-5 #565047 measured 2.2–2.5:1
        on dark surfaces (sub-AA) wherever it was used as text. #928b80 ≥ 4.6:1. */
