@@ -89,7 +89,7 @@ export default function GraphScene({
                 <circle
                   r={n.radius}
                   fill="none"
-                  stroke={isSelected ? 'var(--accent)' : 'var(--line)'}
+                  stroke={isSelected ? 'var(--accent-strong)' : 'var(--line)'}
                   strokeWidth={isSelected ? 2 : 0.75}
                   opacity={isSelected ? 0.9 : 0.5}
                 />

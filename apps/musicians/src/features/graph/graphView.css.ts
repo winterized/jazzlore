@@ -48,20 +48,20 @@ export const GRAPH_CSS = `
 }
 .mu-graph-ctrls button:hover { background: var(--card-hover); }
 .mu-graph-ctrls button:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--accent-strong);
   outline-offset: 2px;
 }
 .mu-graph-ctrls button[aria-pressed='true'] {
-  background: var(--accent);
+  background: var(--accent-strong);
   color: var(--accent-fg);
-  border-color: var(--accent);
+  border-color: var(--accent-strong);
 }
 .mu-graph-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .mu-graph-svg:focus-visible { outline: none; }
 .mu-gnode { cursor: pointer; }
 .mu-gnode:focus-visible { outline: none; }
 .mu-gnode:focus-visible > circle:last-of-type {
-  stroke: var(--accent);
+  stroke: var(--accent-strong);
   stroke-width: 2.5;
   opacity: 1;
 }
