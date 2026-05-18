@@ -56,6 +56,7 @@ function readCreds(): AuraCreds {
   const uri = process.env.NEO4J_URI ?? file.NEO4J_URI
   const username = process.env.NEO4J_USERNAME ?? file.NEO4J_USERNAME
   const password = process.env.NEO4J_PASSWORD ?? file.NEO4J_PASSWORD
+  const database = process.env.NEO4J_DATABASE ?? file.NEO4J_DATABASE
   if (!uri || !username || !password) {
     console.error(
       'Missing NEO4J_URI / NEO4J_USERNAME / NEO4J_PASSWORD ' +
@@ -63,7 +64,7 @@ function readCreds(): AuraCreds {
     )
     process.exit(2)
   }
-  return { uri, username, password }
+  return { uri, username, password, database }
 }
 
 async function main(): Promise<void> {

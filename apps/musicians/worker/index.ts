@@ -39,6 +39,7 @@ function auraCreds(env: Env): AuraCreds | null {
     uri: env.NEO4J_URI,
     username: env.NEO4J_USERNAME,
     password: env.NEO4J_PASSWORD,
+    database: env.NEO4J_DATABASE,
   }
 }
 

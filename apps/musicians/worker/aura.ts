@@ -42,6 +42,10 @@ export interface AuraCreds {
   uri: string
   username: string
   password: string
+  /** Aura database name. Optional; defaults to `neo4j` (Aura Free) when
+   * absent. Enterprise/AuraDS/self-managed instances can use a custom name —
+   * the Query API path is `/db/<database>/query/v2`. */
+  database?: string
 }
 
 interface AuraQueryV2Body {
@@ -73,9 +77,13 @@ export function httpQueryBase(uri: string): string {
   return u
 }
 
-/** Strip a trailing slash so `${uri}/db/neo4j/query/v2` is well-formed. */
-function queryEndpoint(uri: string): string {
-  return `${httpQueryBase(uri)}/db/neo4j/query/v2`
+/** Build the Aura Query API v2 endpoint. The database segment is configurable
+ * (`/db/<database>/query/v2`) — Aura Free is `neo4j` but Enterprise/AuraDS/
+ * self-managed can differ; hardcoding `neo4j` made every non-default instance
+ * fail with `DatabaseNotFound`. Falls back to `neo4j` when unset. */
+function queryEndpoint(uri: string, database?: string): string {
+  const db = database && database.trim() ? database.trim() : 'neo4j'
+  return `${httpQueryBase(uri)}/db/${encodeURIComponent(db)}/query/v2`
 }
 
 /**
@@ -94,7 +102,7 @@ export async function auraQuery(
   const timer = setTimeout(() => controller.abort(), AURA_TIMEOUT_MS)
   let res: Response
   try {
-    res = await fetchImpl(queryEndpoint(creds.uri), {
+    res = await fetchImpl(queryEndpoint(creds.uri, creds.database), {
       method: 'POST',
       signal: controller.signal,
       headers: {

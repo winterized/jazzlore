@@ -13,6 +13,11 @@ export interface Env {
   NEO4J_URI?: string
   NEO4J_USERNAME?: string
   NEO4J_PASSWORD?: string
+  /** Aura database name. Aura Free defaults to `neo4j`, but Enterprise/AuraDS
+   * or self-managed instances can use a custom name — the HTTP Query API path
+   * is `/db/<database>/query/v2`, so this must be configurable, not hardcoded.
+   * Optional; falls back to `neo4j` when unset. */
+  NEO4J_DATABASE?: string
 }
 
 /** Edge `Cache-Control` per endpoint (technical note "API shape").

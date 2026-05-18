@@ -65,6 +65,36 @@ describe('auraQuery — request shaping', () => {
       'https://abc.databases.neo4j.io/db/neo4j/query/v2',
     )
   })
+
+  it('targets a configurable database when creds.database is set', async () => {
+    const spy = vi.fn(
+      async () => new Response(JSON.stringify(HEALTH_OK), { status: 200 }),
+    )
+    await auraQuery(
+      { ...CREDS, database: 'd30e12cc' },
+      'RETURN 1',
+      {},
+      spy as unknown as typeof fetch,
+    )
+    expect((spy.mock.calls[0]! as unknown as [string])[0]).toBe(
+      'https://abc.databases.neo4j.io/db/d30e12cc/query/v2',
+    )
+  })
+
+  it('falls back to the `neo4j` database when creds.database is blank', async () => {
+    const spy = vi.fn(
+      async () => new Response(JSON.stringify(HEALTH_OK), { status: 200 }),
+    )
+    await auraQuery(
+      { ...CREDS, database: '   ' },
+      'RETURN 1',
+      {},
+      spy as unknown as typeof fetch,
+    )
+    expect((spy.mock.calls[0]! as unknown as [string])[0]).toBe(
+      'https://abc.databases.neo4j.io/db/neo4j/query/v2',
+    )
+  })
 })
 
 describe('httpQueryBase — Aura Bolt-URI → HTTP Query API base', () => {
