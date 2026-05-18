@@ -59,8 +59,8 @@ describe('useFocusTrap — focus restoration on cleanup', () => {
     // case: the disclosure link unmounts together with the sheet).
     rerender(<Harness showTrap={false} showTrigger={false} />)
 
-    const h1 = screen.getByRole('heading', { level: 1 })
-    expect(h1).toHaveFocus()
-    expect(document.activeElement).not.toBe(document.body)
+    // Focus landed on the page <h1> (meaningful content), NOT silently on
+    // <body> — toHaveFocus on the heading proves both.
+    expect(screen.getByRole('heading', { level: 1 })).toHaveFocus()
   })
 })
