@@ -1,0 +1,120 @@
+import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router'
+import { describe, expect, it } from 'vitest'
+import { MODERATE, RICH, SPARSE } from '../../test/fixtures'
+import { DetailView } from './DetailView'
+
+function setup(detail = MODERATE, opts: { duplicate?: boolean } = {}) {
+  return render(
+    <MemoryRouter>
+      <DetailView detail={detail} duplicate={opts.duplicate ?? false} />
+    </MemoryRouter>,
+  )
+}
+
+describe('DetailView — identity / bio / listen', () => {
+  it('renders the identity strip with name + instrument line', () => {
+    setup()
+    expect(
+      screen.getByRole('heading', { level: 1, name: /Bobby Timmons/i }),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/piano/i)).toBeInTheDocument()
+  })
+
+  it('renders the bio + a "More about" disclosure link to #about', () => {
+    setup()
+    expect(screen.getByText(/leading hard-bop voice/i)).toBeInTheDocument()
+    const more = screen.getByRole('link', { name: /more about bobby/i })
+    expect(more).toHaveAttribute('href', '#about')
+  })
+
+  it('renders Spotify + Apple deep-links from the frozen links builder', () => {
+    setup()
+    const listen = screen.getByRole('region', {
+      name: /listen to bobby timmons/i,
+    })
+    const spotify = within(listen).getByRole('link', {
+      name: /listen on spotify/i,
+    })
+    const apple = within(listen).getByRole('link', { name: /apple music/i })
+    expect(spotify).toHaveAttribute(
+      'href',
+      'https://open.spotify.com/search/Bobby%20Timmons',
+    )
+    expect(apple).toHaveAttribute(
+      'href',
+      'https://music.apple.com/search?term=Bobby%20Timmons',
+    )
+  })
+
+  it('renders the orbit mosaic and the records strip', () => {
+    setup()
+    expect(screen.getByRole('group', { name: /orbit/i })).toBeInTheDocument()
+    expect(screen.getByText(/records they shaped/i)).toBeInTheDocument()
+  })
+})
+
+describe('DetailView — headliners + expansion CTA (total > 16)', () => {
+  it('caps headliners at 16 and shows the expansion CTA only when total > 16', () => {
+    setup(RICH)
+    // RICH fixture has 3 + 18 = 21 collaborators.
+    const rail = screen.getByRole('list', { name: /where to go from here/i })
+    const rows = within(rail).getAllByRole('link', { name: /records?/i })
+    // 16 headliner rows (each ConnRow is role=link with a "records" label).
+    const headliners = rows.filter((r) =>
+      /\d+ records?/.test(r.getAttribute('aria-label') ?? ''),
+    )
+    expect(headliners).toHaveLength(16)
+    expect(
+      screen.getByRole('button', { name: /show all 21 collaborators/i }),
+    ).toBeInTheDocument()
+  })
+
+  it('does NOT show the CTA when total ≤ 16 (Bobby-like)', () => {
+    setup(MODERATE)
+    expect(screen.queryByRole('button', { name: /show all/i })).toBeNull()
+  })
+
+  it('expands inline on CTA tap: CTA hidden, tail-marker shown, long tail rendered', async () => {
+    setup(RICH)
+    await userEvent.setup().click(
+      screen.getByRole('button', { name: /show all 21 collaborators/i }),
+    )
+    expect(screen.queryByRole('button', { name: /show all/i })).toBeNull()
+    expect(screen.getByText(/the rest/i)).toBeInTheDocument()
+    const rail = screen.getByRole('list', { name: /where to go from here/i })
+    const allRows = within(rail).getAllByRole('link', {
+      name: /\d+ records?/i,
+    })
+    expect(allRows).toHaveLength(21)
+  })
+})
+
+describe('DetailView — sparse variant + duplicate flag', () => {
+  it('shows a "bio not yet written" placeholder when there is no bio', () => {
+    setup(SPARSE)
+    expect(screen.getByText(/bio not yet written/i)).toBeInTheDocument()
+  })
+
+  it('renders initials (no portrait) for sparse musicians — never silent', () => {
+    setup(SPARSE)
+    // Antoine Hervé → AH initials on the identity tile.
+    expect(screen.getAllByText('AH').length).toBeGreaterThan(0)
+  })
+
+  it('shows the user-facing duplicate flag when flagged (Antoine design)', () => {
+    setup(SPARSE, { duplicate: true })
+    expect(screen.getByText(/possible duplicate/i)).toBeInTheDocument()
+  })
+
+  it('does NOT show the duplicate flag when not flagged', () => {
+    setup(SPARSE, { duplicate: false })
+    expect(screen.queryByText(/possible duplicate/i)).toBeNull()
+  })
+
+  it('renders an empty-state line when there are no collaborators', () => {
+    setup({ ...SPARSE, collaborators: [] })
+    expect(screen.getByText(/no collaborators on file/i)).toBeInTheDocument()
+  })
+})
