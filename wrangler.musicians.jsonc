@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "jazzlore-musicians",
+  "compatibility_date": "2026-05-12",
+  "main": "./apps/musicians/worker/index.ts",
+  "assets": {
+    "directory": "./apps/musicians/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  }
+}

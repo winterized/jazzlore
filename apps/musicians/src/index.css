@@ -1,0 +1,24 @@
+@import 'tailwindcss';
+
+/* Drive Tailwind v4 dark: variant from data-theme="dark", not prefers-color-scheme.
+   Required for the manual theme toggle to override the OS preference. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+@source "../../../packages/ui/src";
+
+/* Phase B: musicians design-token layer + self-hosted fonts go here */
+
+/* Root background must live on <html>, not only on each page's <main>, so the
+   themed canvas covers overscroll and any translucent chrome. data-theme is set
+   on <html> by music-core applyTheme(). The musicians-specific token palette
+   (--bg/--paper/--card/--accent, Geist / Geist Mono / Newsreader) is built and
+   frozen in Phase B; this is the minimal valid placeholder until then. */
+@layer base {
+  html {
+    background-color: var(--color-stone-100);
+    color: var(--color-stone-900);
+  }
+  html[data-theme='dark'] {
+    background-color: var(--color-stone-950);
+    color: var(--color-stone-100);
+  }
+}

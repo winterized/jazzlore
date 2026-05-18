@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "pnpm -F @jazzlore/scales dev",
     "dev:chords": "pnpm -F @jazzlore/chords dev",
-    "build": "pnpm -F @jazzlore/scales build && pnpm -F @jazzlore/chords build",
+    "dev:musicians": "pnpm -F @jazzlore/musicians dev",
+    "build": "pnpm -F @jazzlore/scales build && pnpm -F @jazzlore/chords build && pnpm -F @jazzlore/musicians build",
     "build:chords": "pnpm -F @jazzlore/chords build",
     "preview": "pnpm -F @jazzlore/scales preview",
     "typecheck": "pnpm -r run typecheck",

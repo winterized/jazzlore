@@ -28,6 +28,8 @@ storybook-static
 .env
 .env.local
 .env.*.local
+.dev.vars
+.dev.vars.*
 
 # Test artifacts
 coverage/
