@@ -152,37 +152,41 @@ export const SEARCH_INDEX = {
   },
 }
 
-// Curated hydration: only 2 of the picked ids resolve in Neo4j (the first two
-// reconciled curated picks — Dizzy Gillespie, Archie Shepp; see
-// docs/data-audit.md §5); the other 10 picks are unresolved in this stub →
-// faithfully dropped. Ids are real reconciled `CURATED` ids so the
-// `handleCurated` id-join (endpoints.ts) still resolves exactly these two.
+// Curated hydration: only 2 of the picked ids resolve in this stub (the first
+// two restored iconic curated picks — Miles Davis, John Coltrane; see
+// docs/data-audit.md §5 + docs/db-feedback.md). The other 10 picks are
+// unresolved in this stub → faithfully dropped. Ids are the real restored
+// `CURATED` node ids so the `handleCurated` id-join (endpoints.ts) still
+// resolves exactly these two. (These two are given enriched fields HERE so the
+// subtitle/photo assertions still exercise the rich path — the synthetic
+// fixture deliberately exercises hydration; live Aura currently returns these
+// as sparse stubs, which is the accepted v1 product state per db-feedback.md.)
 export const CURATED_PARTIAL = {
   data: {
     fields: ['m'],
     values: [
       [
         {
-          id: 'wikidata:Q49575',
-          name: 'Dizzy Gillespie',
+          id: 'musicbrainz:561d854a-6a28-4aa7-8c99-323e6ce46c2a',
+          name: 'Miles Davis',
           primary_instruments: ['trumpet'],
-          genres: ['bebop'],
-          years_active_start: 1935,
-          picture_url: 'https://commons.example/dizzy.jpg',
-          picture_license: 'Public domain',
-          picture_attribution: 'William P. Gottlieb',
+          genres: ['cool jazz', 'modal jazz'],
+          years_active_start: 1944,
+          picture_url: 'https://commons.example/miles.jpg',
+          picture_license: 'CC BY-SA 3.0',
+          picture_attribution: 'Tom Palumbo',
           bio_summary: 'American jazz trumpeter and bandleader.',
-          wikidata_id: 'Q49575',
+          musicbrainz_id: '561d854a-6a28-4aa7-8c99-323e6ce46c2a',
         },
       ],
       [
         {
-          id: 'wikidata:Q200791',
-          name: 'Archie Shepp',
+          id: 'musicbrainz:b625448e-bf4a-41c3-a421-72ad46cdb831',
+          name: 'John Coltrane',
           primary_instruments: ['tenor saxophone'],
-          picture_url: 'https://commons.example/shepp.jpg',
+          picture_url: 'https://commons.example/trane.jpg',
           picture_license: 'CC BY-SA 3.0',
-          picture_attribution: 'Tom Marcello',
+          picture_attribution: 'Hugo van Gelderen',
           genres: ['free jazz'],
         },
       ],
