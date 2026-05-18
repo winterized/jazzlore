@@ -50,14 +50,16 @@ describe('handleCurated', () => {
     const body = (await res.json()) as {
       curated: { id: string; name: string; subtitle?: string }[]
     }
-    // Only the 2 resolvable picks survive (faithful — reconcile in Phase 0).
+    // Only the 2 resolvable picks survive (faithful — the other 10 reconciled
+    // picks are absent from this stub and dropped). Reconciled ids per
+    // docs/data-audit.md §5.
     expect(body.curated.map((c) => c.id)).toEqual([
-      'wikidata:Q93341',
-      'wikidata:Q379938',
+      'wikidata:Q49575',
+      'wikidata:Q200791',
     ])
-    const bobby = body.curated.find((c) => c.id === 'wikidata:Q379938')!
-    expect(bobby.name).toBe('Bobby Timmons')
-    expect(bobby.subtitle).toBe('Hard bop · piano') // era · instrument
+    const shepp = body.curated.find((c) => c.id === 'wikidata:Q200791')!
+    expect(shepp.name).toBe('Archie Shepp')
+    expect(shepp.subtitle).toBe('Avant-garde · tenor saxophone') // era · instrument
   })
 })
 

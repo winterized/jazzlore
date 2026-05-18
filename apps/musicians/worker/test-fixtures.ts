@@ -152,22 +152,38 @@ export const SEARCH_INDEX = {
   },
 }
 
-// Curated hydration: only 2 of the picked ids exist in Neo4j (Miles, Bobby);
-// the rest are unresolved → faithfully dropped (reconcile in Phase 0).
+// Curated hydration: only 2 of the picked ids resolve in Neo4j (the first two
+// reconciled curated picks — Dizzy Gillespie, Archie Shepp; see
+// docs/data-audit.md §5); the other 10 picks are unresolved in this stub →
+// faithfully dropped. Ids are real reconciled `CURATED` ids so the
+// `handleCurated` id-join (endpoints.ts) still resolves exactly these two.
 export const CURATED_PARTIAL = {
   data: {
     fields: ['m'],
     values: [
-      [MILES],
       [
         {
-          id: 'wikidata:Q379938',
-          name: 'Bobby Timmons',
-          primary_instruments: ['piano'],
-          picture_url: 'https://commons.example/bobby.jpg',
-          picture_license: 'CC BY 2.0',
-          picture_attribution: 'Brian McMillen',
-          genres: ['hard bop'],
+          id: 'wikidata:Q49575',
+          name: 'Dizzy Gillespie',
+          primary_instruments: ['trumpet'],
+          genres: ['bebop'],
+          years_active_start: 1935,
+          picture_url: 'https://commons.example/dizzy.jpg',
+          picture_license: 'Public domain',
+          picture_attribution: 'William P. Gottlieb',
+          bio_summary: 'American jazz trumpeter and bandleader.',
+          wikidata_id: 'Q49575',
+        },
+      ],
+      [
+        {
+          id: 'wikidata:Q200791',
+          name: 'Archie Shepp',
+          primary_instruments: ['tenor saxophone'],
+          picture_url: 'https://commons.example/shepp.jpg',
+          picture_license: 'CC BY-SA 3.0',
+          picture_attribution: 'Tom Marcello',
+          genres: ['free jazz'],
         },
       ],
     ],
