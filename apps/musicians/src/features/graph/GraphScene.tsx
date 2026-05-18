@@ -1,0 +1,127 @@
+// The SVG scene: edges + nodes for one animation frame. Split out of
+// GraphView to keep each file < ~150 lines. Purely presentational — all
+// theming via the frozen token CSS vars (`--accent`, `--card`, `--line`,
+// `--text`, `--muted`), dark/light automatic through `data-theme`.
+
+import type { KeyboardEvent } from 'react'
+import type { LayoutEdge } from './layout'
+import type { FrameNode, GraphFrame } from './useRecentre'
+import { duotoneFor, initialsOf } from './palette'
+
+interface GraphSceneProps {
+  frame: GraphFrame
+  /** Map of node id → its current position, for edge endpoint lookup. */
+  selectedId: string
+  onSelect(id: string): void
+}
+
+function edgeClass(e: LayoutEdge): string {
+  return e.strong ? 'mu-gedge mu-gedge-strong' : 'mu-gedge'
+}
+
+export default function GraphScene({
+  frame,
+  selectedId,
+  onSelect,
+}: GraphSceneProps) {
+  const pos = new Map(frame.nodes.map((n) => [n.id, n]))
+
+  const onKey = (id: string) => (ev: KeyboardEvent<SVGGElement>) => {
+    if (ev.key === 'Enter' || ev.key === ' ' || ev.key === 'Spacebar') {
+      ev.preventDefault()
+      onSelect(id)
+    }
+  }
+
+  return (
+    <>
+      <g aria-hidden="true">
+        {frame.edges.map((e) => {
+          const s = pos.get(e.source)
+          const t = pos.get(e.target)
+          if (!s || !t) return null
+          return (
+            <line
+              key={`${e.source}__${e.target}`}
+              className={edgeClass(e)}
+              x1={s.x}
+              y1={s.y}
+              x2={t.x}
+              y2={t.y}
+              strokeWidth={e.strokeWidth}
+              opacity={Math.min(s.fade, t.fade)}
+            />
+          )
+        })}
+      </g>
+      {frame.nodes.map((n: FrameNode) => {
+        const [lo, hi] = duotoneFor(n.id)
+        const label = n.instrument ? `${n.name}, ${n.instrument}` : n.name
+        const isSelected = n.id === selectedId
+        return (
+          <g
+            key={n.id}
+            className={`mu-gnode${n.focus ? ' mu-gnode-focus' : ''}`}
+            transform={`translate(${n.x},${n.y})`}
+            opacity={n.fade}
+            role="button"
+            tabIndex={0}
+            aria-label={label}
+            aria-pressed={isSelected}
+            onClick={() => onSelect(n.id)}
+            onKeyDown={onKey(n.id)}
+          >
+            {n.focus ? (
+              <>
+                <circle
+                  r={n.radius + 6}
+                  fill="none"
+                  stroke="var(--accent)"
+                  strokeWidth={1}
+                  opacity={0.4}
+                />
+                <circle r={n.radius} fill="var(--accent)" />
+              </>
+            ) : (
+              <>
+                <circle r={n.radius} fill={lo} />
+                <circle r={n.radius} fill={hi} opacity={0.55} />
+                <circle
+                  r={n.radius}
+                  fill="none"
+                  stroke={isSelected ? 'var(--accent)' : 'var(--line)'}
+                  strokeWidth={isSelected ? 2 : 0.75}
+                  opacity={isSelected ? 0.9 : 0.5}
+                />
+              </>
+            )}
+            <text
+              className="mu-gnode-initials"
+              textAnchor="middle"
+              dy="0.32em"
+              aria-hidden="true"
+            >
+              {initialsOf(n.name)}
+            </text>
+            <text
+              className="mu-gnode-label"
+              textAnchor="middle"
+              dy={n.radius + 15}
+            >
+              {n.name}
+            </text>
+            {n.instrument ? (
+              <text
+                className="mu-gnode-sub"
+                textAnchor="middle"
+                dy={n.radius + 27}
+              >
+                {n.instrument}
+              </text>
+            ) : null}
+          </g>
+        )
+      })}
+    </>
+  )
+}
