@@ -61,7 +61,24 @@ export function useFocusTrap(
     document.addEventListener('keydown', onKeyDown, true)
     return () => {
       document.removeEventListener('keydown', onKeyDown, true)
-      previouslyFocused?.focus?.()
+      // Restore focus to the trigger. If it was removed from the DOM while
+      // the trap was open (e.g. the disclosure unmounted with the sheet),
+      // `.focus()` on the detached node silently drops focus to <body> — a
+      // focus-loss a11y bug. Fall back to the page <h1> (or <main>) so
+      // focus lands on meaningful content, never nowhere.
+      if (previouslyFocused?.isConnected) {
+        previouslyFocused.focus()
+        return
+      }
+      const fallback =
+        document.querySelector<HTMLElement>('h1') ??
+        document.querySelector<HTMLElement>('main')
+      if (fallback) {
+        if (!fallback.hasAttribute('tabindex')) {
+          fallback.setAttribute('tabindex', '-1')
+        }
+        fallback.focus()
+      }
     }
   }, [ref, active])
 }
