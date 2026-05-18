@@ -5,6 +5,13 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Tap through jazz musicians to discover who they played with, hear what defined them, and find new artists worth listening to on Spotify and Apple Music." />
+    <!-- Preload only the above-the-fold woff2 (Phase-G perf pass): Geist 400
+         (body/UI base), Geist 600 (headings/labels), Newsreader 500 (the
+         serif hero h1 — LCP text). The remaining 8 weights stay lazy under
+         font-display:swap with their metrics-matched fallbacks (CLS≈0). -->
+    <link rel="preload" href="/fonts/geist-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/geist-600.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/newsreader-500.woff2" as="font" type="font/woff2" crossorigin />
     <title>Jazzlore — Jazz musicians</title>
   </head>
   <body>

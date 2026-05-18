@@ -34,10 +34,123 @@
 
 /* ─── Self-hosted fonts (latin subset, woff2, font-display: swap) ───────────
    Vendored from Fontsource (Geist + Geist Mono = OFL, Newsreader = OFL) into
-   public/fonts/. Only the weights the design CSS actually references are
-   loaded: Geist 400/500/600/700, Geist Mono 400/500/600, Newsreader
-   400/500/600 in normal + italic. Served as separate cached requests, off
-   the initial JS bundle; swap avoids a render-blocking FOIT. */
+   public/fonts/. Only the weights the design CSS actually RENDERS are loaded
+   (Phase-G perf pass — usage audited across components.css + graphView.css.ts):
+     • Geist 400/500/600/700  (sans)
+     • Geist Mono 400/500/600 (mono; the lone 700 use, .err-mark, faux-bolds
+       600 — no 700 cut shipped, unchanged by this pass)
+     • Newsreader 400/500/600 normal + 400 italic only
+   Newsreader 500-italic & 600-italic were vendored but NEVER selected by any
+   rule (no `font-style:italic` rule resolves to weight ≥500) → removed here
+   with their woff2 (≈49 KB of dead font payload off the network).
+   Served as separate cached requests, off the initial JS bundle.
+
+   CLS/FCP (Phase-G perf pass — authorized scoped unfreeze of THIS block only):
+   `swap` with no metrics-matched fallback reflowed text when the web fonts
+   arrived (Lighthouse throttled-mobile CLS 0.293, the dominant ≥90 miss).
+   Fix = a metrics-matched fallback `@font-face` per family ("… Fallback",
+   `src: local()` of the platform face) carrying a tuned `size-adjust` +
+   `ascent/descent/line-gap-override`, inserted into the stack BEFORE the
+   generic family so the pre-swap box is identical to the web font's.
+
+   `size-adjust` derivation — the OS/2 `xAvgCharWidth` ratio formula
+   (web xAvg/upm ÷ fallback xAvg/upm) was tried first and proved WRONG for
+   these faces: it yielded ~124% (Geist) / ~132% (Newsreader), which widened
+   the fallback so the hero h1 wrapped an extra line and CLS got WORSE
+   (verified: an unchanged 0.297 with the formula values). `xAvgCharWidth` is
+   not representative of these designs' real rendered width. The shipped
+   values are instead the MEASURED rendered-width ratio of each web font vs
+   its `local()` fallback at the app's real strings, in a real headless
+   Chrome (a setext span ratio probe):
+     Geist / Arial            ≈ 100.6–103.3% (weights 400/600)  → 102%
+     Geist Mono / Menlo       ≈ 99.66%  (mono advance is stable) → 99.66%
+     Newsreader / Times       ≈ 105.78% (verified 2-line h1 wrap
+                                 holds across SA 98–106%)        → 104%
+     Newsreader-it / Times-it ≈ 98.86%                           → 99%
+   ascent/descent-override = the web font's hhea ascent/|descent| ÷ upm ÷
+   size-adjust (web metrics via fontTools from the vendored 400 woff2: Geist
+   1005/-295 upm1000; Newsreader 1470/-530 upm2000) so a normal/auto
+   line-height box also stays pinned. The shipped layout uses a numeric
+   line-height for the hero, so width parity (size-adjust) is the load-bearing
+   term against CLS; the v/overrides are the belt-and-braces for auto-LH text.
+   `font-display: swap` is kept (now reflow-free with matched widths).
+   Above-the-fold woff2 (Geist 400/600 + Newsreader 500 used in the hero h1)
+   are <link rel=preload>'d in index.html — not all 11. */
+
+/* Metrics-matched system fallbacks — occupy the web font's exact line box so
+   the swap does not reflow (CLS≈0). Referenced ahead of system-ui/serif in
+   the --font-* stacks below.
+
+   Each fallback face MUST span `font-weight: 100 900` (and a matching italic
+   face where the family renders italic): the heading/hero text is weight 500
+   and body italic is style:italic — a weight-400-only fallback face would NOT
+   be selected for those, so the pre-swap render would fall through to the
+   generic family (Georgia/system-ui) and the override would never apply (the
+   reason the first cut left CLS unchanged). This is the next/font & fontaine
+   approach. Geist ships no true italic woff2 (only normal weights are
+   vendored) and no sans text renders italic, so the sans/mono fallbacks need
+   no italic face; Newsreader DOES render 400-italic (bios/captions) → a
+   dedicated italic fallback, matched to Times-italic metrics. */
+@font-face {
+  /* Geist → Arial. size-adjust 102% = measured Geist/Arial rendered-width
+     ratio (100.6–103.3% across the 400/600 weights actually used). */
+  font-family: 'Geist Fallback';
+  font-weight: 100 900;
+  src:
+    local('Arial'),
+    local('Helvetica Neue'),
+    local('Helvetica');
+  size-adjust: 102%;
+  ascent-override: 98.53%;
+  descent-override: 28.92%;
+  line-gap-override: 0%;
+}
+@font-face {
+  /* Geist Mono → Menlo. size-adjust 99.66% = measured ratio (both
+     monospace, advance width near-identical). */
+  font-family: 'Geist Mono Fallback';
+  font-weight: 100 900;
+  src:
+    local('Menlo'),
+    local('Consolas'),
+    local('Courier New');
+  size-adjust: 99.66%;
+  ascent-override: 100.84%;
+  descent-override: 29.60%;
+  line-gap-override: 0%;
+}
+@font-face {
+  /* Newsreader → Times New Roman. size-adjust 104% = measured ratio 105.78%
+     pulled to 104 (verified the hero-h1 2-line wrap holds for SA 98–106%;
+     ≥108% wraps a 3rd line → the CLS the first xAvg-formula cut caused). */
+  font-family: 'Newsreader Fallback';
+  font-weight: 100 900;
+  font-style: normal;
+  src:
+    local('Times New Roman'),
+    local('Times'),
+    local('Georgia');
+  size-adjust: 104%;
+  ascent-override: 70.67%;
+  descent-override: 25.48%;
+  line-gap-override: 0%;
+}
+@font-face {
+  /* Newsreader italic (bios, captions, blurbs) → Times New Roman italic.
+     size-adjust 99% = measured Newsreader-it/Times-it ratio (98.86%). */
+  font-family: 'Newsreader Fallback';
+  font-weight: 100 900;
+  font-style: italic;
+  src:
+    local('Times New Roman Italic'),
+    local('Times Italic'),
+    local('Georgia Italic');
+  size-adjust: 99%;
+  ascent-override: 74.24%;
+  descent-override: 26.77%;
+  line-gap-override: 0%;
+}
+
 @font-face {
   font-family: 'Geist';
   font-style: normal;
@@ -115,20 +228,8 @@
   font-display: swap;
   src: url('/fonts/newsreader-400-italic.woff2') format('woff2');
 }
-@font-face {
-  font-family: 'Newsreader';
-  font-style: italic;
-  font-weight: 500;
-  font-display: swap;
-  src: url('/fonts/newsreader-500-italic.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Newsreader';
-  font-style: italic;
-  font-weight: 600;
-  font-display: swap;
-  src: url('/fonts/newsreader-600-italic.woff2') format('woff2');
-}
+/* Newsreader 500-italic & 600-italic intentionally NOT loaded — no rule
+   resolves italic at weight ≥500 (audited); their woff2 were deleted. */
 
 /* ─── Token palette ────────────────────────────────────────────────────────
    Dark is the default (matches the design's `.mu3` base). Light is applied
@@ -172,9 +273,12 @@
     --pulse-bg: rgba(244, 162, 51, 0.2);
     --kbd-bg: #1a1a1a;
 
-    --font-sans: 'Geist', -apple-system, system-ui, sans-serif;
-    --font-mono: 'Geist Mono', ui-monospace, monospace;
-    --font-serif: 'Newsreader', 'Source Serif 4', Georgia, serif;
+    /* Metrics-matched fallback sits between the web font and the generic
+       system family so the pre-swap render uses the web font's exact box
+       (CLS≈0). Variable NAMES are frozen; only the fallback chain changed. */
+    --font-sans: 'Geist', 'Geist Fallback', -apple-system, system-ui, sans-serif;
+    --font-mono: 'Geist Mono', 'Geist Mono Fallback', ui-monospace, monospace;
+    --font-serif: 'Newsreader', 'Newsreader Fallback', 'Source Serif 4', Georgia, serif;
   }
 
   html[data-theme='light'] {
