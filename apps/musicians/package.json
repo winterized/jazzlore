@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b tsconfig.app.json && vite build",
+    "build": "tsc -b tsconfig.app.json tsconfig.worker.json && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -b tsconfig.app.json",
+    "typecheck": "tsc -b tsconfig.app.json tsconfig.worker.json",
     "test": "vitest",
     "test:run": "vitest run",
     "test:ui": "vitest --ui"
