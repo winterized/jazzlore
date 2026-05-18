@@ -1,0 +1,71 @@
+/* Jazzlore Musicians · Pass 5 additions — final.
+ * Replaces the density-tier divider with a single expansion CTA.
+ * Long-tail discovery becomes opt-in, not opt-out.
+ */
+
+.mu3 .conn-expand {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px;
+  margin: 8px 14px 4px;
+  padding: 14px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  transition: background .14s, border-color .14s;
+  font-family: "Geist", system-ui, sans-serif;
+  font-size: 13px; font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.005em;
+  text-align: center;
+  width: calc(100% - 28px);
+}
+.mu3 .conn-expand:hover {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--line));
+}
+.mu3 .conn-expand .arrow {
+  font-family: "Geist Mono", monospace;
+  font-size: 12px;
+  transition: transform .14s;
+}
+.mu3 .conn-expand[aria-expanded="true"] .arrow {
+  transform: rotate(180deg);
+}
+.mu3 .conn-expand .sub {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 10px; color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  display: block;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* When the rail is expanded, drop a subtle italic header to mark the
+ * boundary between headliners and the long tail — still fat cards, same
+ * treatment, but the user knows they've crossed it. */
+.mu3 .tail-marker {
+  position: relative;
+  margin: 16px 14px 6px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: baseline; justify-content: space-between;
+}
+.mu3 .tail-marker .lab {
+  font-family: "Newsreader", serif;
+  font-style: italic;
+  font-size: 14.5px;
+  color: var(--text);
+  letter-spacing: -0.005em;
+}
+.mu3 .tail-marker .lab b {
+  font-style: normal;
+  font-family: "Geist", sans-serif;
+  font-weight: 600;
+}
+.mu3 .tail-marker .ct {
+  font-family: "Geist Mono", monospace;
+  font-size: 10px; color: var(--muted);
+  letter-spacing: 0.08em;
+}

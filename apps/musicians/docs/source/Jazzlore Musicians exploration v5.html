@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Jazzlore Musicians — pass 5 (final)</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&display=swap"/>
+
+  <link rel="stylesheet" href="app/musicians3-styles.css"/>
+  <link rel="stylesheet" href="app/musicians4-styles.css"/>
+  <link rel="stylesheet" href="app/musicians5-styles.css"/>
+
+  <style>
+    html, body, #root { margin: 0; padding: 0; min-height: 100%; }
+    body { background: #f0eee9; }
+  </style>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script src="app/musicians-data.js"></script>
+  <script src="app/musicians2-data.js"></script>
+  <script src="app/musicians3-data.js"></script>
+  <script src="app/musicians4-data.js"></script>
+
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="app/musicians3-shared.jsx"></script>
+  <script type="text/babel" src="app/musicians3-mobile.jsx"></script>
+  <script type="text/babel" src="app/musicians3-desktop.jsx"></script>
+  <script type="text/babel" src="app/musicians4-components.jsx"></script>
+  <script type="text/babel" src="app/musicians5-components.jsx"></script>
+  <script type="text/babel" src="app/musicians5-readme.jsx"></script>
+  <script type="text/babel" src="app/musicians5-app.jsx"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <template id="__bundler_thumbnail">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+      <rect width="200" height="200" fill="#0a0a0a"/>
+      <g stroke="#f4a233" stroke-width="1.6" stroke-linecap="round" fill="none">
+        <line x1="100" y1="100" x2="60"  y2="55"/>
+        <line x1="100" y1="100" x2="148" y2="62"/>
+        <line x1="100" y1="100" x2="48"  y2="142"/>
+        <line x1="100" y1="100" x2="156" y2="142"/>
+        <line x1="100" y1="100" x2="100" y2="42"/>
+      </g>
+      <circle cx="100" cy="100" r="16" fill="#f4a233"/>
+      <circle cx="60"  cy="55"  r="10" fill="#5b7aa0"/>
+      <circle cx="148" cy="62"  r="11" fill="#a07a5b"/>
+      <circle cx="48"  cy="142" r="8" fill="#6b9075"/>
+      <circle cx="156" cy="142" r="10" fill="#a07a5b"/>
+      <circle cx="100" cy="42"  r="9" fill="#7a5b9a"/>
+      <text x="100" y="184" text-anchor="middle"
+            font-family="-apple-system, system-ui, sans-serif"
+            font-size="10" font-weight="700" letter-spacing="2.5"
+            fill="#f4eede">JAZZLORE · FINAL</text>
+    </svg>
+  </template>
+</body>
+</html>
