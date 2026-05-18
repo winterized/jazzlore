@@ -1,40 +1,149 @@
 /**
  * Unified Cloudflare Worker for the musicians app (locked runtime decision).
  *
- * Serves static assets via the ASSETS binding and owns the `/api/*` surface.
- * Phase A ships only `/api/health` (real, so the wake-up cron has a target from
- * day one) and a 503 stub for every other `/api/*` route. Phase C fills in the
- * Aura-backed BFF (curated / detail / graph / search-index) and Phase 4's
- * HTMLRewriter OG injection. No external deps; never `neo4j-driver`.
- *
- * Self-typed (no `@cloudflare/workers-types` dependency yet): a minimal local
- * `Fetcher` shape is enough for the Phase A static-asset hand-off. Phase C/F
- * will pull in the official Workers types when the BFF needs richer bindings.
+ * Serves static assets via the ASSETS binding and owns the `/api/*` BFF
+ * surface. Phase C: real Aura-backed endpoints (curated / detail / graph /
+ * search-index / health), per-request OG injection for `/musicians/:id`
+ * document navigations, and a dynamic `/sitemap.xml`. `fetch` only — NEVER
+ * `neo4j-driver` (landmine 3). No Pages `functions/` dir (landmine 1).
  */
 
-interface Fetcher {
-  fetch(request: Request): Promise<Response>
+import {
+  handleCurated,
+  handleDetail,
+  handleGraph,
+  handleHealth,
+  handleSearchIndex,
+} from './endpoints'
+import { auraQuery, type AuraCreds } from './aura'
+import {
+  detailCypher,
+  reshapeDetail,
+  reshapeMusicianRows,
+  searchIndexCypher,
+} from './cypher'
+import { mapSearchCorpus } from '../src/lib/map'
+import {
+  buildSitemap,
+  injectOg,
+  musicianOgMeta,
+} from './og'
+import { deriveEra } from './era'
+import { CACHE, type Env } from './env'
+
+const MUSICIAN_PATH = /^\/musicians\/([^/]+)\/?$/
+
+function auraCreds(env: Env): AuraCreds | null {
+  if (!env.NEO4J_URI || !env.NEO4J_USERNAME || !env.NEO4J_PASSWORD) return null
+  return {
+    uri: env.NEO4J_URI,
+    username: env.NEO4J_USERNAME,
+    password: env.NEO4J_PASSWORD,
+  }
 }
 
-interface Env {
-  ASSETS: Fetcher
+/** Wants HTML (document navigation), not a fetch()/asset sub-request. */
+function isDocumentNavigation(request: Request): boolean {
+  if (request.method !== 'GET') return false
+  const dest = request.headers.get('Sec-Fetch-Dest')
+  if (dest) return dest === 'document'
+  return (request.headers.get('Accept') ?? '').includes('text/html')
+}
+
+async function handleApi(env: Env, pathname: string): Promise<Response> {
+  if (pathname === '/api/health') return handleHealth(env)
+  if (pathname === '/api/musicians/curated') return handleCurated(env)
+  if (pathname === '/api/musicians/search-index') return handleSearchIndex(env)
+  const graph = pathname.match(/^\/api\/musicians\/([^/]+)\/graph$/)
+  if (graph && graph[1]) return handleGraph(env, decodeURIComponent(graph[1]))
+  const detail = pathname.match(/^\/api\/musicians\/([^/]+)$/)
+  if (detail && detail[1]) {
+    return handleDetail(env, decodeURIComponent(detail[1]))
+  }
+  return new Response(JSON.stringify({ status: 'error', error: 'unknown-endpoint' }), {
+    status: 404,
+    headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' },
+  })
+}
+
+/** Per-request OG injection for `/musicians/:id` document navigations.
+ * Best-effort: any Aura failure (incl. cold/`waking`) falls back to the
+ * untouched SPA shell so the page still renders (decision 7: OG is additive). */
+async function handleMusicianDocument(
+  request: Request,
+  env: Env,
+  id: string,
+): Promise<Response> {
+  const shell = await env.ASSETS.fetch(request)
+  const c = auraCreds(env)
+  if (c === null) return shell
+  try {
+    const result = await auraQuery(c, detailCypher(), { id })
+    const raw = reshapeDetail(result)
+    if (raw === null) return shell
+    const m = raw.musician
+    const meta = musicianOgMeta({
+      id: m.id,
+      name: m.name,
+      instrument: Array.isArray(m.primary_instruments)
+        ? m.primary_instruments[0]
+        : undefined,
+      era: deriveEra(m),
+      bio: typeof m.bio_summary === 'string' ? m.bio_summary : undefined,
+      image: typeof m.picture_url === 'string' ? m.picture_url : undefined,
+    })
+    return injectOg(shell, meta)
+  } catch {
+    // OG is additive (decision 7): any Aura failure incl. cold/`waking`
+    // falls back to the untouched SPA shell so the page still renders.
+    return shell
+  }
+}
+
+async function handleSitemap(env: Env): Promise<Response> {
+  const c = auraCreds(env)
+  const headers = {
+    'Content-Type': 'application/xml; charset=utf-8',
+    'Cache-Control': CACHE.sitemap,
+  }
+  if (c === null) return new Response(buildSitemap([]), { headers })
+  try {
+    const result = await auraQuery(c, searchIndexCypher())
+    const corpus = mapSearchCorpus(reshapeMusicianRows(result))
+    return new Response(buildSitemap(corpus), { headers })
+  } catch {
+    // Sitemap is additive — serve the home-only sitemap on any failure.
+    return new Response(buildSitemap([]), {
+      headers: { ...headers, 'Cache-Control': 'no-store' },
+    })
+  }
 }
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url)
+    const { pathname } = url
 
-    if (url.pathname === '/api/health') {
-      return Response.json({ status: 'ok', phase: 'A-stub' })
+    if (pathname.startsWith('/api/')) {
+      return handleApi(env, pathname)
     }
 
-    if (url.pathname.startsWith('/api/')) {
-      return Response.json({ status: 'not-implemented' }, { status: 503 })
+    if (pathname === '/sitemap.xml') {
+      return handleSitemap(env)
     }
 
-    // Not an API route: hand off to static assets. A non-matching path
-    // evaluates `not_found_handling: "single-page-application"` (serves
-    // index.html with 200) for client-side React Router routes.
+    const musician = pathname.match(MUSICIAN_PATH)
+    if (musician && musician[1] && isDocumentNavigation(request)) {
+      return handleMusicianDocument(
+        request,
+        env,
+        decodeURIComponent(musician[1]),
+      )
+    }
+
+    // Not API / sitemap / a musician document: hand off to static assets. A
+    // non-matching path evaluates `not_found_handling:
+    // "single-page-application"` (serves index.html 200) for React Router.
     return env.ASSETS.fetch(request)
   },
 }
