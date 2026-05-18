@@ -1,0 +1,34 @@
+# Keep the musicians app's Neo4j Aura Free instance warm.
+#
+# Aura Free auto-pauses after 3 days idle; the first request after that is a
+# 20-40s cold start (landmine 2). The musicians BFF degrades that to a graceful
+# 503 `{status:"waking"}`, but a periodic real hit keeps Aura resumed so most
+# visitors never see the waking state at all.
+#
+# This workflow ONLY does anything useful AFTER the user has (1) deployed the
+# `jazzlore-musicians` Worker and (2) bound the `musicians.jazzlore.com` custom
+# domain (see apps/musicians/docs/deploy-checklist.md). Until then the curl
+# fails and the run goes red — that is expected pre-launch and is why the
+# schedule is harmless to merge early.
+#
+# `/api/health` is `Cache-Control: no-store` by design (worker env.ts CACHE):
+# the cron needs a LIVE Aura hit, not an edge-cached response, so it actually
+# resumes the instance. No secrets are needed — the health endpoint is public
+# and trivial (returns only `{status:"ok", musicianCount}`).
+name: Keep Aura warm
+
+on:
+  schedule:
+    # Every 2 days at noon UTC. Comfortably inside Aura Free's 3-day idle
+    # auto-pause window, so the instance is resumed before it ever pauses.
+    - cron: '0 12 */2 * *'
+  workflow_dispatch: {}
+
+jobs:
+  ping-health:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hit /api/health (fails the run on non-2xx)
+        run: >-
+          curl -fsS --max-time 30
+          https://musicians.jazzlore.com/api/health

@@ -31,6 +31,9 @@ storybook-static
 .dev.vars
 .dev.vars.*
 
+# Wrangler local state/cache (musicians unified Worker dev) — never commit
+.wrangler/
+
 # Test artifacts
 coverage/
 playwright-report/

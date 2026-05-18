@@ -10,7 +10,9 @@
     "typecheck": "tsc -b tsconfig.app.json tsconfig.worker.json",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "dev:worker": "wrangler dev --config ../../wrangler.musicians.jsonc",
+    "deploy": "wrangler deploy --config ../../wrangler.musicians.jsonc"
   },
   "dependencies": {
     "@jazzlore/music-core": "workspace:*",
@@ -36,6 +38,7 @@
     "tailwindcss": "^4.3.0",
     "typescript": "~6.0.2",
     "vite": "^8.0.10",
-    "vitest": "^4.1.5"
+    "vitest": "^4.1.5",
+    "wrangler": "^4.92.0"
   }
 }
