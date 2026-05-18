@@ -5,20 +5,175 @@
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 @source "../../../packages/ui/src";
 
-/* Phase B: musicians design-token layer + self-hosted fonts go here */
+/* ════════════════════════════════════════════════════════════════════════
+   Musicians design-token layer — FROZEN at end of Phase B.
+   Extracted verbatim from the Claude Design pass-5 handoff
+   (apps/musicians/docs/source/app/musicians3-styles.css + README.md
+   "Design tokens"). This is NOT the stone/amber system of scales/chords.
+   Downstream phases (C/D/E) must NOT edit this block.
+   ════════════════════════════════════════════════════════════════════════ */
 
-/* Root background must live on <html>, not only on each page's <main>, so the
-   themed canvas covers overscroll and any translucent chrome. data-theme is set
-   on <html> by music-core applyTheme(). The musicians-specific token palette
-   (--bg/--paper/--card/--accent, Geist / Geist Mono / Newsreader) is built and
-   frozen in Phase B; this is the minimal valid placeholder until then. */
+/* ─── Self-hosted fonts (latin subset, woff2, font-display: swap) ───────────
+   Vendored from Fontsource (Geist + Geist Mono = OFL, Newsreader = OFL) into
+   public/fonts/. Only the weights the design CSS actually references are
+   loaded: Geist 400/500/600/700, Geist Mono 400/500/600, Newsreader
+   400/500/600 in normal + italic. Served as separate cached requests, off
+   the initial JS bundle; swap avoids a render-blocking FOIT. */
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/geist-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/geist-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/geist-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/geist-700.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/geist-mono-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/geist-mono-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/geist-mono-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Newsreader';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/newsreader-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Newsreader';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/newsreader-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Newsreader';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/newsreader-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Newsreader';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/newsreader-400-italic.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Newsreader';
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/newsreader-500-italic.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Newsreader';
+  font-style: italic;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/newsreader-600-italic.woff2') format('woff2');
+}
+
+/* ─── Token palette ────────────────────────────────────────────────────────
+   Dark is the default (matches the design's `.mu3` base). Light is applied
+   via data-theme="light" on <html> (music-core applyTheme). The design's
+   prototype keyed light off `.mu3[data-theme="light"]`; here data-theme lives
+   on <html> per the monorepo convention, so both selectors are scoped to the
+   document root. Hex values are verbatim from the pass-5 handoff. */
 @layer base {
-  html {
-    background-color: var(--color-stone-100);
-    color: var(--color-stone-900);
+  :root {
+    --bg: #0a0a0a;
+    --bg-soft: #0d0d0d;
+    --paper: #161616;
+    --card: #181818;
+    --card-hover: #1d1d1d;
+    --text: #f4eede;
+    --text-soft: #d9d2c1;
+    --muted: #8a8378;
+    --dim: #565047;
+    --line: #242322;
+    --line-soft: #1c1c1b;
+    --accent: #f4a233;
+    --accent-fg: #1a1410;
+    --accent-soft: rgba(244, 162, 51, 0.14);
+    --shadow: 0 1px 0 rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
+    --pulse-bg: rgba(244, 162, 51, 0.2);
+    --kbd-bg: #1a1a1a;
+
+    --font-sans: 'Geist', -apple-system, system-ui, sans-serif;
+    --font-mono: 'Geist Mono', ui-monospace, monospace;
+    --font-serif: 'Newsreader', 'Source Serif 4', Georgia, serif;
   }
-  html[data-theme='dark'] {
-    background-color: var(--color-stone-950);
-    color: var(--color-stone-100);
+
+  html[data-theme='light'] {
+    --bg: #f4f1ea;
+    --bg-soft: #f8f5ee;
+    --paper: #ffffff;
+    --card: #ffffff;
+    --card-hover: #faf7f0;
+    --text: #1a1612;
+    --text-soft: #3a342c;
+    --muted: #6a6258;
+    --dim: #9b9384;
+    --line: #e2ddd0;
+    --line-soft: #ede8dc;
+    --accent: #c87f1a;
+    --accent-fg: #ffffff;
+    --accent-soft: rgba(244, 162, 51, 0.16);
+    --shadow: 0 1px 0 rgba(0, 0, 0, 0.04), 0 8px 24px rgba(60, 50, 30, 0.06);
+    --pulse-bg: rgba(244, 162, 51, 0.2);
+    --kbd-bg: #f4f1ea;
+  }
+
+  /* Root background must live on <html>, not only on each page's <main>, so
+     the themed canvas covers overscroll and any translucent chrome. The
+     design's sticky header is translucent (bg + backdrop-blur); without a
+     themed root the browser's white canvas bleeds through in dark mode.
+     data-theme is set on <html> by music-core applyTheme(). */
+  html {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-feature-settings:
+      'ss01' on,
+      'cv11' on;
+    -webkit-font-smoothing: antialiased;
   }
 }
