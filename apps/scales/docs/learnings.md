@@ -25,4 +25,14 @@ La méthode que je kiffe à ma petite échelle (il faudra voir à plus grande é
 - On lui dit qqch du type 'Read ./apps/chords/docs/chords.md. We're going to refine it together before any code is written. Walk me through the open questions one at a time. For each, propose your default, explain your reasoning, then ask me to confirm or chat. When we're done, update the spec file directly'
 - On valide le plan, et quand on lui donne le OK on lui dit qu'il passe en auto mode mais qu'il doit utiliser la skill subagent de SuperPowers
 
-Plan quality is now compounding — each plan visibly inherits and extends the discipline of the previous one. This is an actual long-term value of the AI-assisted workflow.
+Passer par Claude design, lui demander des protos, 5 variations de chaque, ça aide bien. Pour lui fournir des screenshots, demander à Claude Code d'utiliser le MCP playwright : use Playwright MCP to capture screenshots of both current sites (desktop + mobile, both themes). So that I can hand them to Claude Design with the brief.
+
+Claude Design for horizontal/visual work is dramatically better than going straight to Code. The multi-direction exploration is the move — never accept the first proposal.
+
+The plan is now allowed to push back on the design, and the design pushed back on the spec. Each artifact refines the prior one rather than just passing through. That's the real workflow — not 'spec → plan → code' as a one-way pipeline, but a dialogue where each step can challenge the previous.
+
+AI tools propose the locally-obvious implementation by default. The senior move is the pre-flight 'wait, what does this look like at scale?' — every time.
+
+The right design decision is often not 'which direction wins' but 'which direction does which job.' Compositions beat monoliths, but require sharper articulation of what each part is for.
+
+Three-pass design iteration: pass 1 explores, pass 2 reweights against a sharper brief, pass 3 converges. The output of each pass is input to the next — never start a pass from scratch. The discipline is in the briefs, not the overrides.
