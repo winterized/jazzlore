@@ -1088,8 +1088,6 @@
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   z-index: 60;
-  display: flex;
-  align-items: flex-end;
   opacity: 0;
   transition: opacity 0.2s ease;
 }
@@ -1097,6 +1095,11 @@
   opacity: 1;
 }
 .mu3-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 61;
   width: 100%;
   background: var(--paper);
   color: var(--text);

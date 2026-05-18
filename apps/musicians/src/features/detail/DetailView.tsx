@@ -11,7 +11,7 @@
 // sheet — both plug into the slots/props here without restructuring.
 
 import { useRef, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
 import type { MusicianDetail } from '../../lib/types'
 import { Shell } from '../../components/Shell'
 import { MosaicV4 } from '../../components/MosaicV4'
@@ -21,7 +21,20 @@ import { ChevronIcon, SearchIcon } from '../../components/icons'
 import { ThemeToggleButton } from '../../components/ThemeToggleButton'
 import { DetailIdentity } from './DetailIdentity'
 import { CollaboratorRail } from './CollaboratorRail'
+import { MoreAboutSheet } from './MoreAboutSheet'
 import { useMosaicScrollPulse } from '../../hooks/useMosaicScrollPulse'
+
+/** Split the frozen `bioSummary` into display paragraphs. The contract froze
+ * only `bioSummary` (no `bioFull`); the sheet shows the summary, the page may
+ * pass richer paragraphs once the BFF supplies them. */
+function bioParagraphs(d: MusicianDetail, extra?: string[]): string[] {
+  if (extra && extra.length > 0) return extra
+  if (!d.bioSummary) return []
+  return d.bioSummary
+    .split(/(?<=\.)\s+(?=[A-Z])/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+}
 
 type Props = {
   detail: MusicianDetail
@@ -32,10 +45,19 @@ type Props = {
    * strip hides itself). Era taxonomy is intentionally NOT in the frozen
    * contract. */
   sameEra?: EraItem[]
+  /** Richer long-form bio paragraphs for the "More about" sheet, when the
+   * BFF supplies them. Falls back to splitting `bioSummary`. */
+  bioFull?: string[]
 }
 
-export function DetailView({ detail, duplicate = false, sameEra = [] }: Props) {
+export function DetailView({
+  detail,
+  duplicate = false,
+  sameEra = [],
+  bioFull,
+}: Props) {
   const navigate = useNavigate()
+  const location = useLocation()
   const railRef = useRef<HTMLDivElement>(null)
   const [pulseId, setPulseId] = useState<string | null>(null)
   const onMosaicTap = useMosaicScrollPulse(railRef, setPulseId)
@@ -44,6 +66,15 @@ export function DetailView({ detail, duplicate = false, sameEra = [] }: Props) {
     void navigate(`/musicians/${encodeURIComponent(id)}`)
   }
   const firstName = detail.name.split(' ')[0] ?? detail.name
+
+  // The "More about" sheet is the `#about` hash on this route (locked
+  // decision 3): link-addressable, Back closes it (history). Closing pops
+  // the hash so browser Back and the in-app close are the same operation.
+  const sheetOpen = location.hash === '#about'
+  const closeSheet = (): void => {
+    void navigate(-1)
+  }
+  const paras = bioParagraphs(detail, bioFull)
 
   return (
     <Shell>
@@ -114,6 +145,15 @@ export function DetailView({ detail, duplicate = false, sameEra = [] }: Props) {
           Jazzlore graph.
         </footer>
       </main>
+
+      {sheetOpen && paras.length > 0 && (
+        <MoreAboutSheet
+          name={detail.name}
+          paragraphs={paras}
+          attribution="Bio · Jazzlore staff, drawn from Wikipedia & MusicBrainz."
+          onClose={closeSheet}
+        />
+      )}
     </Shell>
   )
 }

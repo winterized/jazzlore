@@ -118,3 +118,29 @@ describe('DetailView — sparse variant + duplicate flag', () => {
     expect(screen.getByText(/no collaborators on file/i)).toBeInTheDocument()
   })
 })
+
+describe('DetailView — "More about" #about sheet', () => {
+  it('opens the sheet when the route hash is #about (link-addressable)', () => {
+    render(
+      <MemoryRouter initialEntries={['/musicians/x#about']}>
+        <DetailView detail={MODERATE} />
+      </MemoryRouter>,
+    )
+    expect(
+      screen.getByRole('dialog', { name: /more about bobby timmons/i }),
+    ).toBeInTheDocument()
+  })
+
+  it('does not render the sheet without the #about hash', () => {
+    setup(MODERATE)
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('the bio "More about" link targets #about', () => {
+    setup(MODERATE)
+    expect(screen.getByRole('link', { name: /more about bobby/i })).toHaveAttribute(
+      'href',
+      '#about',
+    )
+  })
+})
