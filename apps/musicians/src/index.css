@@ -6,11 +6,27 @@
 @source "../../../packages/ui/src";
 
 /* ════════════════════════════════════════════════════════════════════════
-   Musicians design-token layer — FROZEN at end of Phase B.
-   Extracted verbatim from the Claude Design pass-5 handoff
+   Musicians design-token layer — RE-FROZEN after the Phase-D a11y revision.
+   Base palette extracted from the Claude Design pass-5 handoff
    (apps/musicians/docs/source/app/musicians3-styles.css + README.md
    "Design tokens"). This is NOT the stone/amber system of scales/chords.
-   Downstream phases (C/D/E) must NOT edit this block.
+
+   A11y revision (user-approved, post Phase-D axe pass): pass-5's vivid
+   `--accent` failed WCAG 2 AA contrast for text/UI use. Resolution =
+   SPLIT decorative vs text/UI:
+     • `--accent` / `--accent-soft` keep the vivid pass-5 hue and are for
+       PURELY DECORATIVE, NON-TEXT use only (graph node/edge fills, mosaic
+       pulse bg, decorative dots/legend swatches). WCAG contrast N/A there.
+     • `--accent-strong` (NEW) is AA-compliant in BOTH themes and is the
+       ONLY accent allowed for accent-colored text/links, focus rings,
+       active/selected signifiers, and any CTA where `--accent-fg` sits on
+       an accent background (that bg must be `--accent-strong`).
+     • `--dim` was sub-AA wherever it was used as text → retargeted to the
+       `--muted` values (both themes), measured AA on every surface.
+   Derived by measuring WCAG ratios against the ACTUAL surfaces each token
+   paints on (see commit body / final summary for the ratio table).
+   Downstream phases (C/D/E) must NOT edit this block; usages select the
+   right token, they do not redefine values.
    ════════════════════════════════════════════════════════════════════════ */
 
 /* ─── Self-hosted fonts (latin subset, woff2, font-display: swap) ───────────
@@ -116,7 +132,9 @@
    via data-theme="light" on <html> (music-core applyTheme). The design's
    prototype keyed light off `.mu3[data-theme="light"]`; here data-theme lives
    on <html> per the monorepo convention, so both selectors are scoped to the
-   document root. Hex values are verbatim from the pass-5 handoff. */
+   document root. Hex values are verbatim from the pass-5 handoff EXCEPT the
+   a11y-revised tokens flagged inline below (--accent-strong [new], --dim,
+   and dark --muted) — see the block header for the rationale. */
 @layer base {
   :root {
     --bg: #0a0a0a;
@@ -126,13 +144,24 @@
     --card-hover: #1d1d1d;
     --text: #f4eede;
     --text-soft: #d9d2c1;
-    --muted: #8a8378;
-    --dim: #565047;
+    /* --muted nudged from pass-5 #8a8378 (4.1:1 on the .journey card+line
+       blend #242424 — sub-AA for 10.5px body text) to #928b80: ≥4.6:1 on
+       every surface --muted paints text on, minimal neutral-warm-grey drift. */
+    --muted: #928b80;
+    /* --dim retargeted to the --muted value: pass-5 #565047 measured 2.2–2.5:1
+       on dark surfaces (sub-AA) wherever it was used as text. #928b80 ≥ 4.6:1. */
+    --dim: #928b80;
     --line: #242322;
     --line-soft: #1c1c1b;
+    /* --accent / --accent-soft: DECORATIVE, NON-TEXT only (graph fills, pulse,
+       dots). On dark surfaces the pass-5 hue already measures 8.5–9.5:1, so the
+       AA text/UI token equals it here (zero perceptual drift). */
     --accent: #f4a233;
     --accent-fg: #1a1410;
     --accent-soft: rgba(244, 162, 51, 0.14);
+    /* --accent-strong: AA text/links/focus/active/CTA-bg. Dark = --accent
+       (already AA: 8.5–9.5:1 on bg/paper/card; #1a1410-on-it CTA = 8.7:1). */
+    --accent-strong: #f4a233;
     --shadow: 0 1px 0 rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
     --pulse-bg: rgba(244, 162, 51, 0.2);
     --kbd-bg: #1a1a1a;
@@ -151,12 +180,25 @@
     --text: #1a1612;
     --text-soft: #3a342c;
     --muted: #6a6258;
-    --dim: #9b9384;
+    /* --dim retargeted to the --muted value: pass-5 #9b9384 measured 2.7–3.0:1
+       on light surfaces (sub-AA) wherever it was used as text. #6a6258 = 5.3–6.0:1. */
+    --dim: #6a6258;
     --line: #e2ddd0;
     --line-soft: #ede8dc;
+    /* --accent / --accent-soft: DECORATIVE, NON-TEXT only. pass-5 #c87f1a
+       measures only 2.9–3.2:1 on light surfaces — kept verbatim for graph
+       fills / pulse / dots, never text. */
     --accent: #c87f1a;
     --accent-fg: #ffffff;
     --accent-soft: rgba(244, 162, 51, 0.16);
+    /* --accent-strong: AA text/links/focus/active/CTA-bg. Darkened, minimal
+       perceptual drift (CIE76 dE 17.8 from #c87f1a, same warm-amber family).
+       Measured ≥4.5 on EVERY surface it paints on, incl. accent text sitting
+       on the translucent --accent-soft chip wash (the binding worst case):
+       5.01 vs --bg #f4f1ea, 5.19 vs --bg-soft, 5.65 vs --paper/--card,
+       4.53 on the .conn/.era accent-soft chip, white-on-it CTA 5.65,
+       4.17 vs --line (non-text focus ring ≥3:1). */
+    --accent-strong: #995700;
     --shadow: 0 1px 0 rgba(0, 0, 0, 0.04), 0 8px 24px rgba(60, 50, 30, 0.06);
     --pulse-bg: rgba(244, 162, 51, 0.2);
     --kbd-bg: #f4f1ea;
