@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MODERATE, RICH, SPARSE } from '../../test/fixtures'
 import { DetailView } from './DetailView'
@@ -142,6 +142,66 @@ describe('DetailView — "More about" #about sheet', () => {
       'href',
       '#about',
     )
+  })
+
+  // Decision 3 / Highest-risk #3: the open sheet is link-addressable. A
+  // direct/bookmarked/reloaded `…#about` has NO in-app history entry to
+  // pop — closing must land back on its OWN detail page, never navigate
+  // away (the old unconditional navigate(-1) bug popped off the detail
+  // route entirely).
+  it('deep-linked #about: closing stays on the detail page, not a pop away', async () => {
+    render(
+      <MemoryRouter initialEntries={['/musicians/x#about']}>
+        <Routes>
+          <Route path="/musicians/:id" element={<DetailView detail={MODERATE} />} />
+          <Route path="*" element={<div>OFF THE DETAIL PAGE</div>} />
+        </Routes>
+      </MemoryRouter>,
+    )
+    expect(
+      screen.getByRole('dialog', { name: /more about bobby timmons/i }),
+    ).toBeInTheDocument()
+    await userEvent.setup().click(
+      screen.getByRole('button', { name: /close — more about/i }),
+    )
+    // Sheet closed (hash dropped) and we are STILL on the detail route.
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.queryByText('OFF THE DETAIL PAGE')).toBeNull()
+    expect(
+      screen.getByRole('heading', { level: 1, name: /bobby timmons/i }),
+    ).toBeInTheDocument()
+  })
+
+  it('in-app open: closing pops history back to the pushed-from entry', async () => {
+    // Models the in-app `<a href="#about">` push: a prior entry exists, so
+    // location.key is NOT 'default' and close must navigate(-1) to keep
+    // browser-Back and in-app-close symmetric (Decision 3).
+    render(
+      <MemoryRouter
+        initialEntries={['/musicians/x', '/musicians/x#about']}
+        initialIndex={1}
+      >
+        <Routes>
+          <Route
+            path="/musicians/:id"
+            element={<DetailView detail={MODERATE} />}
+          />
+          <Route path="*" element={<div>OFF THE DETAIL PAGE</div>} />
+        </Routes>
+      </MemoryRouter>,
+    )
+    expect(
+      screen.getByRole('dialog', { name: /more about bobby timmons/i }),
+    ).toBeInTheDocument()
+    await userEvent.setup().click(
+      screen.getByRole('button', { name: /close — more about/i }),
+    )
+    // Popped back to the hash-less detail entry: sheet gone, still on detail.
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.queryByText('OFF THE DETAIL PAGE')).toBeNull()
+    expect(
+      screen.getByRole('heading', { level: 1, name: /bobby timmons/i }),
+    ).toBeInTheDocument()
   })
 })
 

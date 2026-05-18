@@ -74,11 +74,24 @@ export function DetailView({
   const firstName = detail.name.split(' ')[0] ?? detail.name
 
   // The "More about" sheet is the `#about` hash on this route (locked
-  // decision 3): link-addressable, Back closes it (history). Closing pops
-  // the hash so browser Back and the in-app close are the same operation.
+  // decision 3): link-addressable, Back closes it (history).
+  //
+  // Close is hash-aware. When `#about` was pushed in-app (the disclosure
+  // `<a href="#about">` adds a history entry) there is a prior entry, so
+  // `navigate(-1)` keeps browser-Back and the in-app close symmetric.
+  // But a direct/bookmarked/reloaded `…/musicians/<id>#about` is the FIRST
+  // history entry — React Router stamps it `key === 'default'` — and a
+  // `navigate(-1)` there pops AWAY from the detail page entirely (the
+  // link-addressable promise broken). In that case replace the hash so a
+  // deep-linked sheet closes to its OWN detail page.
   const sheetOpen = location.hash === '#about'
+  const isDeepLink = location.key === 'default'
   const closeSheet = (): void => {
-    void navigate(-1)
+    if (isDeepLink) {
+      void navigate({ hash: '' }, { replace: true })
+    } else {
+      void navigate(-1)
+    }
   }
   const paras = bioParagraphs(detail, bioFull)
 
