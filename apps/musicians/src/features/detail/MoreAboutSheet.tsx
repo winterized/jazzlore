@@ -107,8 +107,8 @@ export function MoreAboutSheet({
           </button>
         </div>
         <div className="more-body">
-          {paragraphs.map((p, i) => (
-            <p key={i}>{p}</p>
+          {paragraphs.map((p) => (
+            <p key={p}>{p}</p>
           ))}
           {attribution && <div className="attribution">{attribution}</div>}
         </div>
