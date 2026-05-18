@@ -10,6 +10,7 @@
 import { useEffect, useState } from 'react'
 import type {
   CuratedResponse,
+  GraphResponse,
   MusicianDetailResponse,
   SearchIndexResponse,
 } from '../lib/types'
@@ -18,6 +19,7 @@ import {
   CURATED,
   SEARCH_CORPUS,
   fixtureDetail,
+  fixtureGraph,
 } from '../test/fixtures'
 
 /** A BFF source: each method resolves the frozen envelope OR a WakingResponse
@@ -33,6 +35,9 @@ export interface DataSource {
   searchIndex(): Promise<
     SearchIndexResponse | { status: 'waking'; retryAfter: number }
   >
+  graph(
+    id: string,
+  ): Promise<GraphResponse | { status: 'waking'; retryAfter: number }>
 }
 
 /** Fixture-backed source (default for Phase D + tests). */
@@ -40,6 +45,7 @@ export const fixtureSource: DataSource = {
   curated: async () => ({ curated: CURATED }),
   detail: async (id) => fixtureDetail(id),
   searchIndex: async () => ({ corpus: SEARCH_CORPUS }),
+  graph: async (id) => ({ graph: fixtureGraph(id) }),
 }
 
 export type AsyncState<T> =

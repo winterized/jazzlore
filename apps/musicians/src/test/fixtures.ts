@@ -9,6 +9,7 @@
 
 import type {
   CuratedCard,
+  GraphData,
   MusicianDetail,
   SearchCorpusEntry,
 } from '../lib/types'
@@ -19,6 +20,7 @@ import {
   SPARSE_DETAIL,
 } from '../lib/fixtures'
 import {
+  mapGraphData,
   mapMusicianDetail,
   mapSearchCorpus,
 } from '../lib/map'
@@ -233,4 +235,20 @@ export function fixtureDetail(id: string): MusicianDetail {
   if (id === RICH.id) return RICH
   if (id === MODERATE.id) return MODERATE
   return SPARSE
+}
+
+// ─── Graph data (desktop graph panel). Built from the SAME raw detail
+// results via the FROZEN mapGraphData, so the graph and the detail screen
+// always describe one consistent collaboration neighbourhood (what
+// `/api/musicians/:id/graph` will return post-mapper). ───
+const RICH_GRAPH: GraphData = mapGraphData(RICH_RAW)
+const MODERATE_GRAPH: GraphData = mapGraphData(MODERATE_DETAIL)
+const SPARSE_GRAPH: GraphData = mapGraphData(SPARSE_DETAIL)
+
+/** Graph-by-id lookup for the mock data hook (mirrors `fixtureDetail`:
+ * unknown ids fall back to the sparse neighbourhood). */
+export function fixtureGraph(id: string): GraphData {
+  if (id === RICH.id) return RICH_GRAPH
+  if (id === MODERATE.id) return MODERATE_GRAPH
+  return SPARSE_GRAPH
 }

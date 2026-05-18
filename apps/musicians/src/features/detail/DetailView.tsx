@@ -23,6 +23,8 @@ import { DetailIdentity } from './DetailIdentity'
 import { CollaboratorRail } from './CollaboratorRail'
 import { MoreAboutSheet } from './MoreAboutSheet'
 import { useMosaicScrollPulse } from '../../hooks/useMosaicScrollPulse'
+import { useIsDesktop } from '../../hooks/useIsDesktop'
+import { GraphPanelSlot } from '../graph/GraphPanelSlot'
 
 /** Split the frozen `bioSummary` into display paragraphs. The contract froze
  * only `bioSummary` (no `bioFull`); the sheet shows the summary, the page may
@@ -61,6 +63,10 @@ export function DetailView({
   const railRef = useRef<HTMLDivElement>(null)
   const [pulseId, setPulseId] = useState<string | null>(null)
   const onMosaicTap = useMosaicScrollPulse(railRef, setPulseId)
+  // Desktop enrichment only: the graph (and its heavy lazy d3-force chunk)
+  // is never even requested on phones — the mobile detail screen IS the
+  // product (CLAUDE.md "desktop adds the graph panel").
+  const isDesktop = useIsDesktop()
 
   const goToMusician = (id: string): void => {
     void navigate(`/musicians/${encodeURIComponent(id)}`)
@@ -102,7 +108,8 @@ export function DetailView({
         </div>
       </header>
 
-      <main>
+      <div className="desk-detail">
+       <main className="desk-rail">
         <DetailIdentity d={detail} duplicate={duplicate} />
 
         <div className="mosaic-h">
@@ -144,7 +151,17 @@ export function DetailView({
           Portraits · attribution rendered per-image where licensed. Source ·
           Jazzlore graph.
         </footer>
-      </main>
+       </main>
+
+       {isDesktop && (
+         <aside
+           className="desk-graph"
+           aria-label={`Collaboration graph for ${detail.name}`}
+         >
+           <GraphPanelSlot focusId={detail.id} name={detail.name} />
+         </aside>
+       )}
+      </div>
 
       {sheetOpen && paras.length > 0 && (
         <MoreAboutSheet

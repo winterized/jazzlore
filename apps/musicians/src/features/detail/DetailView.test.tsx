@@ -1,7 +1,7 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MODERATE, RICH, SPARSE } from '../../test/fixtures'
 import { DetailView } from './DetailView'
 
@@ -141,6 +141,47 @@ describe('DetailView — "More about" #about sheet', () => {
     expect(screen.getByRole('link', { name: /more about bobby/i })).toHaveAttribute(
       'href',
       '#about',
+    )
+  })
+})
+
+describe('DetailView — desktop graph panel (lazy, ≥1024px only)', () => {
+  function stubDesktop(matches: boolean) {
+    vi.stubGlobal('matchMedia', (q: string) => ({
+      // The hook queries (min-width: 1024px); reduced-motion stays false.
+      matches: q.includes('min-width') ? matches : false,
+      media: q,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      onchange: null,
+      dispatchEvent: vi.fn(),
+    }))
+  }
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('does NOT mount the graph (nor its heavy chunk) on mobile', () => {
+    stubDesktop(false)
+    setup(MODERATE)
+    expect(
+      screen.queryByRole('complementary', { name: /collaboration graph/i }),
+    ).toBeNull()
+  })
+
+  it('mounts the lazy GraphView in a complementary region on desktop', async () => {
+    stubDesktop(true)
+    setup(RICH)
+    const aside = screen.getByRole('complementary', {
+      name: /collaboration graph for miles davis/i,
+    })
+    expect(aside).toBeInTheDocument()
+    // The lazy graph chunk + fixture graph resolve into the real app region.
+    await waitFor(() =>
+      expect(within(aside).getByRole('application')).toHaveAttribute(
+        'aria-label',
+        expect.stringContaining('Miles Davis'),
+      ),
     )
   })
 })
