@@ -25,47 +25,31 @@ const ANTOINE = '/musicians/wikidata:Q2856321' // SPARSE fixture
 const WAKING = '/musicians/__preview/waking' // dev-only harness route
 
 /**
- * KNOWN FROZEN-CONTRACT GAP (reported, not fixable in Phase D):
- * apps/musicians/src/index.css is frozen at the end of Phase B and ships a
- * token palette that fails WCAG AA color-contrast — `--accent #c87f1a`,
- * `--dim #9b9384` (light) / `#565047` (dark) on the paper/ink surfaces are
- * all < 4.5:1. Every musicians view trips axe's `color-contrast` rule in
- * both themes purely from these frozen tokens (D-owned components.css
- * hardcodes no colour). Phase D may not edit the frozen layer, so this
- * suite asserts ZERO violations of *every other* rule (real regression
- * coverage for anything D introduces) and treats `color-contrast` as the
- * one documented, token-owner-blocked exception. See
+ * Phase-B token layer was REVISED (user-authorised) to close the WCAG AA
+ * color-contrast gap the Phase-D axe pass found: pass-5's `--accent` /
+ * `--dim` measured 2.2–3.2:1 on the paper/ink surfaces. The fix split
+ * decorative vs text/UI accent — `--accent`/`--accent-soft` stay vivid for
+ * decorative-only use, a new AA-compliant `--accent-strong` carries all
+ * accent text / links / focus / active / CTA-bg, and `--dim` was retargeted
+ * to the `--muted` value. The token layer is RE-FROZEN. There is therefore
+ * NO LONGER a suppressed exception: this suite asserts ZERO axe violations
+ * of EVERY rule, `color-contrast` INCLUDED, in both themes. See
  * .omc/notepads/2026-05-18-musicians-v1/phase-D-learnings.md.
  */
-const FROZEN_TOKEN_CONTRAST = 'color-contrast'
-
 async function expectNoAxe(page: Page, label: string): Promise<void> {
   const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze()
-  const other = results.violations.filter(
-    (v) => v.id !== FROZEN_TOKEN_CONTRAST,
-  )
-  const digest = other.map((v) => ({
+  const digest = results.violations.map((v) => ({
     id: v.id,
     impact: v.impact,
     help: v.help,
     nodes: v.nodes.map((n) => ({ target: n.target, html: n.html })),
   }))
   expect(
-    other,
-    `[${label}] axe found ${other.length} non-frozen-token violation(s):\n` +
+    results.violations,
+    `[${label}] axe found ${results.violations.length} violation(s) ` +
+      `(color-contrast included — no suppressed exception):\n` +
       JSON.stringify(digest, null, 2),
   ).toEqual([])
-
-  // Surface the frozen gap loudly without failing the lane (it is owned by
-  // the Phase-B token layer, out of Phase D's write-scope).
-  const contrast = results.violations.find(
-    (v) => v.id === FROZEN_TOKEN_CONTRAST,
-  )
-  if (contrast) {
-    console.warn(
-      `[${label}] KNOWN frozen-token contrast gap: ${contrast.nodes.length} node(s) < WCAG AA (apps/musicians/src/index.css; reported, not fixable in Phase D).`,
-    )
-  }
 }
 
 function theme(page: Page): Promise<string | null> {
@@ -149,13 +133,13 @@ test.describe('a11y — autosuggest listbox open', () => {
     await expect(page.getByRole('option').first()).toBeVisible()
   }
 
-  test('light — 0 non-frozen-token axe violations', async ({ page }) => {
+  test('light — 0 axe violations', async ({ page }) => {
     await page.goto('/musicians')
     await openListbox(page)
     await expectNoAxe(page, 'autosuggest light')
   })
 
-  test('dark — 0 non-frozen-token axe violations', async ({ page }) => {
+  test('dark — 0 axe violations', async ({ page }) => {
     await page.goto('/musicians')
     // Flip BEFORE opening — re-typing after a theme flip is more brittle
     // than auditing the popup once, in the target theme.
@@ -176,13 +160,13 @@ test.describe('a11y — More about sheet open', () => {
     ).toBeVisible()
   }
 
-  test('light — 0 non-frozen-token axe violations', async ({ page }) => {
+  test('light — 0 axe violations', async ({ page }) => {
     await page.goto(MILES)
     await openSheet(page)
     await expectNoAxe(page, 'sheet light')
   })
 
-  test('dark — 0 non-frozen-token axe violations', async ({ page }) => {
+  test('dark — 0 axe violations', async ({ page }) => {
     await page.goto(MILES)
     // The sheet is an aria-modal dialog with a focus trap — the header
     // theme toggle is (correctly) unreachable while it is open, so the
