@@ -3,12 +3,17 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MODERATE, RICH, SPARSE } from '../../test/fixtures'
+import { fixtureSource } from '../../hooks/useMusicianData'
 import { DetailView } from './DetailView'
 
 function setup(detail = MODERATE, opts: { duplicate?: boolean } = {}) {
   return render(
     <MemoryRouter>
-      <DetailView detail={detail} duplicate={opts.duplicate ?? false} />
+      <DetailView
+        detail={detail}
+        duplicate={opts.duplicate ?? false}
+        source={fixtureSource}
+      />
     </MemoryRouter>,
   )
 }

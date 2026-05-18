@@ -7,6 +7,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { RICH } from '../../test/fixtures'
+import { fixtureSource } from '../../hooks/useMusicianData'
 import { GraphPanelSlot } from './GraphPanelSlot'
 
 beforeEach(() => {
@@ -27,7 +28,11 @@ describe('GraphPanelSlot', () => {
   it('shows an accessible loading state, then the real graph centred on the focus', async () => {
     render(
       <MemoryRouter>
-        <GraphPanelSlot focusId={RICH.id} name={RICH.name} />
+        <GraphPanelSlot
+          focusId={RICH.id}
+          name={RICH.name}
+          source={fixtureSource}
+        />
       </MemoryRouter>,
     )
     // Accessible Suspense fallback (status, not a bare spinner).
@@ -43,7 +48,11 @@ describe('GraphPanelSlot', () => {
   it('renders a focus node and peripheral collaborator nodes from the seam', async () => {
     render(
       <MemoryRouter>
-        <GraphPanelSlot focusId={RICH.id} name={RICH.name} />
+        <GraphPanelSlot
+          focusId={RICH.id}
+          name={RICH.name}
+          source={fixtureSource}
+        />
       </MemoryRouter>,
     )
     await screen.findByRole('application')

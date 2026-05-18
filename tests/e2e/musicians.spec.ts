@@ -32,7 +32,8 @@
  * portrait caption the design intentionally does not paint.
  */
 
-import { expect, test, type Page, type Route } from '@playwright/test'
+import { expect, test } from '@playwright/test'
+import { mockBff } from './musicians-bff-mock'
 
 const BASE = 'http://localhost:5175'
 const MILES = '/musicians/wikidata:Q93341' // RICH fixture
@@ -40,141 +41,6 @@ const ANTOINE = '/musicians/wikidata:Q2856321' // SPARSE fixture + duplicate
 const WAKING = '/musicians/__preview/waking' // dev-only calm-503 harness
 
 test.use({ baseURL: BASE })
-
-// ─── Frozen-shaped BFF responses (mirror src/lib/fixtures.ts + the frozen
-// envelopes in src/lib/types.ts). Used by the page.route guard below; the
-// rich/sparse/503 shapes match exactly what `/api/musicians/*` returns. ───
-
-const RICH_DETAIL = {
-  id: 'wikidata:Q93341',
-  name: 'Miles Davis',
-  aka: ['Miles Dewey Davis III'],
-  primaryInstruments: ['trumpet'],
-  allInstruments: ['trumpet', 'flugelhorn'],
-  birthYear: 1926,
-  deathYear: 1991,
-  genres: ['cool jazz', 'modal jazz'],
-  bioSummary:
-    'American trumpeter, bandleader and composer who was among the most influential figures in jazz. He shaped cool jazz, modal jazz and jazz fusion.',
-  portrait: {
-    url: 'https://commons.example/miles.jpg',
-    license: 'CC BY-SA 3.0',
-    attribution: 'Tom Palumbo',
-  },
-  photo: true,
-  links: { wikidataId: 'Q93341' },
-  collaborators: [
-    {
-      id: 'wikidata:Q7346',
-      name: 'John Coltrane',
-      instrument: 'tenor saxophone',
-      sharedRecordCount: 2,
-      topRecord: { title: 'Kind of Blue', year: 1959 },
-      photo: true,
-    },
-  ],
-  records: [
-    {
-      id: 'musicbrainz:rg-1959-kob',
-      title: 'Kind of Blue',
-      type: 'album' as const,
-      releaseYear: 1959,
-      label: 'Columbia',
-      cover: {
-        url: 'https://commons.example/kob.jpg',
-        license: 'Fair use',
-        attribution: '',
-      },
-      links: {},
-    },
-  ],
-}
-
-const SPARSE_DETAIL = {
-  id: 'wikidata:Q2856321',
-  name: 'Antoine Hervé',
-  aka: [],
-  primaryInstruments: ['piano'],
-  allInstruments: [],
-  birthYear: 1959,
-  genres: [],
-  portrait: {},
-  photo: false,
-  links: { wikidataId: 'Q2856321' },
-  collaborators: [
-    {
-      id: 'musicbrainz:stub-didier-lockwood',
-      name: 'Didier Lockwood',
-      instrument: 'violin',
-      sharedRecordCount: 1,
-      photo: false,
-    },
-  ],
-  records: [
-    {
-      id: 'musicbrainz:rg-1989-onj',
-      title: 'Orchestre National de Jazz 1989',
-      releaseYear: 1989,
-      label: 'Label Bleu',
-      cover: {},
-      links: {},
-    },
-  ],
-}
-
-const WAKING_503 = { status: 'waking', retryAfter: 8 }
-
-/**
- * Install the BFF guard. The SPA does not currently call `/api/*`; if it
- * ever does, return the correctly-shaped fixture (rich / sparse / 503 /
- * curated / search) so the journey holds — and never silently let an
- * unmocked network call through.
- */
-async function mockBff(page: Page): Promise<void> {
-  await page.route('**/api/**', async (route: Route) => {
-    const url = route.request().url()
-    if (url.includes('/api/musicians/wikidata:Q2856321')) {
-      return route.fulfill({ json: SPARSE_DETAIL })
-    }
-    if (url.includes('/api/musicians/wikidata:Q93341')) {
-      return route.fulfill({ json: RICH_DETAIL })
-    }
-    if (url.includes('/__waking')) {
-      return route.fulfill({ status: 503, json: WAKING_503 })
-    }
-    if (url.includes('/api/musicians/curated')) {
-      return route.fulfill({
-        json: {
-          curated: [
-            {
-              id: RICH_DETAIL.id,
-              name: RICH_DETAIL.name,
-              hook: 'The restless modernist.',
-              photo: true,
-              portrait: RICH_DETAIL.portrait,
-            },
-          ],
-        },
-      })
-    }
-    if (url.includes('/api/musicians/search-index')) {
-      return route.fulfill({
-        json: {
-          corpus: [
-            { id: RICH_DETAIL.id, name: 'Miles Davis', aka: [] },
-            { id: SPARSE_DETAIL.id, name: 'Antoine Hervé', aka: [] },
-          ],
-        },
-      })
-    }
-    // Unmocked /api/* call — fail loudly: the data seam changed and this
-    // spec (and the launch-readiness assumptions) must be revisited.
-    return route.fulfill({
-      status: 599,
-      body: `Unmocked BFF call in e2e: ${url}`,
-    })
-  })
-}
 
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })

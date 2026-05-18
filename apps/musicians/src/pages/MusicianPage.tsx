@@ -7,20 +7,30 @@
 
 import { useCallback, useState } from 'react'
 import { useParams } from 'react-router'
-import { fixtureSource, useBffResource } from '../hooks/useMusicianData'
+import {
+  defaultSource,
+  useBffResource,
+  type DataSource,
+} from '../hooks/useMusicianData'
 import { DetailView } from '../features/detail/DetailView'
 import { WakingState } from '../features/status/WakingState'
 import { CURATED, SPARSE_DUPLICATE_ID } from '../test/fixtures'
 
 const FALLBACK = CURATED.slice(0, 5).map((c) => ({ id: c.id, name: c.name }))
 
-export default function MusicianPage() {
+export default function MusicianPage({
+  source = defaultSource,
+}: {
+  /** BFF seam. Defaults to the real fetch-backed source; tests inject the
+   * fixture source. */
+  source?: DataSource
+}) {
   const { id = '' } = useParams<{ id: string }>()
   const [attempt, setAttempt] = useState(0)
   const retry = useCallback(() => setAttempt((a) => a + 1), [])
   const state = useBffResource(
-    () => fixtureSource.detail(id),
-    [id, attempt],
+    () => source.detail(id),
+    [source, id, attempt],
   )
 
   if (state.kind === 'waking') {
@@ -51,5 +61,7 @@ export default function MusicianPage() {
   const duplicate =
     state.data.id === 'wikidata:Q2856321' ||
     state.data.id === SPARSE_DUPLICATE_ID
-  return <DetailView detail={state.data} duplicate={duplicate} />
+  return (
+    <DetailView detail={state.data} duplicate={duplicate} source={source} />
+  )
 }

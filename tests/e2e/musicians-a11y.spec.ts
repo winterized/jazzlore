@@ -17,6 +17,7 @@
 
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
+import { mockBff } from './musicians-bff-mock'
 
 const BASE = 'http://localhost:5175'
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
@@ -64,6 +65,14 @@ async function flipTheme(page: Page): Promise<void> {
 }
 
 test.use({ baseURL: BASE })
+
+// The SPA now calls `/api/musicians/*` through the production `httpSource`
+// (the H1 seam swap); the Vite dev server has no `/api/*`, so every audited
+// view that loads BFF data needs the frozen-shaped mock or it would only
+// audit the calm error state. Same guard as `musicians.spec.ts`.
+test.beforeEach(async ({ page }) => {
+  await mockBff(page)
+})
 
 type View = { name: string; ready: (p: Page) => Promise<void> }
 

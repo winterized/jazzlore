@@ -11,7 +11,11 @@
 
 import { lazy, Suspense } from 'react'
 import { useNavigate } from 'react-router'
-import { fixtureSource, useBffResource } from '../../hooks/useMusicianData'
+import {
+  defaultSource,
+  useBffResource,
+  type DataSource,
+} from '../../hooks/useMusicianData'
 
 // Resolves the default export (GraphView) — d3-force lands in this async
 // chunk, never the initial bundle. PUBLIC API only (features/graph/index.ts).
@@ -34,13 +38,20 @@ type Props = {
   focusId: string
   /** Focus musician name — for the loading + empty copy only. */
   name: string
+  /** BFF seam. Defaults to the real fetch-backed source; tests inject the
+   * fixture source. */
+  source?: DataSource
 }
 
-export function GraphPanelSlot({ focusId, name }: Props) {
+export function GraphPanelSlot({
+  focusId,
+  name,
+  source = defaultSource,
+}: Props) {
   const navigate = useNavigate()
   const state = useBffResource(
-    () => fixtureSource.graph(focusId),
-    [focusId],
+    () => source.graph(focusId),
+    [source, focusId],
   )
 
   if (state.kind !== 'ready') {

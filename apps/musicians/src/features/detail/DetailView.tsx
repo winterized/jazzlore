@@ -13,6 +13,7 @@
 import { useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import type { MusicianDetail } from '../../lib/types'
+import { defaultSource, type DataSource } from '../../hooks/useMusicianData'
 import { Shell } from '../../components/Shell'
 import { MosaicV4 } from '../../components/MosaicV4'
 import { EraStrip, type EraItem } from '../../components/EraStrip'
@@ -50,6 +51,9 @@ type Props = {
   /** Richer long-form bio paragraphs for the "More about" sheet, when the
    * BFF supplies them. Falls back to splitting `bioSummary`. */
   bioFull?: string[]
+  /** BFF seam for the desktop graph slot. Defaults to the real fetch-backed
+   * source; tests inject the fixture source. */
+  source?: DataSource
 }
 
 export function DetailView({
@@ -57,6 +61,7 @@ export function DetailView({
   duplicate = false,
   sameEra = [],
   bioFull,
+  source = defaultSource,
 }: Props) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -171,7 +176,11 @@ export function DetailView({
            className="desk-graph"
            aria-label={`Collaboration graph for ${detail.name}`}
          >
-           <GraphPanelSlot focusId={detail.id} name={detail.name} />
+           <GraphPanelSlot
+             focusId={detail.id}
+             name={detail.name}
+             source={source}
+           />
          </aside>
        )}
       </div>

@@ -18,6 +18,7 @@
     "test:e2e": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test",
     "test:e2e:install": "PLAYWRIGHT_BROWSERS_PATH=0 playwright install chromium webkit",
     "lighthouse:audit": "node tests/lighthouse-audit.mjs",
+    "bundle:budget": "node tests/musicians-bundle-budget.mjs",
     "storybook": "pnpm -F @jazzlore/ui storybook",
     "build-storybook": "pnpm -F @jazzlore/ui build-storybook",
     "lint": "eslint .",

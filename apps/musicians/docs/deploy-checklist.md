@@ -143,12 +143,13 @@ Phase F smoke result (local `wrangler dev` 4.92.0 against live Aura):
 
 ---
 
-## Launch readiness (Phase G)
+## Launch readiness (Phase G + final-review H1 resolution)
 
-Run on `feat/musicians-v1` at the Phase-F tip (parent commit `5a3b56e`).
-Measured, not asserted — commands + numbers below. **No code under
-`apps/musicians/src/**` or the frozen `src/lib/**` / token layer was touched
-in Phase G** (e2e harness + the Lighthouse-audit target list only).
+Phase G ran on `feat/musicians-v1` at the Phase-F tip; the final-review
+**H1 resolution** (SPA→BFF `httpSource` wired as the app default) +
+the perf-CLS fix (commit `cece81c`) were measured on top. Measured, not
+asserted — commands + numbers below. No code under the frozen
+`src/lib/**` / token layer was touched.
 
 ### Gate status
 
@@ -156,14 +157,15 @@ in Phase G** (e2e harness + the Lighthouse-audit target list only).
 | --- | --- | --- | --- |
 | Typecheck (`pnpm -F @jazzlore/musicians typecheck`) | clean | exit 0 | ✅ pass |
 | Lint (`pnpm lint`) | clean | exit 0 | ✅ pass |
-| Unit tests (`pnpm test:run`) | musicians ≥235 | **235/235** (28 files); repo all green (music-core 293, ui 208, scales 50, chords 176) | ✅ pass |
+| Unit tests (`pnpm test:run`) | musicians ≥235 | **243/243** (29 files; +8 `httpSource` seam tests); repo all green (music-core 293, ui 208, scales 50, chords 176) | ✅ pass |
 | Build (`pnpm build`, 3 apps) | succeeds | exit 0 | ✅ pass |
-| Initial JS budget | ≤100 KB gz | **88.13 KB gz** (`index-*.js`, 276.95 KB raw) | ✅ pass |
-| d3-force code-split | lazy chunk, not initial | `graph-*.js` 9.37 KB gz / 25.38 KB raw; d3-force markers (`alphaDecay`/`velocityDecay`) present in `graph-*.js`, **absent from `index-*.js`** | ✅ pass |
-| e2e journey (`musicians.spec.ts`, chromium+webkit) | green | **22/22** (11 tests ×2 engines) | ✅ pass |
-| axe a11y (`musicians-a11y`, chromium) | 12/12, 0 violations, both themes | **12/12, 0 violations** (home / detail-rich / detail-sparse / waking ×2 themes; autosuggest-listbox-open ×2; More-about-sheet-open ×2; `color-contrast` included, no suppressed exception) — stable 2× as its own scoped command | ✅ pass |
-| Lighthouse a11y | ≥95 | **100** | ✅ pass |
-| Lighthouse perf | ≥90 | **~83** (3 stable runs: 82, 82, 83) | ❌ **MISS** |
+| Initial JS budget | ≤100 KB gz | **88.22 KB gz** (`index-*.js`, 277.27 KB raw) — the `httpSource` fetch wiring added no measurable weight | ✅ pass |
+| d3-force code-split | lazy chunk, not initial | `graph-*.js` 9.37 KB gz / 25.38 KB raw; d3-force markers (`alphaDecay`/`velocityDecay`) present in `graph-*.js`, **absent from `index-*.js`** (seam swap did not leak it) | ✅ pass |
+| SPA→BFF wiring (**H1**) | SPA calls `/api/*` | `httpSource` is the app default; verified end-to-end vs `wrangler dev` against **live Aura** (real musician + counts below) | ✅ **RESOLVED** |
+| e2e journey (`musicians.spec.ts`, chromium+webkit) | green | **22/22** (11 tests ×2 engines) — now exercises the **real http path** through the `page.route('**/api/**')` mock | ✅ pass |
+| axe a11y (`musicians-a11y`, chromium) | 12/12, 0 violations, both themes | **12/12, 0 violations** (home / detail-rich / detail-sparse / waking ×2 themes; autosuggest-listbox-open ×2; More-about-sheet-open ×2; `color-contrast` included, no suppressed exception); the BFF route mock was added to this spec too (the SPA now fetches `/api/*`) | ✅ pass |
+| Lighthouse a11y | ≥95 | **100** (both runs) | ✅ pass |
+| Lighthouse perf | ≥90 | **97/98** baseline (commit `cece81c`); **98 / 99** re-measured ×2 with the H1 on-load fetch wired — no CLS/FCP regression | ✅ **pass** |
 | Frozen paths (`git diff cfd3540 HEAD -- apps/musicians/src/lib apps/scales`) | empty | empty | ✅ pass |
 
 ### e2e coverage (`tests/e2e/musicians.spec.ts`, baseURL 5175)
@@ -194,21 +196,24 @@ viewport — never an eyeball), `reducedMotion: 'reduce'` per test:
 
 ### Honest deviations / findings (no fabrication)
 
-1. **BFF mocking — the SPA does not call `/api/*`.** `HomePage` /
-   `MusicianPage` / `Autosuggest` / `GraphPanelSlot` read the frozen-shaped
-   `fixtureSource` (`src/hooks/useMusicianData.ts`) directly; the
-   production-source swap to real `fetch` was deliberately deferred (it lands
-   when the real BFF source is wired). So `page.route('**/api/**')` is a
-   no-op against the current build. The spec **still installs the route
-   guard** — it returns correctly-shaped frozen fixtures if a call ever
-   fires and **fails loudly (HTTP 599) on any unmocked `/api/*` call** so a
-   future seam change forces this spec to be revisited. The journey is
-   driven against the real fixture-fed dev server; the fixture shapes ARE
-   the frozen `/api/musicians/*` envelopes (rich = Miles, sparse = Antoine,
-   the dev-only `__preview/waking` harness for the 503). This is faithful,
-   not a shortcut, but the e2e does **not** exercise real BFF wiring — that
-   is covered by the Phase-C/F worker tests + the user's post-deploy
-   `/api/health` + musician-page prod probe.
+1. **BFF wiring (H1) — RESOLVED.** The SPA now calls `/api/*` for real:
+   `httpSource` (a `DataSource` matching the frozen seam in
+   `src/hooks/useMusicianData.ts`) is the app `defaultSource`. It `fetch`es
+   relative same-origin `/api/musicians/{curated,:id,:id/graph,search-index}`,
+   parses the FROZEN envelopes into the FROZEN domain types (imported from
+   `src/lib`, never reimplemented), resolves the `503 {status:"waking"}`
+   body via the FROZEN `isWaking` (so the existing waking UI triggers), and
+   REJECTS network / non-ok-HTTP / `{status:"error"}` so the existing calm
+   error state surfaces. Components are a clean seam swap — each takes an
+   optional `source` prop defaulting to `defaultSource` (the same idiom
+   `Autosuggest.loadCorpus` already used); `fixtureSource` stays behind the
+   seam for unit tests. The `musicians.spec.ts` `page.route('**/api/**')`
+   guard now intercepts the **real** http path (decoded-URL matcher); the
+   same mock was added to `musicians-a11y.spec.ts` (the SPA fetches `/api/*`
+   there too). Both still fail loudly (HTTP 599) on any unmocked `/api/*`.
+   **Verified end-to-end vs `wrangler dev` against live Aura** (see the
+   dedicated section below) — the plan's Phase-F Verification, performed for
+   the first time.
 
 2. **Image attribution is rendered for album covers only.** Verified
    against the live DOM: v1 never paints the remote `picture_url` /
@@ -258,34 +263,65 @@ viewport — never an eyeball), `reducedMotion: 'reduce'` per test:
    `tabIndex=0`, Enter/Space → `onSelect`), which is a stronger objective
    assertion and engine-independent. Green on both engines.
 
-### Lighthouse perf miss — measured root cause (perf gate NOT met)
+### Lighthouse perf — RESOLVED (gate met)
 
-`pnpm lighthouse:audit` (system Chrome via chrome-launcher — this path
-works; the "broken CLI" memory note is about the standalone `lighthouse`
-binary, not the Node-lib runner). The audit script's `TARGETS` list was
-extended with a `musicians` entry (port 4175, `/musicians`) — a low-risk,
-single-array change matching the existing scales/chords pattern.
+The Phase-G ~83 miss (FCP 2.4 s + `CLS = 0.314` from `font-display: swap`)
+was fixed in commit **`cece81c`** (metrics-matched font fallbacks +
+preload → CLS killed): baseline **97 / 98**. Re-measured **×2 with the H1
+on-load `/api/*` fetch wired** (`pnpm lighthouse:audit`, system Chrome via
+chrome-launcher):
 
 ```
-scales:    perf 91 · a11y 100 · best 100 · seo 100  ✓
-chords:    perf 90 · a11y 100 · best 100 · seo 100  ✓
-musicians: perf 83 · a11y 100 · best 100 · seo 100  ✗ (perf gate ≥90)
+run 1 — scales: perf 91 · chords: perf 90 · musicians: perf 98 · a11y 100
+run 2 — scales: perf 91 · chords: perf 90 · musicians: perf 99 · a11y 100
 ```
 
-Re-run ×3 for stability (single-run perf is noisy per the script's own
-note): **82 / 82 / 83 — reproducible, not noise.** Diagnostics:
-`FCP = LCP = SI = TTI ≈ 2.4 s`, `TBT = 0 ms`, **`CLS = 0.314`** (poor),
-sole opportunity "unused-javascript ≈ 43 KiB". Interpretation: under
-Lighthouse's throttled-mobile profile (4× CPU + slow-4G) the SPA's
-first paint lands ~2.4 s (88 KB-gz initial bundle — within budget but
-heavier than scales/chords, which clear 90), and `font-display: swap`
-trades FOUT for a 0.314 layout shift. **This is a real Phase-G finding,
-not fabricated and not papered over.** A11y (100), bundle budget
-(88 KB gz), and code-split are all met; the Lighthouse perf score is
-**~83, below the ≥90 quality bar**, and is the one open quality gate.
-Remediation (font preload + reserve layout box to kill CLS + trim unused
-JS) is a **follow-up, out of Phase-G scope** (it would touch the
-frozen-ish Phase-B token layer / Phase-D UI).
+musicians **perf 98 / 99, a11y 100** — stable, decisively above the ≥90 /
+≥95 bars. The added on-load fetch did **not** regress CLS/FCP below the
+gate (the audit runs `vite preview` with no `/api`, so the home settles
+into the calm error state — itself a styled, accessible, zero-CLS screen;
+the real-data home was separately paint-verified vs `wrangler dev` below).
+
+### H1 end-to-end verification vs `wrangler dev` (live Aura — first run of the plan's Phase-F Verification)
+
+Repo-root `.dev.vars` (gitignored — `git check-ignore` confirms
+`.gitignore:31`; `git status` shows it untracked) carries the four
+`NEO4J_*` from `~/.zshrc` with `NEO4J_DATABASE=d30e12cc` (the real db
+name, not the literal `neo4j`). Unified Worker started:
+`wrangler dev --config wrangler.musicians.jsonc` (4.92.0), all four
+`NEO4J_*` + the `ASSETS` binding loaded, serving the production
+`apps/musicians/dist` build. Objective probes (curl + Playwright-MCP
+DOM/computed/paint-sample, never an eyeball):
+
+- `GET /api/health` → `200 {"status":"ok","musicianCount":26055}` — live.
+- `GET /api/musicians/curated` → **12** cards, real names hydrated from
+  Aura (Miles Davis, John Coltrane, Bill Evans, Thelonious Monk, …),
+  `photo:false` (sparse name+hook — expected, no portrait bitmap in v1).
+- `GET /api/musicians/search-index` → **26 055**-entry corpus (matches the
+  live count); autosuggest typing "coltrane" returns 6 real hits (John
+  Coltrane, John Coltrane Quartet, Ravi/Alice/Michelle Coltrane …) — one
+  cached fetch, client-side match, no per-keystroke backend call.
+- Real musician detail — **Miles Davis**
+  (`musicbrainz:561d854a-6a28-4aa7-8c99-323e6ce46c2a`):
+  **199 collaborators** / **64 records** from live Aura; the SPA renders
+  h1 "Miles Davis" (painted `rgb(26,22,18)`), **16** collaborator rows
+  (J.C. Heard, Freddie Green, Mundell Lowe, Bennie Green … each with the
+  "Most: 'Sarah Vaughan' '50" defining-record line) and real records
+  (Sarah Vaughan/Columbia '50, Modern Jazz Trumpets/Prestige '51, Legrand
+  Jazz/Columbia '58); 0 console errors, not the error/waking fallback.
+- Desktop graph (1280) from real `GET /api/musicians/:id/graph` →
+  **200 nodes / 199 edges**; the SVG paints **798** shapes, focus node
+  "Miles Davis" `aria-pressed="true"`, `role=application` label "centred
+  on Miles Davis".
+- Waking/error path **reachable end-to-end**: a real BFF non-200 (a
+  bogus id → live Aura `404`) flows through `httpSource` reject →
+  `useBffResource` → the calm "The graph is napping." screen with
+  `role="alert"`, a retry control and navigable cached fallback links —
+  the same wiring the real cold-Aura `503 {status:"waking"}` triggers via
+  the FROZEN `isWaking` branch.
+
+`.dev.vars` was deleted-from-tracking by design — never staged, never
+committed (landmine 12).
 
 ### Explicit remaining USER actions (out-of-repo, dashboard-only — landmine 15)
 
@@ -306,15 +342,24 @@ does not extend to this app (live external deps + secrets).
 
 ### Launch-ready verdict
 
-**NOT launch-ready as a fully green build — one quality gate is open.**
-Everything functional is green and verified: typecheck, lint, 235 unit
-tests, 3-app build, e2e journey on both engines, 12/12 axe a11y both
-themes, Lighthouse a11y 100, the ≤100 KB-gz bundle budget, and d3-force
-code-split. The single blocker is the **Lighthouse performance score
-(~83 vs the ≥90 bar)** — a real, reproduced measurement (FCP 2.4 s under
-mobile throttling + CLS 0.314), reported honestly and not worked around.
-Functionally and accessibly the app is deploy-quality; against the
-project's stated Lighthouse perf ≥90 quality bar it is not yet there.
-The deploy is user-gated regardless: the user decides whether to (a) ship
-v1 with a tracked perf follow-up or (b) hold for the perf remediation,
-**after** completing the out-of-repo Cloudflare provisioning above.
+**Launch-ready — every quality gate is green; the only remaining work is
+the user-gated out-of-repo Cloudflare provisioning.** Verified: typecheck,
+lint, **243** unit tests (incl. the 8 new `httpSource` seam tests), 3-app
+build, e2e journey on both engines (now over the real http path), 12/12
+axe a11y both themes, Lighthouse a11y **100** and perf **98/99**
+(≥90 met — the prior ~83 miss resolved in `cece81c`, no regression from
+the H1 on-load fetch), the **88.22 KB-gz** initial bundle (≤100 KB) with
+d3-force still isolated to the lazy graph chunk, and — the previously-open
+final-review blocker — **H1 RESOLVED**: the SPA→BFF `httpSource` is wired
+as the app default and **verified end-to-end against live Aura via
+`wrangler dev`** (26 055 musicians; Miles Davis with 199 real
+collaborators / 64 records; autosuggest over the real corpus; the desktop
+graph from real `/api/musicians/:id/graph`; the waking/error path
+reachable). The frozen `src/lib/**` and `apps/scales` are untouched.
+
+**Merge and first deploy remain USER-GATED (landmine 14).** This work did
+NOT push, merge, or deploy, and did not provision any Cloudflare/GitHub
+dashboard resource. The standing auto-merge autonomy explicitly does not
+extend to this app (live external deps + secrets). The app is
+deploy-quality; the user merges + first-deploys **after** completing the
+out-of-repo provisioning checklist below.

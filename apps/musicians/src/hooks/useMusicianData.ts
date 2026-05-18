@@ -40,13 +40,62 @@ export interface DataSource {
   ): Promise<GraphResponse | { status: 'waking'; retryAfter: number }>
 }
 
-/** Fixture-backed source (default for Phase D + tests). */
+/** Fixture-backed source (kept behind the seam for unit tests + the
+ * dev-only `__preview/waking` harness). NOT the app default any more. */
 export const fixtureSource: DataSource = {
   curated: async () => ({ curated: CURATED }),
   detail: async (id) => fixtureDetail(id),
   searchIndex: async () => ({ corpus: SEARCH_CORPUS }),
   graph: async (id) => ({ graph: fixtureGraph(id) }),
 }
+
+type Waking = { status: 'waking'; retryAfter: number }
+
+/**
+ * One BFF GET. Relative URL → the SAME unified Worker that serves this SPA
+ * also serves `/api/*` (same-origin, no CORS, no base URL). The frozen
+ * `503 {status:"waking"}` body resolves AS the waking shape (so
+ * `useBffResource` maps it to `kind:'waking'` via the FROZEN `isWaking`);
+ * a network failure, a non-ok HTTP status, or an `{status:"error"}` envelope
+ * REJECTS so the hook surfaces the calm error state (D7).
+ */
+async function bffGet<T>(path: string): Promise<T | Waking> {
+  const res = await fetch(path, { headers: { Accept: 'application/json' } })
+  const body: unknown = await res.json().catch(() => null)
+  if (isWaking(body)) return body
+  if (!res.ok) throw new Error(`bff ${res.status} ${path}`)
+  if (
+    typeof body === 'object' &&
+    body !== null &&
+    (body as { status?: unknown }).status === 'error'
+  ) {
+    throw new Error(`bff error envelope ${path}`)
+  }
+  return body as T
+}
+
+/**
+ * Production source — the SPA→BFF wiring. Calls the unified Worker's
+ * `/api/musicians/*` endpoints and parses the FROZEN envelopes into the
+ * FROZEN domain types (imported from `../lib/types`, never reimplemented).
+ */
+export const httpSource: DataSource = {
+  curated: () => bffGet<CuratedResponse>('/api/musicians/curated'),
+  detail: (id) =>
+    bffGet<MusicianDetailResponse>(
+      `/api/musicians/${encodeURIComponent(id)}`,
+    ),
+  searchIndex: () =>
+    bffGet<SearchIndexResponse>('/api/musicians/search-index'),
+  graph: (id) =>
+    bffGet<GraphResponse>(
+      `/api/musicians/${encodeURIComponent(id)}/graph`,
+    ),
+}
+
+/** The source the app uses by default (the H1 seam swap: real `fetch`,
+ * not fixtures). Components default to this; tests inject `fixtureSource`. */
+export const defaultSource: DataSource = httpSource
 
 export type AsyncState<T> =
   | { kind: 'loading' }

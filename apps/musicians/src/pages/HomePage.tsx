@@ -6,7 +6,11 @@
 // reader is never stranded. The D6 autosuggest combobox is the search slot.
 
 import { useCallback, useState } from 'react'
-import { fixtureSource, useBffResource } from '../hooks/useMusicianData'
+import {
+  defaultSource,
+  useBffResource,
+  type DataSource,
+} from '../hooks/useMusicianData'
 import { HomeView } from '../features/home/HomeView'
 import { Autosuggest } from '../features/search/Autosuggest'
 import { WakingState } from '../features/status/WakingState'
@@ -16,13 +20,16 @@ import { CURATED } from '../test/fixtures'
  * closest stand-in for "your last visit" until a real client cache lands. */
 const FALLBACK = CURATED.slice(0, 5).map((c) => ({ id: c.id, name: c.name }))
 
-export default function HomePage() {
+export default function HomePage({
+  source = defaultSource,
+}: {
+  /** BFF seam. Defaults to the real fetch-backed source; tests inject the
+   * fixture source. */
+  source?: DataSource
+}) {
   const [attempt, setAttempt] = useState(0)
   const retry = useCallback(() => setAttempt((a) => a + 1), [])
-  const state = useBffResource(
-    () => fixtureSource.curated(),
-    [attempt],
-  )
+  const state = useBffResource(() => source.curated(), [source, attempt])
 
   if (state.kind === 'waking') {
     return (

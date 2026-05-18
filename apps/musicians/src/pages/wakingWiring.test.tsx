@@ -6,28 +6,33 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 
+// The H1 seam swap made `defaultSource` (real fetch) the app default that
+// HomePage / MusicianPage call. Mock THAT to drive the calm D7 screens
+// deterministically — no network, exercising the production default path.
 vi.mock('../hooks/useMusicianData', async () => {
   const actual = await vi.importActual<
     typeof import('../hooks/useMusicianData')
   >('../hooks/useMusicianData')
   return {
     ...actual,
-    fixtureSource: {
+    defaultSource: {
       curated: vi.fn(),
       detail: vi.fn(),
       searchIndex: vi.fn(),
+      graph: vi.fn(),
     },
   }
 })
 
-import { fixtureSource } from '../hooks/useMusicianData'
+import { defaultSource } from '../hooks/useMusicianData'
 import HomePage from './HomePage'
 import MusicianPage from './MusicianPage'
 
-const mocked = fixtureSource as unknown as {
+const mocked = defaultSource as unknown as {
   curated: ReturnType<typeof vi.fn>
   detail: ReturnType<typeof vi.fn>
   searchIndex: ReturnType<typeof vi.fn>
+  graph: ReturnType<typeof vi.fn>
 }
 
 beforeEach(() => {
@@ -41,6 +46,10 @@ beforeEach(() => {
     onchange: null,
     dispatchEvent: vi.fn(),
   }))
+  // HomePage also mounts <Autosuggest/>, whose corpus loader now defaults to
+  // defaultSource.searchIndex() (this mock). Give it a benign resolved value
+  // so the autosuggest effect never throws while we assert the D7 screens.
+  mocked.searchIndex.mockResolvedValue({ corpus: [] })
 })
 afterEach(() => {
   vi.unstubAllGlobals()

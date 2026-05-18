@@ -19,7 +19,7 @@ import {
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router'
 import type { SearchIndexResponse } from '../../lib/types'
-import { fixtureSource } from '../../hooks/useMusicianData'
+import { defaultSource } from '../../hooks/useMusicianData'
 import { isWaking } from '../../lib/types'
 import { SearchIcon } from '../../components/icons'
 import { searchCorpus } from './searchCorpus'
@@ -30,7 +30,7 @@ const DEBOUNCE_MS = 80
 type Pos = { top: number; left: number; width: number }
 
 export function Autosuggest({
-  loadCorpus = () => fixtureSource.searchIndex(),
+  loadCorpus = () => defaultSource.searchIndex(),
 }: {
   loadCorpus?: () => Promise<
     SearchIndexResponse | { status: 'waking'; retryAfter: number }
