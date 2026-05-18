@@ -5,6 +5,7 @@
 
 import { fixtureSource, useBffResource } from '../hooks/useMusicianData'
 import { HomeView } from '../features/home/HomeView'
+import { Autosuggest } from '../features/search/Autosuggest'
 
 export default function HomePage() {
   const state = useBffResource(() => fixtureSource.curated(), [])
@@ -17,5 +18,7 @@ export default function HomePage() {
       </main>
     )
   }
-  return <HomeView curated={state.data.curated} />
+  return (
+    <HomeView curated={state.data.curated} searchSlot={<Autosuggest />} />
+  )
 }
