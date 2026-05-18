@@ -74,8 +74,9 @@ function hasPhoto(m: RawMusician): boolean {
 /**
  * Map one record + its (optional) `:PLAYED_ON` edge. `primaryArtist` is
  * DERIVED (the schema has no primary-artist field): the leader/co-leader on
- * the record, falling back to `fallbackArtist` (typically the focus
- * musician's name) so deep-links never read "<title> undefined".
+ * the record, falling back to the caller-supplied `opts.primaryArtist`
+ * (typically the focus musician's name, computed by `primaryArtistForRecord`)
+ * so deep-links never read "<title> undefined".
  */
 export function mapRecordRef(
   record: RawRecord,
