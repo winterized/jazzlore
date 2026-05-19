@@ -142,6 +142,60 @@ async function readLayoutSnapshot(page: Page) {
   })
 }
 
+/**
+ * Phase B3 — era strip is present on Miles (rich peers), absent on Antoine
+ * (sparse). The strip is a `<section aria-label="From the same era">` that
+ * `EraStrip.tsx` self-hides on an empty `items` array — so the absence
+ * assertion is structurally meaningful (NOT a CSS suppression).
+ *
+ * This test runs LIVE-ONLY (PREVIEW_BASE) and is the post-merge integration
+ * gate for Group B's data wiring. Before Group B merges to main + deploys,
+ * the prod BFF doesn't supply `sameEra`, so the strip is absent for both
+ * musicians — that's the documented "before" state in
+ * apps/musicians/docs/diagnostics/era-strip-missing.md. After merge + deploy,
+ * Miles must show ≥ 1 tile; Antoine remains absent (sparse — 0 peers).
+ *
+ * One viewport × one theme is enough for this assertion: presence/absence
+ * is a DOM predicate, not a visual-baseline pixel match. The visual rail
+ * composition (strip in slot 4) is already enforced by DetailView.tsx and
+ * doesn't need a multi-viewport sweep here.
+ */
+test.describe('joint-fix acceptance — Phase B3 era strip', () => {
+  test.skip(!ENABLED, 'PREVIEW_BASE not set — joint-fix acceptance suite is no-op')
+
+  test.use({ viewport: { width: 1024, height: 768 } })
+
+  test('Miles · "From the same era" section is present (≥ 1 tile)', async ({
+    page,
+  }) => {
+    await page.goto(MILES)
+    await expect(
+      page.getByRole('heading', { level: 1, name: /miles davis/i }),
+    ).toBeVisible({ timeout: 15_000 })
+    // The strip is in slot 4 of the rail (between CollaboratorRail and
+    // RecordsStrip). Located by its aria-label, not a class selector.
+    const strip = page.locator('[aria-label="From the same era"]')
+    await expect(strip).toBeVisible({ timeout: 15_000 })
+    // At least one tile rendered — EraStrip emits one `.era-tile` per peer.
+    await expect(strip.locator('.era-tile').first()).toBeVisible()
+  })
+
+  test('Antoine · "From the same era" section is absent (sparse → self-hide)', async ({
+    page,
+  }) => {
+    await page.goto(ANTOINE)
+    await expect(
+      page.getByRole('heading', { level: 1, name: /antoine herv/i }),
+    ).toBeVisible({ timeout: 15_000 })
+    // EraStrip returns null on items.length === 0 — the section MUST NOT
+    // be in the DOM (this is the meaningful "no peers" signal, not CSS
+    // suppression).
+    await expect(
+      page.locator('[aria-label="From the same era"]'),
+    ).toHaveCount(0)
+  })
+})
+
 test.describe('joint-fix acceptance — Phase 0 scaffolding', () => {
   test.skip(!ENABLED, 'PREVIEW_BASE not set — joint-fix acceptance suite is no-op')
 
