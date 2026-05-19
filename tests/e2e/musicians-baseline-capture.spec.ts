@@ -24,7 +24,9 @@ import { mockBff } from './musicians-bff-mock'
 // silently been hitting a SPA error state without the mock; Phase 0 restores
 // localhost capture AND enables prod/preview capture in one parameterization.
 const BASE = process.env.BASE ?? 'http://localhost:5175'
-const IS_LIVE_BFF = !BASE.startsWith('http://localhost')
+// Same heuristic as musicians-a11y.spec.ts — HTTPS is unambiguously live; any
+// http://... (incl. 127.0.0.1, *.local) is local.
+const IS_LIVE_BFF = /^https:\/\//.test(BASE)
 const MILES = '/musicians/wikidata:Q93341'
 const ANTOINE_ID = IS_LIVE_BFF ? 'wikidata:Q586360' : 'wikidata:Q2856321'
 const ANTOINE = `/musicians/${ANTOINE_ID}`

@@ -28,7 +28,12 @@ import { mockBff } from './musicians-bff-mock'
 // Hervé at Q586360, verified 2026-05-19) and whether mockBff is installed
 // (skipped in live mode so we audit real data, not mock data).
 const BASE = process.env.BASE ?? 'http://localhost:5175'
-const IS_LIVE_BFF = !BASE.startsWith('http://localhost')
+// Live BFF = unambiguous HTTPS (musicians.jazzlore.com + Cloudflare previews).
+// Any http://... (including 127.0.0.1, 0.0.0.0, *.local, localhost) is local —
+// keeps mockBff installed and the fixture Antoine ID active. Code review
+// caught the earlier `!startsWith('http://localhost')` heuristic flipping into
+// live mode for 127.0.0.1 etc. — silent regression.
+const IS_LIVE_BFF = /^https:\/\//.test(BASE)
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
 const MILES = '/musicians/wikidata:Q93341' // RICH — same ID in fixture and live
 const ANTOINE_ID = IS_LIVE_BFF ? 'wikidata:Q586360' : 'wikidata:Q2856321'

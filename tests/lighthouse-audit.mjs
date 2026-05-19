@@ -36,8 +36,15 @@ import { setTimeout as sleep } from 'node:timers/promises'
 import { launch } from 'chrome-launcher'
 import lighthouse from 'lighthouse'
 
-/** Parse `--url <full-url>` from argv (anything else is ignored). */
+/** Parse `--url <full-url>` from argv. Rejects unknown `--*` flags so a typo
+ * (e.g. `--URL`) doesn't silently fall through to the multi-app spawn loop. */
 function parseUrlOverride(argv) {
+  const flagArgs = argv.slice(2).filter((a) => a.startsWith('--'))
+  const unknown = flagArgs.filter((a) => a !== '--url')
+  if (unknown.length) {
+    console.error(`Unknown flag(s): ${unknown.join(' ')}. Only --url is supported.`)
+    process.exit(2)
+  }
   const i = argv.indexOf('--url')
   if (i === -1) return null
   const value = argv[i + 1]

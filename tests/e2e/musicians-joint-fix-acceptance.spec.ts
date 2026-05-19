@@ -98,6 +98,10 @@ async function readLayoutSnapshot(page: Page) {
     const eraStrip = document.querySelector('[aria-label="From the same era"]')
     return {
       viewport: { w: window.innerWidth, h: window.innerHeight },
+      // Distinguishes "aside is mounted but selector changed" from "viewport
+      // is below the 1024 desktop gate" — DetailView.tsx renders <aside
+      // class="desk-graph"> conditionally on useIsDesktop().
+      asideExpected: window.innerWidth >= 1024,
       pageScrollHeight: document.documentElement.scrollHeight,
       detail: detail
         ? {
@@ -164,10 +168,18 @@ test.describe('joint-fix acceptance — Phase 0 scaffolding', () => {
             page.getByRole('heading', { level: 1, name: /miles davis/i }),
           ).toBeVisible({ timeout: 15_000 })
           await setTheme(page, th)
-          // Wait for the lazy d3-force graph chunk on desktop viewports
-          // (≥1024) — the diagnostic noted ~5 s for the 417-node sim to
-          // mount. Below 1024 it's not rendered (useIsDesktop gate).
-          if (vp.w >= 1024) await page.waitForTimeout(5000)
+          // On desktop viewports, the lazy d3-force graph mounts inside
+          // <aside aria-label="Collaboration graph …">. Wait for the
+          // GraphView's role=application to be visible — matches the
+          // existing pattern in musicians-baseline-capture.spec.ts and is
+          // event-driven (no fixed 5 s sleep that races slow runners).
+          if (vp.w >= 1024) {
+            await expect(
+              page
+                .getByRole('complementary', { name: /collaboration graph/i })
+                .getByRole('application'),
+            ).toBeVisible({ timeout: 30_000 })
+          }
           await shoot(page, 'before', `miles-${sfx}`)
           const snap = await readLayoutSnapshot(page)
           test.info().attach(`miles-${sfx}-layout.json`, {
