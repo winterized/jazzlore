@@ -22,14 +22,16 @@
  * journey assertions stay valid either way. The fixture data IS the contract;
  * the journey it drives is the real one.
  *
- * Image-attribution note (verified against the rendered DOM): v1 never
- * displays the remote picture_url / cover_art_url bitmap — Duo3 is a
- * deterministic CSS-duotone placeholder. The legal credit is still surfaced
- * as the magazine-style <figcaption> wherever the license/attribution
- * metadata is non-empty, via the only rendered attribution path —
- * AttribAlbum (RecordsStrip) → the frozen attributionCaption. The caption
- * tests therefore assert that rendered artefact ("Cover art: …"), not a
- * portrait caption the design intentionally does not paint.
+ * Image-attribution note (Phase H — verified against the rendered DOM):
+ * the 12 home curated cards and the detail identity hero now paint the REAL
+ * Wikimedia portrait in the pass-5 duotone treatment (hover/focus → full
+ * colour; the collaborator mosaic + ConnRow tiles stay monogram by design).
+ * The legal credit is the magazine-style <figcaption> rendered wherever the
+ * license/attribution metadata is non-empty (the FROZEN attributionCaption
+ * owns the rule): "Photo: <attr> · <lic>" beside a hero portrait,
+ * "Cover art: …" beside an album cover. A missing portrait → graceful
+ * monogram (+ the explicit "no portrait on file" placeholder on the detail
+ * hero), never a broken <img>, no caption.
  */
 
 import { expect, test } from '@playwright/test'
@@ -63,6 +65,50 @@ test('home renders the curated grid; tapping a card opens the detail', async ({
     .filter({ hasText: /miles davis/i })
     .first()
   await expect(milesCard).toBeVisible()
+
+  // Phase H — the Miles card paints a REAL duotone portrait (the CC mock
+  // serves a real bitmap). Objective (not eyeballed): the <img> actually
+  // DECODED (naturalWidth>0 + complete — a broken/blocked image is 0, which
+  // would have flipped Duo3's onError→monogram), is laid out with a non-zero
+  // box, the duotone tile carries the `has-photo` treatment hook, and the
+  // monogram is css-collapsed (display:none under .has-photo) — i.e. the
+  // photo path is live and the picture genuinely rendered, not the gradient.
+  const milesImg = milesCard.getByRole('img', { name: /miles davis/i })
+  await expect(milesImg).toBeVisible()
+  const decoded = await milesImg.evaluate((el) => {
+    const im = el as HTMLImageElement
+    const box = im.getBoundingClientRect()
+    return {
+      complete: im.complete,
+      naturalWidth: im.naturalWidth,
+      boxW: box.width,
+      boxH: box.height,
+      monogramHidden:
+        getComputedStyle(
+          im.closest('.duo3')!.querySelector('.duo3-initials') ??
+            document.body,
+        ).display === 'none',
+    }
+  })
+  expect(decoded.complete, 'portrait <img> must finish loading').toBe(true)
+  expect(
+    decoded.naturalWidth,
+    'portrait <img> must decode (>0 — not the onError monogram fallback)',
+  ).toBeGreaterThan(0)
+  expect(decoded.boxW).toBeGreaterThan(0)
+  expect(decoded.boxH).toBeGreaterThan(0)
+  expect(
+    decoded.monogramHidden,
+    'monogram is css-collapsed → the photo, not the gradient, is shown',
+  ).toBe(true)
+  await expect(milesCard.locator('.duo3.has-photo')).toBeVisible()
+
+  // The LEGAL credit for the CC-licensed portrait is present (frozen
+  // attributionCaption format, programmatically associated via figcaption).
+  await expect(
+    page.locator('figcaption').filter({ hasText: /^Photo:.*Tom Palumbo/ }),
+  ).toBeVisible()
+
   await milesCard.click()
 
   await expect(page).toHaveURL(/\/musicians\/wikidata(%3A|:)Q93341/)
@@ -312,14 +358,22 @@ test('sparse musician renders placeholders + the duplicate flag, no breakage', a
   await expect(
     page.getByText(/where to go from here/i),
   ).toBeVisible()
-  // No-portrait is DATA (photo:false): the duotone tile collapses to a flat
-  // surface with lifted initials (the v1 design never renders the remote
-  // picture_url — Duo3 is a deterministic placeholder, so there is no broken
-  // <img> and no caption to show). Objective: the identity tile is the flat
-  // duotone variant and carries the musician's initials, never silent.
-  const identTile = page.locator('section.ident .duo3').first()
+  // No-portrait is DATA (photo:false, Phase H): the hero renders the
+  // graceful flat-monogram tile (NO <img>, never a broken-image icon) PLUS
+  // the explicit "no portrait on file" placeholder (never silent), no
+  // caption (nothing to attribute). Objective: zero portrait <img> in the
+  // identity hero, the flat duotone variant + the AH initials + the
+  // placeholder text.
+  const identFig = page.locator('figure.ident-photo')
+  await expect(identFig).toBeVisible()
+  await expect(identFig.getByRole('img')).toHaveCount(0)
+  const identTile = identFig.locator('.duo3').first()
   await expect(identTile).toHaveClass(/\bflat\b/)
+  await expect(identTile).not.toHaveClass(/\bhas-photo\b/)
   await expect(identTile).toContainText(/AH/)
+  await expect(
+    page.getByText(/no portrait on file/i),
+  ).toBeVisible()
 })
 
 // ─── 8. Image-attribution captions (legal requirement) ────────────────────
@@ -327,16 +381,33 @@ test('sparse musician renders placeholders + the duplicate flag, no breakage', a
 test('attribution caption renders when a license/attribution is non-empty', async ({
   page,
 }) => {
-  // Legal-requirement note. v1 never renders the remote picture_url /
-  // cover_art_url image itself — Duo3 is a deterministic CSS placeholder.
-  // The legal credit is still surfaced as the magazine-style figcaption
-  // wherever the license/attribution metadata is non-empty: the rendered
-  // path is AttribAlbum (RecordsStrip) → the frozen attributionCaption,
-  // format "Cover art: <attr> · <lic>". Miles' "Kind of Blue" carries
-  // cover_art_license "Fair use" → the caption MUST render.
+  // Legal-requirement note (Phase H). Two rendered attribution paths now
+  // exist: the detail HERO portrait (AttribPhoto → "Photo: <attr> · <lic>")
+  // and the album cover (AttribAlbum/RecordsStrip → "Cover art: …"). Miles'
+  // portrait carries CC BY-SA 3.0 / Tom Palumbo and "Kind of Blue" carries
+  // cover_art_license "Fair use" → BOTH captions MUST render, and the hero
+  // portrait <img> must genuinely decode (objective, not eyeballed).
   await page.goto(MILES)
   await expect(
     page.getByRole('heading', { level: 1, name: /miles davis/i }),
+  ).toBeVisible()
+
+  const heroImg = page.locator('figure.ident-photo').getByRole('img', {
+    name: /miles davis/i,
+  })
+  await expect(heroImg).toBeVisible()
+  const heroDecoded = await heroImg.evaluate(
+    (el) =>
+      (el as HTMLImageElement).complete &&
+      (el as HTMLImageElement).naturalWidth > 0,
+  )
+  expect(
+    heroDecoded,
+    'detail hero portrait must decode (not the onError monogram)',
+  ).toBe(true)
+
+  await expect(
+    page.locator('figcaption').filter({ hasText: /^Photo:.*Tom Palumbo/ }),
   ).toBeVisible()
   await expect(
     page.locator('figcaption').filter({ hasText: /^Cover art:\s*Fair use$/ }),

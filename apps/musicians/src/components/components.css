@@ -105,6 +105,67 @@
   opacity: 1;
 }
 
+/* ── Phase H — hero portrait photo (duotone → full-colour reveal) ──────
+ *
+ * The real <img> fills the SAME fixed box as the monogram (CLS = 0: the
+ * layout box is identical, the photo is an absolutely-positioned overlay
+ * inside it). Duotone treatment, CSS-only so the deterministic per-name
+ * `--duo-lo`/`--duo-hi` palette Duo3 already computes is reused:
+ *
+ *  - the image is desaturated to luminance (`grayscale(1)`),
+ *  - the existing `::before` `--duo-lo`/`--duo-hi` gradient is promoted
+ *    ABOVE the image and `mix-blend-mode: color` paints that luminance with
+ *    the lo→hi ramp → a true two-tone image, no SVG filter needed.
+ *
+ * On the focusable card/figure's `:hover` AND `:focus-visible` (a11y parity)
+ * the grayscale lifts and the colour tint fades → full natural colour. The
+ * colour change is transitioned; `prefers-reduced-motion: reduce` makes it
+ * INSTANT (transition removed — never an animation), see the reduced-motion
+ * block at the foot of this file. */
+.duo3.has-photo .duo3-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 22%;
+  display: block;
+  z-index: 0;
+  filter: grayscale(1) contrast(1.05) brightness(1.02);
+  transition: filter 0.32s ease;
+}
+/* The per-name duotone gradient becomes the colour tint over the greyscale
+ * image (instead of the standalone placeholder gradient). */
+.duo3.has-photo::before {
+  z-index: 1;
+  mix-blend-mode: color;
+  opacity: 0.92;
+  transition: opacity 0.32s ease;
+}
+/* Keep the fine grain on top for the magazine print feel. */
+.duo3.has-photo::after {
+  z-index: 2;
+  opacity: 0.35;
+}
+.duo3.has-photo .duo3-initials {
+  display: none;
+}
+/* Full-colour reveal — on the hero host's `:hover`, and on the curated
+ * card's `:focus-visible` (the card is a focusable <a> → keyboard parity
+ * with hover; the detail-hero <figure> is presentational, not tabbable, so
+ * it reveals on hover only). The bare `.duo3.has-photo:hover` covers the
+ * detail hero and any future host generically. */
+.mu3 .home-card:hover .duo3.has-photo .duo3-photo,
+.mu3 .home-card:focus-visible .duo3.has-photo .duo3-photo,
+.duo3.has-photo:hover .duo3-photo {
+  filter: grayscale(0) contrast(1) brightness(1);
+}
+.mu3 .home-card:hover .duo3.has-photo::before,
+.mu3 .home-card:focus-visible .duo3.has-photo::before,
+.duo3.has-photo:hover::before {
+  opacity: 0;
+}
+
 /* ─────────────────────── Header (mobile) ────────────────────────────── */
 .mu3 .hdr {
   position: sticky;
@@ -170,6 +231,13 @@
   grid-template-columns: 64px 1fr;
   gap: 14px;
   padding: 14px 14px 6px;
+}
+/* Phase H — the identity tile moved OUT of this strip into the full-width
+   AttribPhoto hero block above it (the real duotone portrait). The strip is
+   now a single text column; the image cell is gone. */
+.mu3 .ident.ident-text {
+  grid-template-columns: 1fr;
+  padding-top: 2px;
 }
 .mu3 .ident .duo3 {
   width: 64px;
@@ -783,7 +851,7 @@
 
 /* ─────────────────────── Image attribution captions ────────────────── */
 .mu3 .ident-photo {
-  margin: 0 14px 14px;
+  margin: 12px 14px 14px;
 }
 .mu3 .ident-photo .duo3 {
   width: 100%;
@@ -951,14 +1019,41 @@
 .mu3 .home-card:hover {
   transform: translateY(-1px);
 }
+/* Visible focus indicator — the curated card is the focusable hero host
+   whose `:focus-visible` triggers the duotone→colour reveal (keyboard
+   parity with hover); never color-only. */
+.mu3 .home-card:focus-visible {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 2px;
+}
+.mu3 .home-card-fig {
+  margin: 0;
+  padding: 0;
+}
 .mu3 .home-card .duo3 {
   width: 100%;
   aspect-ratio: 4/3;
   border-radius: 0;
   padding: 10px;
 }
+/* Magazine-style portrait credit (LEGAL — rendered whenever a license /
+ * attribution field is non-empty). Small + unobtrusive; a fixed min-height
+ * reserves space so a card WITH a credit and one WITHOUT keep an identical
+ * footprint (CLS = 0 — the caption never reflows the grid). */
+.mu3 .home-card-credit {
+  min-height: 16px;
+  padding: 5px 11px 0;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  line-height: 1.35;
+  letter-spacing: 0.04em;
+  color: var(--dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .mu3 .home-card .body {
-  padding: 9px 11px 11px;
+  padding: 6px 11px 11px;
 }
 .mu3 .home-card .nm {
   font-size: 14px;
@@ -1369,6 +1464,13 @@
     transition: none;
   }
   .mu3-sheet-backdrop {
+    transition: none;
+  }
+  /* Phase H — the duotone→colour reveal is INSTANT under reduced motion
+     (the colour change still happens on hover/focus, but never tweened —
+     CLAUDE.md "reduced-motion = snap", never an animation). */
+  .mu3 .duo3.has-photo .duo3-photo,
+  .mu3 .duo3.has-photo::before {
     transition: none;
   }
 }

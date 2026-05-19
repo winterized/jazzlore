@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { Collaborator, RecordRef } from '../lib/types'
 import { Duo3 } from './Duo3'
@@ -56,6 +56,79 @@ describe('Duo3', () => {
     const el = screen.getByTestId('duo')
     expect(el.style.getPropertyValue('--duo-lo')).toMatch(/^#[0-9a-f]{6}$/i)
     expect(el.style.getPropertyValue('--duo-hi')).toMatch(/^#[0-9a-f]{6}$/i)
+  })
+
+  // ── Phase H — hero portrait photo opt-in ──────────────────────────────
+  it('renders a real <img> (alt=name, lazy, no-referrer) when a portrait url is supplied', () => {
+    render(
+      <Duo3
+        name="Miles Davis"
+        portrait={{ url: 'https://commons.example/miles.jpg' }}
+        data-testid="duo"
+      />,
+    )
+    const img = screen.getByRole('img', { name: 'Miles Davis' })
+    expect(img).toHaveAttribute('src', 'https://commons.example/miles.jpg')
+    expect(img).toHaveAttribute('loading', 'lazy')
+    expect(img).toHaveAttribute('decoding', 'async')
+    expect(img).toHaveAttribute('referrerpolicy', 'no-referrer')
+    // The duotone treatment hook + a stable layout box (CLS = 0).
+    expect(screen.getByTestId('duo')).toHaveClass('duo3', 'has-photo')
+  })
+
+  it('eager-loads the portrait when eager (first home row / detail hero, LCP)', () => {
+    render(
+      <Duo3 name="Miles Davis" portrait={{ url: 'https://x/m.jpg' }} eager />,
+    )
+    expect(screen.getByRole('img', { name: 'Miles Davis' })).toHaveAttribute(
+      'loading',
+      'eager',
+    )
+  })
+
+  it('renders the monogram (no <img>) when no portrait url is supplied — non-hero call-sites unchanged', () => {
+    render(<Duo3 name="Bobby Timmons" data-testid="duo" />)
+    expect(screen.queryByRole('img')).toBeNull()
+    expect(screen.getByText('BT')).toBeInTheDocument()
+    expect(screen.getByTestId('duo')).not.toHaveClass('has-photo')
+  })
+
+  it('an empty / whitespace portrait url is treated as no photo (graceful monogram)', () => {
+    render(
+      <Duo3 name="Bobby Timmons" portrait={{ url: '   ' }} data-testid="duo" />,
+    )
+    expect(screen.queryByRole('img')).toBeNull()
+    expect(screen.getByText('BT')).toBeInTheDocument()
+    expect(screen.getByTestId('duo')).not.toHaveClass('has-photo')
+  })
+
+  it('photo={false} (data: no picture_url) never renders an <img>, even with a stray url', () => {
+    render(
+      <Duo3
+        name="Antoine Hervé"
+        photo={false}
+        portrait={{ url: 'https://x/a.jpg' }}
+        data-testid="duo"
+      />,
+    )
+    expect(screen.queryByRole('img')).toBeNull()
+    expect(screen.getByTestId('duo')).toHaveClass('duo3', 'flat')
+    expect(screen.getByText('AH')).toBeInTheDocument()
+  })
+
+  it('falls back to the monogram on a Wikimedia load error (never a broken-image icon)', () => {
+    render(
+      <Duo3
+        name="Miles Davis"
+        portrait={{ url: 'https://commons.example/404.jpg' }}
+        data-testid="duo"
+      />,
+    )
+    const img = screen.getByRole('img', { name: 'Miles Davis' })
+    fireEvent.error(img)
+    expect(screen.queryByRole('img')).toBeNull()
+    expect(screen.getByText('MD')).toBeInTheDocument()
+    expect(screen.getByTestId('duo')).not.toHaveClass('has-photo')
   })
 })
 
@@ -213,14 +286,48 @@ describe('AttribPhoto / AttribAlbum', () => {
     expect(screen.getByText(/CC BY-SA 3\.0/)).toBeInTheDocument()
   })
 
-  it('renders an explicit italic placeholder when the portrait is missing', () => {
-    render(<AttribPhoto name="Antoine Hervé" attribution={{}} missing />)
-    expect(screen.getByText(/no portrait on file/i)).toBeInTheDocument()
+  it('renders the real duotone portrait (eager — detail-hero LCP) when a url is present', () => {
+    render(
+      <AttribPhoto
+        name="Miles Davis"
+        attribution={{
+          url: 'https://commons.example/miles.jpg',
+          license: 'CC BY-SA 3.0',
+          attribution: 'Tom Palumbo',
+        }}
+      />,
+    )
+    const img = screen.getByRole('img', { name: 'Miles Davis' })
+    expect(img).toHaveAttribute('src', 'https://commons.example/miles.jpg')
+    expect(img).toHaveAttribute('loading', 'eager')
   })
 
-  it('renders no caption for a public-domain photo (all fields empty)', () => {
+  it('renders the portrait inside a semantic figure/figcaption (credit programmatically associated)', () => {
+    render(
+      <AttribPhoto
+        name="Miles Davis"
+        attribution={{
+          url: 'https://x/m.jpg',
+          license: 'CC BY-SA 3.0',
+          attribution: 'Tom Palumbo',
+        }}
+      />,
+    )
+    const fig = screen.getByRole('figure')
+    expect(within(fig).getByRole('img', { name: 'Miles Davis' })).toBeInTheDocument()
+    expect(within(fig).getByText(/^Photo:.*Tom Palumbo/)).toBeInTheDocument()
+  })
+
+  it('renders an explicit italic placeholder + NO <img> when the portrait is missing', () => {
+    render(<AttribPhoto name="Antoine Hervé" attribution={{}} missing />)
+    expect(screen.getByText(/no portrait on file/i)).toBeInTheDocument()
+    expect(screen.queryByRole('img')).toBeNull()
+  })
+
+  it('renders no caption for a public-domain photo (all fields empty) but still paints the image', () => {
     render(<AttribPhoto name="John Coltrane" attribution={{ url: 'x' }} />)
     expect(screen.queryByText(/Photo:/)).toBeNull()
+    expect(screen.getByRole('img', { name: 'John Coltrane' })).toBeInTheDocument()
   })
 
   it('AttribAlbum renders cover-art caption + record meta', () => {

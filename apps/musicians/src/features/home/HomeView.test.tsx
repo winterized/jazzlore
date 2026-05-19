@@ -58,6 +58,41 @@ describe('HomeView', () => {
     expect(screen.getByText(/curated · 12/i)).toBeInTheDocument()
   })
 
+  // ── Phase H — hero portrait photos on the curated cards ───────────────
+  it('renders the real duotone portrait for a curated card that has one', () => {
+    setup()
+    // CURATED[0] = the rich (Miles-like) pick — its portrait has a url.
+    const miles = CURATED[0]!
+    expect(miles.portrait.url).toBeTruthy()
+    const img = screen.getByRole('img', { name: new RegExp(miles.name, 'i') })
+    expect(img).toHaveAttribute('src', miles.portrait.url!)
+  })
+
+  it('shows the LEGAL attribution caption for a CC-licensed portrait', () => {
+    setup()
+    // CURATED[0]'s portrait carries license + attribution → the credit
+    // MUST render (legal requirement; the FROZEN attributionCaption owns
+    // the format "Photo: <attr> · <lic>").
+    expect(screen.getByText(/^Photo:.*Tom Palumbo/)).toBeInTheDocument()
+  })
+
+  it('renders the monogram + NO caption for a curated card with no portrait', () => {
+    setup()
+    // CURATED[2] = John Coltrane, portrait:{} photo:false → graceful
+    // monogram, and no legal caption (nothing to attribute).
+    const trane = CURATED[2]!
+    expect(trane.portrait.url).toBeFalsy()
+    expect(
+      screen.queryByRole('img', { name: new RegExp(trane.name, 'i') }),
+    ).toBeNull()
+    // No "Photo: …" caption is emitted for an un-credited / monogram card.
+    const credits = screen
+      .getAllByText(/^Photo:/)
+      .map((n) => n.textContent ?? '')
+    expect(credits.some((t) => /Tom Palumbo/.test(t))).toBe(true)
+    expect(credits.length).toBeLessThan(CURATED.length)
+  })
+
   it('renders a theme toggle', () => {
     setup()
     expect(

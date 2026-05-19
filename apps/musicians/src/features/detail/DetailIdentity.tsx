@@ -7,7 +7,7 @@
 
 import type { MusicianDetail } from '../../lib/types'
 import { spotifyMusicianUrl, appleMusicMusicianUrl } from '../../lib/links'
-import { Duo3 } from '../../components/Duo3'
+import { AttribPhoto } from '../../components/Attrib'
 import { SpotifyIcon, AppleIcon } from '../../components/icons'
 
 function metaLine(d: MusicianDetail): string {
@@ -33,8 +33,16 @@ export function DetailIdentity({
   const firstName = d.name.split(' ')[0] ?? d.name
   return (
     <>
-      <section className="ident" aria-labelledby="detail-name">
-        <Duo3 name={d.name} photo={d.photo} />
+      {/* Phase H — the real duotone hero portrait + the LEGAL caption
+          (AttribPhoto wires the FROZEN attributionCaption). Missing
+          picture → AttribPhoto's explicit "no portrait on file"
+          placeholder + flat monogram (never silent). */}
+      <AttribPhoto
+        name={d.name}
+        attribution={d.portrait}
+        missing={!d.photo}
+      />
+      <section className="ident ident-text" aria-labelledby="detail-name">
         <div>
           <h1 className="nm" id="detail-name">
             {d.name}

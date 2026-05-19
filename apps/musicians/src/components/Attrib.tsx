@@ -23,9 +23,22 @@ export function AttribPhoto({
   missing?: boolean
 }) {
   const caption = attributionCaption(attribution, 'Photo')
+  // Phase H — the detail hero renders the REAL duotone portrait (eager:
+  // it is the LCP image on the detail route). The figure is presentational
+  // (no interactive role → NOT made tabbable: a focusable non-interactive
+  // element is an a11y anti-pattern). The duotone→colour reveal therefore
+  // fires on `:hover` here; on the home page the curated card IS a focusable
+  // <a> so it additionally reveals on `:focus-visible` (keyboard parity).
+  // `missing` keeps the explicit "no portrait on file" placeholder + the
+  // flat monogram (never silent).
   return (
     <figure className="ident-photo">
-      <Duo3 name={name} photo={!missing} />
+      <Duo3
+        name={name}
+        photo={!missing}
+        portrait={missing ? undefined : attribution}
+        eager
+      />
       <figcaption>
         {missing ? (
           <span className="attr-missing">

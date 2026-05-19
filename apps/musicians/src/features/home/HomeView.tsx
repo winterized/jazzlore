@@ -9,10 +9,16 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import type { CuratedCard } from '../../lib/types'
+import { attributionCaption } from '../../lib/attribution'
 import { Shell } from '../../components/Shell'
 import { Duo3 } from '../../components/Duo3'
 import { ThemeToggleButton } from '../../components/ThemeToggleButton'
 import { HomeSearchInput } from './HomeSearchInput'
+
+/** First home row eager-loads its portraits so the above-the-fold LCP image
+ * is not lazy-deferred; the rest stay lazy. The grid is 1-col mobile →
+ * 2-col sm → 4-col lg, so the largest first row is 4 cards. */
+const EAGER_FIRST_ROW = 4
 
 type Props = {
   curated: CuratedCard[]
@@ -74,21 +80,42 @@ export function HomeView({ curated, searchSlot }: Props) {
           <span className="ct">CURATED · {curated.length}</span>
         </div>
         <ul className="home-grid" aria-labelledby="home-curated-h">
-          {curated.map((m) => (
-            <li key={m.id} className="home-card-li">
-              <Link
-                className="home-card"
-                to={`/musicians/${encodeURIComponent(m.id)}`}
-              >
-                <Duo3 name={m.name} photo={m.photo} />
-                <div className="body">
-                  <div className="nm">{m.name}</div>
-                  {m.subtitle && <div className="ml">{m.subtitle}</div>}
-                  <div className="hook">{m.hook}</div>
-                </div>
-              </Link>
-            </li>
-          ))}
+          {curated.map((m, i) => {
+            // Legal requirement (CLAUDE.md "Image attribution"): the credit
+            // renders whenever ANY license/attribution field is non-empty.
+            // The FROZEN builder owns that rule (null for public-domain /
+            // empty). No portrait url → graceful monogram, no caption.
+            const caption = attributionCaption(m.portrait, 'Photo')
+            return (
+              <li key={m.id} className="home-card-li">
+                <Link
+                  className="home-card"
+                  to={`/musicians/${encodeURIComponent(m.id)}`}
+                >
+                  <figure className="home-card-fig">
+                    <Duo3
+                      name={m.name}
+                      photo={m.photo}
+                      portrait={m.portrait}
+                      eager={i < EAGER_FIRST_ROW}
+                    />
+                    {/* Always rendered (reserves a fixed-height row so a
+                        credited card and an un-credited one keep an
+                        identical footprint — CLS = 0). Empty for
+                        public-domain / monogram (no legal trigger). */}
+                    <figcaption className="home-card-credit">
+                      {caption}
+                    </figcaption>
+                  </figure>
+                  <div className="body">
+                    <div className="nm">{m.name}</div>
+                    {m.subtitle && <div className="ml">{m.subtitle}</div>}
+                    <div className="hook">{m.hook}</div>
+                  </div>
+                </Link>
+              </li>
+            )
+          })}
         </ul>
       </main>
     </Shell>

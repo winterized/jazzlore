@@ -120,11 +120,29 @@ function graphFor(detail: typeof RICH_DETAIL | typeof SPARSE_DETAIL) {
 }
 
 /**
+ * A 3×3 solid-blue PNG (deterministic, non-greyscale). The Phase-H hero
+ * portrait <img>s point at the non-resolvable `commons.example` host; this
+ * lets the e2e serve a REAL bitmap so the duotone treatment actually paints
+ * (a sampled pixel is the blue/duotone-tinted image, never the monogram
+ * gradient) and the `onError`→monogram fallback is not spuriously triggered.
+ */
+const BLUE_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAMAAAADCAYAAABWKLW/AAAAFklEQVR4nGNkYPjPgAcw4ZMc' +
+    'VTAcFAAA6QAGGA9YJgAAAABJRU5ErkJggg==',
+  'base64',
+)
+
+/**
  * Install the BFF guard. Returns the correctly-shaped frozen fixture for
  * every `/api/musicians/*` endpoint the SPA calls; fails loudly on any
  * unmocked `/api/*` (the seam changed → these specs must be revisited).
+ * Also serves a real bitmap for the Phase-H portrait host so the hero
+ * photos genuinely paint in-browser.
  */
 export async function mockBff(page: Page): Promise<void> {
+  await page.route('**/commons.example/**', (route: Route) =>
+    route.fulfill({ contentType: 'image/png', body: BLUE_PNG }),
+  )
   await page.route('**/api/**', async (route: Route) => {
     // `httpSource` percent-encodes the id (`:` → `%3A`); decode so the raw
     // and encoded forms both match.
@@ -135,11 +153,22 @@ export async function mockBff(page: Page): Promise<void> {
         json: {
           curated: [
             {
+              // A CC-licensed portrait → the card paints a real duotone
+              // photo AND the LEGAL credit must render (Phase H).
               id: RICH_DETAIL.id,
               name: RICH_DETAIL.name,
               hook: 'The restless modernist.',
               photo: true,
               portrait: RICH_DETAIL.portrait,
+            },
+            {
+              // No portrait → graceful monogram, no credit (the legal
+              // rule's inverse: nothing to attribute).
+              id: SPARSE_DETAIL.id,
+              name: SPARSE_DETAIL.name,
+              hook: 'A quieter corner of the graph.',
+              photo: false,
+              portrait: {},
             },
           ],
         },
