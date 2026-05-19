@@ -62,6 +62,11 @@ export default function MusicianPage({
     state.data.id === 'wikidata:Q2856321' ||
     state.data.id === SPARSE_DUPLICATE_ID
   return (
-    <DetailView detail={state.data} duplicate={duplicate} source={source} />
+    <DetailView
+      detail={state.data}
+      duplicate={duplicate}
+      sameEra={state.data.sameEra ?? []}
+      source={source}
+    />
   )
 }

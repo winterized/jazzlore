@@ -15,12 +15,26 @@ import type {
   SearchIndexResponse,
 } from '../lib/types'
 import { isWaking } from '../lib/types'
+import type { EraItem } from '../components/EraStrip'
 import {
   CURATED,
   SEARCH_CORPUS,
   fixtureDetail,
   fixtureGraph,
 } from '../test/fixtures'
+
+/**
+ * `/api/musicians/:id` payload with the era-strip peers attached as a
+ * SIBLING. The frozen `MusicianDetailResponse` (= `MusicianDetail` in
+ * `lib/types.ts`) is intentionally agnostic of the era taxonomy; the BFF
+ * rides `sameEra` alongside it the same way it rides the editorial `era`
+ * label. The page reads it through the `?? []` default so a Phase-D
+ * fixture source (no `sameEra`) keeps the strip hidden via EraStrip's
+ * self-hide on empty.
+ */
+export type MusicianDetailWithEra = MusicianDetailResponse & {
+  sameEra?: EraItem[]
+}
 
 /** A BFF source: each method resolves the frozen envelope OR a WakingResponse
  * (the 503 cold-Aura shape). Errors reject so the hook can surface the calm
@@ -30,7 +44,7 @@ export interface DataSource {
   detail(
     id: string,
   ): Promise<
-    MusicianDetailResponse | { status: 'waking'; retryAfter: number }
+    MusicianDetailWithEra | { status: 'waking'; retryAfter: number }
   >
   searchIndex(): Promise<
     SearchIndexResponse | { status: 'waking'; retryAfter: number }
@@ -82,7 +96,7 @@ async function bffGet<T>(path: string): Promise<T | Waking> {
 export const httpSource: DataSource = {
   curated: () => bffGet<CuratedResponse>('/api/musicians/curated'),
   detail: (id) =>
-    bffGet<MusicianDetailResponse>(
+    bffGet<MusicianDetailWithEra>(
       `/api/musicians/${encodeURIComponent(id)}`,
     ),
   searchIndex: () =>
