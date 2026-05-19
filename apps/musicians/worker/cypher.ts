@@ -60,6 +60,38 @@ export function searchIndexCypher(): string {
   )
 }
 
+/** Peers "from the same era" — contemporaries who weren't in their bands.
+ * Same-genre overlap AND overlapping years-active window (±10y), excluding
+ * direct collaborators (musicians sharing any :Record via :PLAYED_ON). The
+ * focus musician is also excluded by id. Returns peers ranked by genre
+ * overlap, then earliest active year for determinism. Ridden on the detail
+ * response as a `sameEra` SIBLING (the frozen `MusicianDetail` contract is
+ * intentionally agnostic of era taxonomy — see lib/types.ts). */
+export function peersByEraCypher(): string {
+  return assertReadOnly(
+    `MATCH (m:Musician {id: $id})
+     WITH m,
+          coalesce(m.genres, []) AS genres,
+          m.years_active_start AS yas,
+          m.years_active_end   AS yae
+     MATCH (p:Musician)
+     WHERE p.id <> m.id
+       AND any(g IN coalesce(p.genres, []) WHERE g IN genres)
+       AND coalesce(p.years_active_start, 9999) <= coalesce(yae, 9999) + 10
+       AND coalesce(p.years_active_end,    0)    >= coalesce(yas, 0)    - 10
+       AND NOT EXISTS {
+             MATCH (m)-[:PLAYED_ON]->(:Record)<-[:PLAYED_ON]-(p)
+           }
+     RETURN p.id                  AS id,
+            p.name                AS name,
+            p.primary_instruments AS primary_instruments,
+            p.picture_url         AS picture_url,
+            size([g IN coalesce(p.genres, []) WHERE g IN genres]) AS overlap
+     ORDER BY overlap DESC, coalesce(p.years_active_start, 9999) ASC
+     LIMIT $limit`,
+  )
+}
+
 /** One-shot detail aggregation: focus node, the records it played on (+ its
  * own edge), and every collaborator (shared record + that collaborator's
  * edge). One page load = one BFF call (server-side aggregation). */
@@ -144,6 +176,40 @@ export function reshapeMusicianRows(result: AuraResult): RawMusician[] {
     .map((row) => col(result, row, 'm'))
     .filter((m): m is object => m !== null && typeof m === 'object')
     .map(toRawMusician)
+}
+
+/** A peer row from `peersByEraCypher` shaped into the EraStrip `EraItem`
+ * contract (see src/components/EraStrip.tsx). `photo` is a presence boolean
+ * derived from `picture_url`. `instrument` falls back to `undefined` when no
+ * primary instrument is recorded. `hint` is intentionally omitted here —
+ * EraStrip tolerates it; an editorial hint may be derived later by the BFF. */
+export interface PeerEraItem {
+  id: string
+  name: string
+  instrument?: string
+  hint?: string
+  photo: boolean
+}
+
+/** Reshape a `peersByEraCypher` result into `PeerEraItem[]`. Rows with a
+ * missing/non-string `id` or `name` are dropped (defensive; Cypher RETURN
+ * shape is stable, but the AuraResult value tuples are `unknown`). */
+export function reshapePeerEra(result: AuraResult): PeerEraItem[] {
+  return result.values.flatMap((row) => {
+    const id = col(result, row, 'id')
+    const name = col(result, row, 'name')
+    if (typeof id !== 'string' || typeof name !== 'string') return []
+    const instruments = col(result, row, 'primary_instruments')
+    const instrument =
+      Array.isArray(instruments) && typeof instruments[0] === 'string'
+        ? instruments[0]
+        : undefined
+    const picture = col(result, row, 'picture_url')
+    const photo = typeof picture === 'string' && picture.length > 0
+    const item: PeerEraItem = { id, name, photo }
+    if (instrument !== undefined) item.instrument = instrument
+    return [item]
+  })
 }
 
 /** Read the single integer from a `RETURN count(m) AS n` health result. */
