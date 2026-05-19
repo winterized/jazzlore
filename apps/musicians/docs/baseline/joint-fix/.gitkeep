@@ -1,0 +1,13 @@
+# Joint-fix acceptance baselines
+
+Screenshots captured by `tests/e2e/musicians-joint-fix-acceptance.spec.ts`
+land under this directory, one subdirectory per phase:
+
+- `before/` — broken-prod baseline (Phase 0)
+- `A1/` — after rail-containment fix (Stream A)
+- `A2/` — after graph-viewport fix (Stream A)
+- `B3/` — after era-strip data wiring (Stream B)
+- `integration/` — after integration check (both streams merged)
+
+The plan for the joint fix lives at `apps/musicians/docs/plans/2026-05-19-joint-crit-fix.md`.
+The root-cause analyses live at `apps/musicians/docs/diagnostics/`.

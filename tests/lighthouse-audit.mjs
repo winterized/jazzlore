@@ -22,6 +22,12 @@
  *
  * It does NOT rebuild — run `pnpm build` first (kept separate so the audit is
  * fast to re-run and the build step is explicit).
+ *
+ * Phase 0 (2026-05-19) — added `--url <full-url>` override so the script can
+ * also audit a live preview/prod URL directly (no local preview spawn). Used
+ * by the joint-fix acceptance gate; gates (perf ≥ 90, a11y ≥ 95) unchanged.
+ *
+ *   pnpm lighthouse:audit -- --url https://musicians.jazzlore.com/musicians
  */
 
 import { spawn } from 'node:child_process'
@@ -29,6 +35,25 @@ import { existsSync } from 'node:fs'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { launch } from 'chrome-launcher'
 import lighthouse from 'lighthouse'
+
+/** Parse `--url <full-url>` from argv. Rejects unknown `--*` flags so a typo
+ * (e.g. `--URL`) doesn't silently fall through to the multi-app spawn loop. */
+function parseUrlOverride(argv) {
+  const flagArgs = argv.slice(2).filter((a) => a.startsWith('--'))
+  const unknown = flagArgs.filter((a) => a !== '--url')
+  if (unknown.length) {
+    console.error(`Unknown flag(s): ${unknown.join(' ')}. Only --url is supported.`)
+    process.exit(2)
+  }
+  const i = argv.indexOf('--url')
+  if (i === -1) return null
+  const value = argv[i + 1]
+  if (!value || !/^https?:\/\//.test(value)) {
+    console.error('--url requires a full http(s)://... URL')
+    process.exit(2)
+  }
+  return value
+}
 
 const TARGETS = [
   { app: 'scales', filter: '@jazzlore/scales', port: 4173, path: '/scales/C' },
@@ -117,6 +142,23 @@ async function main() {
     process.exit(2)
   }
   console.log(`Using Chrome: ${chromePath}\n`)
+
+  // --url override: audit a single full URL (no local preview spawn).
+  // Used for live preview/prod gates (joint-fix acceptance).
+  const urlOverride = parseUrlOverride(process.argv)
+  if (urlOverride) {
+    console.log(`Auditing ${urlOverride} (mobile) …`)
+    const scores = await runLighthouse(urlOverride, chromePath)
+    const pass =
+      scores.performance >= GATES.performance &&
+      scores.accessibility >= GATES.accessibility
+    console.log(
+      `  perf ${scores.performance} · a11y ${scores.accessibility} · ` +
+        `best ${scores['best-practices']} · seo ${scores.seo} ` +
+        `${pass ? '✓' : '✗ (gate: perf>=90, a11y>=95)'}\n`,
+    )
+    process.exit(pass ? 0 : 1)
+  }
 
   const previews = []
   let failed = false

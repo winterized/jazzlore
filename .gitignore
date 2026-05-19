@@ -41,3 +41,10 @@ test-results/
 .playwright/
 .playwright-mcp/
 baselines/
+
+# Joint-fix acceptance captures — reproducible from
+# tests/e2e/musicians-joint-fix-acceptance.spec.ts, can run to tens of MB per
+# PNG (the broken-prod CRIT-1 mobile capture is literally 14624 px wide).
+# Only the directory marker + README is tracked; the captures are regenerable.
+apps/musicians/docs/baseline/joint-fix/**
+!apps/musicians/docs/baseline/joint-fix/.gitkeep
