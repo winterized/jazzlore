@@ -19,11 +19,21 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
 import { mockBff } from './musicians-bff-mock'
 
-const BASE = 'http://localhost:5175'
+// BASE is parameterized so the same spec can audit (a) the localhost dev
+// server with a route-stubbed BFF (the historical mode) OR (b) a live
+// preview/prod URL that serves the REAL BFF (joint-fix acceptance mode).
+// IS_LIVE_BFF gates two things: which Antoine ID to use (the test fixture's
+// Q2856321 is a CODEBASE-INTERNAL test double — woven into worker/test-
+// fixtures.ts, duplicates.test.ts, etc.; the live Aura DB carries Antoine
+// Hervé at Q586360, verified 2026-05-19) and whether mockBff is installed
+// (skipped in live mode so we audit real data, not mock data).
+const BASE = process.env.BASE ?? 'http://localhost:5175'
+const IS_LIVE_BFF = !BASE.startsWith('http://localhost')
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
-const MILES = '/musicians/wikidata:Q93341' // RICH fixture
-const ANTOINE = '/musicians/wikidata:Q2856321' // SPARSE fixture
-const WAKING = '/musicians/__preview/waking' // dev-only harness route
+const MILES = '/musicians/wikidata:Q93341' // RICH — same ID in fixture and live
+const ANTOINE_ID = IS_LIVE_BFF ? 'wikidata:Q586360' : 'wikidata:Q2856321'
+const ANTOINE = `/musicians/${ANTOINE_ID}` // SPARSE — fixture vs live (see above)
+const WAKING = '/musicians/__preview/waking' // dev-only harness route (no live equivalent)
 
 /**
  * Phase-B token layer was REVISED (user-authorised) to close the WCAG AA
@@ -67,12 +77,17 @@ async function flipTheme(page: Page): Promise<void> {
 test.use({ baseURL: BASE })
 
 // The SPA now calls `/api/musicians/*` through the production `httpSource`
-// (the H1 seam swap); the Vite dev server has no `/api/*`, so every audited
-// view that loads BFF data needs the frozen-shaped mock or it would only
-// audit the calm error state. Same guard as `musicians.spec.ts`.
+// (the H1 seam swap); the Vite dev server has no `/api/*`, so localhost
+// audited views need the frozen-shaped mock or they'd only audit the calm
+// error state. In LIVE-BFF mode (BASE is a preview/prod URL) we skip the
+// mock so we audit real data — the whole point of targeting prod.
 test.beforeEach(async ({ page }) => {
-  await mockBff(page)
+  if (!IS_LIVE_BFF) await mockBff(page)
 })
+
+// Live-BFF mode requires a hint to skip the WAKING preview route (it's
+// localhost-dev-only — no equivalent on a deployed environment).
+const SKIP_WAKING_VIEW = IS_LIVE_BFF
 
 type View = { name: string; ready: (p: Page) => Promise<void> }
 
@@ -117,6 +132,8 @@ const VIEWS: Record<string, View> = {
 }
 
 for (const view of Object.values(VIEWS)) {
+  // Skip the dev-only waking preview when targeting a live BFF.
+  if (SKIP_WAKING_VIEW && view.name === 'waking') continue
   test.describe(`a11y — ${view.name}`, () => {
     test('light theme — 0 axe violations', async ({ page }) => {
       await view.ready(page)

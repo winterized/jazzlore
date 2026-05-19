@@ -16,10 +16,18 @@
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { expect, test, type Page } from '@playwright/test'
+import { mockBff } from './musicians-bff-mock'
 
-const BASE = 'http://localhost:5175'
+// Mirrors musicians-a11y.spec.ts: BASE parameterized for localhost-mock vs
+// live-BFF mode. The localhost dev server has no `/api/*` (Vite serves only
+// the SPA bundle) — since the H1 seam swap (commit cba2ee8) THIS spec has
+// silently been hitting a SPA error state without the mock; Phase 0 restores
+// localhost capture AND enables prod/preview capture in one parameterization.
+const BASE = process.env.BASE ?? 'http://localhost:5175'
+const IS_LIVE_BFF = !BASE.startsWith('http://localhost')
 const MILES = '/musicians/wikidata:Q93341'
-const ANTOINE = '/musicians/wikidata:Q2856321'
+const ANTOINE_ID = IS_LIVE_BFF ? 'wikidata:Q586360' : 'wikidata:Q2856321'
+const ANTOINE = `/musicians/${ANTOINE_ID}`
 const WAKING = '/musicians/__preview/waking'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -36,6 +44,11 @@ const FREEZE = `
 `
 
 test.use({ baseURL: BASE })
+
+// Localhost-mock mode needs the BFF stub; live mode hits the real BFF.
+test.beforeEach(async ({ page }) => {
+  if (!IS_LIVE_BFF) await mockBff(page)
+})
 
 function themeOf(page: Page): Promise<string | null> {
   return page.locator('html').getAttribute('data-theme')
@@ -132,6 +145,8 @@ for (const vp of VIEWPORTS) {
       })
 
       test('waking', async ({ page }) => {
+        // dev-only preview route — no live equivalent.
+        test.skip(IS_LIVE_BFF, 'waking is a localhost-dev preview route')
         await page.goto(WAKING)
         await expect(
           page.getByRole('heading', { level: 1, name: /waking up/i }),
