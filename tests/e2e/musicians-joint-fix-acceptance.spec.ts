@@ -96,6 +96,7 @@ async function readLayoutSnapshot(page: Page) {
     const recStrip = document.querySelector('.rec-strip')
     const portrait = document.querySelector('img.duo3-photo')
     const eraStrip = document.querySelector('[aria-label="From the same era"]')
+    const graphCircles = document.querySelectorAll('aside.desk-graph svg circle').length
     return {
       viewport: { w: window.innerWidth, h: window.innerHeight },
       // Distinguishes "aside is mounted but selector changed" from "viewport
@@ -121,6 +122,7 @@ async function readLayoutSnapshot(page: Page) {
         ? {
             position: getComputedStyle(aside).position,
             height: getComputedStyle(aside).height,
+            clientHeight: (aside as HTMLElement).clientHeight,
             rect: rect(aside),
           }
         : null,
@@ -138,8 +140,89 @@ async function readLayoutSnapshot(page: Page) {
           }
         : null,
       eraStripPresent: !!eraStrip,
+      graphCircleCount: graphCircles,
     }
   })
+}
+
+/**
+ * Sum a CSS `grid-template-columns` string of resolved track widths into
+ * total px. Computed style on a `display:grid` element returns the
+ * resolved values like `"480px 800px"` or `"14624px"`; we just parse the
+ * px numbers and sum. Returns 0 if no px tracks were found (e.g. the
+ * grid hasn't been laid out yet, in which case the caller decides).
+ */
+function sumGridTrackPx(gridTemplateColumns: string): number {
+  const m = gridTemplateColumns.match(/(\d+(?:\.\d+)?)px/g) ?? []
+  return m.reduce((sum, t) => sum + parseFloat(t), 0)
+}
+
+/**
+ * Stream A acceptance predicates (CRIT-1 + CRIT-2 + records-dump).
+ *
+ * Run against EVERY captured snapshot so the integration check at
+ * post-merge prod has end-to-end coverage. Failures here are the joint
+ * fix's reason to exist — they MUST pass once Stream A's CSS lands on
+ * prod. Pre-fix on the current broken prod, the m390-Miles + d* aside
+ * predicates fail (by design); that's the "before" baseline that proves
+ * we measure the bug. Each predicate carries the diagnostic citation so
+ * a future regression reads as "diagnostics/CRIT-{1,2} re-broken at
+ * <file>:<line>", not as a mystery test failure.
+ */
+function assertStreamAPredicates(
+  snap: Awaited<ReturnType<typeof readLayoutSnapshot>>,
+  label: string,
+): void {
+  // A1.1 — grid track ≤ container × 1.1 (pre-fix Miles m390: 14 624 px;
+  // post-fix: ~container width). The track inflation IS the bug. See
+  // diagnostics/CRIT-1.
+  if (snap.detail) {
+    const trackPx = sumGridTrackPx(snap.detail.gridTemplateColumns)
+    const containerPx = snap.detail.rect ? snap.detail.rect.width : snap.viewport.w
+    expect.soft(
+      trackPx,
+      `${label} · A1.1 grid track sum=${trackPx}px must be ≤ container ${containerPx}px × 1.1 (cols=${snap.detail.gridTemplateColumns})`,
+    ).toBeLessThanOrEqual(containerPx * 1.1)
+  }
+
+  // A1.2 — records strip itself still scrolls (it should NOT be visually
+  // collapsed by `min-width: 0`; the user-facing horizontal scroll is the
+  // designed overflow). Only assert when the strip exists (sparse Antoine
+  // ships only a few records — strip may or may not exceed clientWidth).
+  if (snap.recStrip && snap.recStrip.childCount > 4) {
+    expect.soft(
+      snap.recStrip.scrollWidth,
+      `${label} · A1.2 .rec-strip.scrollWidth (${snap.recStrip.scrollWidth}) must exceed clientWidth (${snap.recStrip.clientWidth}) — strip should still horizontally scroll`,
+    ).toBeGreaterThan(snap.recStrip.clientWidth)
+  }
+
+  // A1.3 — the hero portrait is contained to the container width × 1.05.
+  // Pre-fix Miles m390 measured 14 596 px (the symptom of CRIT-1).
+  if (snap.portrait?.rect) {
+    const containerPx = snap.detail?.rect
+      ? snap.detail.rect.width
+      : snap.viewport.w
+    expect.soft(
+      snap.portrait.rect.width,
+      `${label} · A1.3 img.duo3-photo width=${snap.portrait.rect.width}px must be ≤ container ${containerPx}px × 1.05`,
+    ).toBeLessThanOrEqual(containerPx * 1.05)
+  }
+
+  // A2.1 — desktop graph panel is bounded to the viewport (post-fix:
+  // ≈ window.innerHeight; pre-fix: ~2926 px for Miles d1280, tracking
+  // the rail content height). Only meaningful when an aside is rendered.
+  if (snap.asideExpected && snap.aside) {
+    expect.soft(
+      snap.aside.clientHeight,
+      `${label} · A2.1 aside.desk-graph clientHeight=${snap.aside.clientHeight}px must be ≤ viewport height ${snap.viewport.h}px × 1.01`,
+    ).toBeLessThanOrEqual(snap.viewport.h * 1.01)
+    // A2.2 — position MUST be sticky on desktop (the CSS gate that
+    // makes A2.1's bounded height actually pinned, not just short).
+    expect.soft(
+      snap.aside.position,
+      `${label} · A2.2 aside.desk-graph computed position=${snap.aside.position} must be "sticky"`,
+    ).toBe('sticky')
+  }
 }
 
 test.describe('joint-fix acceptance — Phase 0 scaffolding', () => {
@@ -186,6 +269,44 @@ test.describe('joint-fix acceptance — Phase 0 scaffolding', () => {
             body: JSON.stringify(snap, null, 2),
             contentType: 'application/json',
           })
+          // Miles is the bug-triggering case (64+ records). All Stream A
+          // predicates apply here.
+          assertStreamAPredicates(snap, `Miles ${sfx}`)
+          // A1.4 — total scroll height is sane at m390 for Miles only
+          // (the runaway-grid symptom inflated the whole page to tens of
+          // thousands of px). Antoine never blew the grid, so this is
+          // Miles-only by design.
+          if (vp.tag === 'm390') {
+            expect.soft(
+              snap.pageScrollHeight,
+              `Miles ${sfx} · A1.4 documentElement.scrollHeight=${snap.pageScrollHeight}px must be < 8000 (pre-fix: tens of thousands)`,
+            ).toBeLessThan(8000)
+          }
+          // A2.3 — graph SVG rendered (lazy chunk loaded and drew the
+          // force layout). circle count ≥ 100 is the regression guard
+          // that prevents A2 stripping the graph along with its height.
+          // Desktop only — sub-1024 viewports don't render <aside>.
+          if (snap.asideExpected) {
+            expect.soft(
+              snap.graphCircleCount,
+              `Miles ${sfx} · A2.3 graph <circle> count=${snap.graphCircleCount} must be ≥ 100 (lazy chunk loaded)`,
+            ).toBeGreaterThanOrEqual(100)
+            // A2.4 — sticky behavior: scroll the page 800 px and verify
+            // the aside stays pinned (`top ≤ 1`). Without the sticky
+            // binding, scrolling drags the panel off the viewport.
+            await page.evaluate(() => window.scrollTo(0, 800))
+            const stickyTop = await page.evaluate(() => {
+              const a = document.querySelector('aside.desk-graph')
+              return a ? a.getBoundingClientRect().top : null
+            })
+            if (stickyTop !== null) {
+              expect.soft(
+                stickyTop,
+                `Miles ${sfx} · A2.4 after scrolling 800px, aside.desk-graph.top=${stickyTop} must be ≤ 1 (pinned)`,
+              ).toBeLessThanOrEqual(1)
+            }
+            await page.evaluate(() => window.scrollTo(0, 0))
+          }
         })
 
         test(`Antoine · capture (${sfx})`, async ({ page }) => {
@@ -194,12 +315,24 @@ test.describe('joint-fix acceptance — Phase 0 scaffolding', () => {
             page.getByRole('heading', { level: 1, name: /antoine herv/i }),
           ).toBeVisible({ timeout: 15_000 })
           await setTheme(page, th)
+          if (vp.w >= 1024) {
+            await expect(
+              page
+                .getByRole('complementary', { name: /collaboration graph/i })
+                .getByRole('application'),
+            ).toBeVisible({ timeout: 30_000 })
+          }
           await shoot(page, 'before', `antoine-${sfx}`)
           const snap = await readLayoutSnapshot(page)
           test.info().attach(`antoine-${sfx}-layout.json`, {
             body: JSON.stringify(snap, null, 2),
             contentType: 'application/json',
           })
+          // Antoine is the sparse / bug-avoiding case. The same
+          // predicates serve as a regression guard — they were already
+          // passing on broken prod for Antoine (3 records, no nowrap
+          // blowout) and MUST keep passing post-fix.
+          assertStreamAPredicates(snap, `Antoine ${sfx}`)
         })
       })
     }
