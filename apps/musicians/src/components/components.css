@@ -1457,6 +1457,22 @@
     border-right: 1px solid var(--line);
     background: var(--bg);
   }
+  /* CRIT-2 cure: bind the graph panel to the viewport.
+     - `align-self: start` so the grid item is sized by its own height,
+       not stretched to the (tall) row defined by column 1's rail.
+     - `position: sticky; top: 0` pins it as the rail scrolls — the
+       "permanent side panel" UX from the design spec.
+     - `100vh` baseline, `100dvh` overrides it where supported (iOS
+       Safari's collapsing URL bar correctness). The dual-declaration
+       pattern degrades gracefully on UAs without dvh.
+     See diagnostics/CRIT-2. */
+  .mu3 .desk-graph {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    height: 100dvh;
+  }
   .mu3 .home-grid {
     grid-template-columns: repeat(4, 1fr);
   }
