@@ -25,10 +25,13 @@ import {
   curatedCypher,
   detailCypher,
   healthCypher,
+  peersByEraCypher,
   reshapeCount,
   reshapeDetail,
   reshapeMusicianRows,
+  reshapePeerEra,
   searchIndexCypher,
+  type PeerEraItem,
 } from './cypher'
 import { warnOnDuplicates } from './duplicates'
 import { deriveEra } from './era'
@@ -117,6 +120,21 @@ export function handleCurated(env: Env): Promise<Response> {
   })
 }
 
+/** `/api/musicians/:id` cap on the "from the same era" peers strip. The
+ * EraStrip can scroll horizontally; 12 keeps the payload small while giving
+ * the rail enough density for the design's serendipitous-divergence intent. */
+const SAME_ERA_LIMIT = 12
+
+/** The detail response with the era-strip peers attached as a SIBLING. The
+ * frozen `MusicianDetailResponse` (= `MusicianDetail`) is intentionally
+ * agnostic of era taxonomy (see src/lib/types.ts) — `sameEra` rides
+ * alongside it the same way the editorial `era` label does on the frozen
+ * type. The hook + page consume this extended shape; the EraStrip itself is
+ * data-agnostic. */
+type DetailResponseWithSameEra = MusicianDetailResponse & {
+  sameEra: PeerEraItem[]
+}
+
 export function handleDetail(env: Env, id: string): Promise<Response> {
   return guard(env, async (c) => {
     const result = await auraQuery(c, detailCypher(), { id })
@@ -124,10 +142,26 @@ export function handleDetail(env: Env, id: string): Promise<Response> {
     if (raw === null) {
       return json({ status: 'error', error: 'not-found' }, 'no-store', 404)
     }
+    // Peers query is best-effort: a Cypher / shape failure must NOT break the
+    // detail page. EraStrip self-hides on `[]`, so on a soft failure we
+    // surface `sameEra: []` and the rest of the page renders unchanged. A
+    // cold Aura is NOT soft: the AuraWakingError must propagate so `guard`
+    // returns the frozen 503 — partial-page-while-Aura-cold would be worse
+    // than the calm waking screen.
+    const sameEra: PeerEraItem[] = await auraQuery(c, peersByEraCypher(), {
+      id,
+      limit: SAME_ERA_LIMIT,
+    })
+      .then(reshapePeerEra)
+      .catch((err: unknown) => {
+        if (err instanceof AuraWakingError) throw err
+        return []
+      })
     const detail = mapMusicianDetail(raw)
-    const body: MusicianDetailResponse = {
+    const body: DetailResponseWithSameEra = {
       ...detail,
       era: deriveEra(raw.musician),
+      sameEra,
     }
     return json(body, CACHE.detail)
   })

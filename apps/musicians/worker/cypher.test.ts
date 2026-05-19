@@ -4,9 +4,11 @@ import {
   curatedCypher,
   detailCypher,
   healthCypher,
+  peersByEraCypher,
   reshapeCount,
   reshapeDetail,
   reshapeMusicianRows,
+  reshapePeerEra,
   searchIndexCypher,
 } from './cypher'
 import {
@@ -28,12 +30,34 @@ describe('Cypher builders are parameterized + read-only', () => {
     expect(() => curatedCypher()).not.toThrow()
     expect(() => searchIndexCypher()).not.toThrow()
     expect(() => detailCypher()).not.toThrow()
+    expect(() => peersByEraCypher()).not.toThrow()
   })
 
   it('detail/curated use $params, never interpolation', () => {
     expect(detailCypher()).toContain('$id')
     expect(curatedCypher()).toContain('$ids')
     expect(detailCypher()).not.toMatch(/\{id:\s*['"]/)
+  })
+
+  it('peersByEra is parameterized, read-only, and excludes collaborators', () => {
+    const q = peersByEraCypher()
+    // Parameterized on $id + $limit (never string-interpolated).
+    expect(q).toContain('$id')
+    expect(q).toContain('$limit')
+    expect(q).not.toMatch(/\{id:\s*['"]/)
+    // Excludes the focus musician.
+    expect(q).toMatch(/p\.id\s*<>\s*m\.id/)
+    // Excludes direct collaborators via the through-record PLAYED_ON join.
+    expect(q).toMatch(
+      /NOT EXISTS\s*\{[\s\S]*PLAYED_ON[\s\S]*PLAYED_ON[\s\S]*\}/,
+    )
+    // Genre overlap + ±10y window are present.
+    expect(q).toMatch(/any\(g IN coalesce\(p\.genres, \[\]\) WHERE g IN genres\)/)
+    expect(q).toContain('years_active_start')
+    expect(q).toContain('years_active_end')
+    // Read-only (no write clauses) — assertReadOnly already wraps it but
+    // double-check explicitly so a regression is obvious here.
+    expect(q).not.toMatch(/\b(CREATE|MERGE|SET|DELETE|REMOVE)\b/)
   })
 
   it('assertReadOnly rejects write clauses', () => {
@@ -75,6 +99,42 @@ describe('reshapeDetail → frozen RawDetailResult', () => {
 
   it('returns null when the musician id is absent (→ 404)', () => {
     expect(reshapeDetail(toResult(DETAIL_NOT_FOUND))).toBeNull()
+  })
+})
+
+describe('reshapePeerEra → EraStrip-shaped items', () => {
+  it('maps fields, derives photo from picture_url, drops malformed rows', () => {
+    const result: AuraResult = {
+      fields: ['id', 'name', 'primary_instruments', 'picture_url', 'overlap'],
+      values: [
+        [
+          'wikidata:Q1',
+          'Sonny Rollins',
+          ['tenor saxophone'],
+          'https://commons.example/sonny.jpg',
+          2,
+        ],
+        // No picture_url → photo:false; no primary_instruments → no instrument.
+        ['wikidata:Q2', 'Lee Morgan', [], '', 1],
+        // Malformed row: missing id → dropped.
+        [null, 'Ghost', ['piano'], 'https://x', 1],
+        // Malformed row: missing name → dropped.
+        ['wikidata:Q3', null, ['piano'], 'https://x', 1],
+      ],
+    }
+    const peers = reshapePeerEra(result)
+    expect(peers).toHaveLength(2)
+    expect(peers[0]).toEqual({
+      id: 'wikidata:Q1',
+      name: 'Sonny Rollins',
+      instrument: 'tenor saxophone',
+      photo: true,
+    })
+    expect(peers[1]).toEqual({
+      id: 'wikidata:Q2',
+      name: 'Lee Morgan',
+      photo: false,
+    })
   })
 })
 

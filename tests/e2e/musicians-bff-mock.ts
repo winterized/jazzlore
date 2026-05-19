@@ -61,6 +61,31 @@ const RICH_DETAIL = {
       links: {},
     },
   ],
+  // "From the same era" — Group B's data-wiring contract (`sameEra` sibling
+  // on /api/musicians/:id). Miles is a rich case: three plausible peers
+  // (same era / overlapping genre / NOT in the collaborator set above).
+  // The fixture ids/instruments are illustrative for the mock — the live
+  // BFF query (worker/cypher.ts `peersByEraCypher`) produces the real set.
+  sameEra: [
+    {
+      id: 'wikidata:Q319185',
+      name: 'Wynton Marsalis',
+      instrument: 'trumpet',
+      photo: true,
+    },
+    {
+      id: 'wikidata:Q502678',
+      name: 'Lee Morgan',
+      instrument: 'trumpet',
+      photo: true,
+    },
+    {
+      id: 'wikidata:Q437631',
+      name: 'Freddie Hubbard',
+      instrument: 'trumpet',
+      photo: false,
+    },
+  ],
 }
 
 const SPARSE_DETAIL = {
@@ -93,6 +118,11 @@ const SPARSE_DETAIL = {
       links: {},
     },
   ],
+  // Sparse case: empty `sameEra`. The BFF supplies the key (even when
+  // empty) and EraStrip self-hides on `[]` — so the section is absent
+  // from the DOM for Antoine, which is the regression-guard the a11y +
+  // joint-fix specs assert.
+  sameEra: [],
 }
 
 const WAKING_503 = { status: 'waking', retryAfter: 8 }

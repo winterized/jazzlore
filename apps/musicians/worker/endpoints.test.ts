@@ -65,7 +65,23 @@ describe('handleCurated', () => {
 
 describe('handleDetail', () => {
   it('returns the frozen MusicianDetail + derived era + 1.5h edge TTL', async () => {
-    stubAura(DETAIL_MILES)
+    // detailCypher is called first, peersByEraCypher second — the spy must
+    // resolve in that ORDER. The peers stub returns 1 peer (Sonny Rollins)
+    // so the `sameEra` sibling is exercised on the happy path.
+    const spy = vi.spyOn(auraMod, 'auraQuery')
+    spy.mockResolvedValueOnce(DETAIL_MILES.data as auraMod.AuraResult)
+    spy.mockResolvedValueOnce({
+      fields: ['id', 'name', 'primary_instruments', 'picture_url', 'overlap'],
+      values: [
+        [
+          'wikidata:Q310746',
+          'Sonny Rollins',
+          ['tenor saxophone'],
+          'https://commons.example/sonny.jpg',
+          2,
+        ],
+      ],
+    } as auraMod.AuraResult)
     const res = await handleDetail(ENV, 'wikidata:Q93341')
     expect(res.status).toBe(200)
     expect(res.headers.get('Cache-Control')).toContain('s-maxage=5400')
@@ -74,6 +90,7 @@ describe('handleDetail', () => {
       era?: string
       collaborators: { name: string; sharedRecordCount: number }[]
       records: { title: string }[]
+      sameEra: { id: string; name: string; photo: boolean; instrument?: string }[]
     }
     expect(body.name).toBe('Miles Davis')
     expect(body.era).toBe('Cool') // genres:['cool jazz','modal jazz'] → Cool
@@ -84,6 +101,24 @@ describe('handleDetail', () => {
       "'Round About Midnight",
       'Kind of Blue',
     ])
+    expect(body.sameEra).toEqual([
+      {
+        id: 'wikidata:Q310746',
+        name: 'Sonny Rollins',
+        instrument: 'tenor saxophone',
+        photo: true,
+      },
+    ])
+  })
+
+  it('falls back to sameEra:[] when the peers query fails (best-effort)', async () => {
+    const spy = vi.spyOn(auraMod, 'auraQuery')
+    spy.mockResolvedValueOnce(DETAIL_MILES.data as auraMod.AuraResult)
+    spy.mockRejectedValueOnce(new auraMod.AuraQueryError('boom'))
+    const res = await handleDetail(ENV, 'wikidata:Q93341')
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as { sameEra: unknown[] }
+    expect(body.sameEra).toEqual([])
   })
 
   it('404s when the musician id is absent', async () => {
@@ -139,6 +174,19 @@ describe('cold-Aura waking path', () => {
     expect(res.status).toBe(503)
     expect(res.headers.get('Retry-After')).toBe('10')
     expect(await res.json()).toEqual({ status: 'waking', retryAfter: 10 })
+  })
+
+  it('propagates AuraWakingError from the peers query (cold mid-request)', async () => {
+    // Detail query succeeds, but the peers query (second call) hits a cold
+    // Aura. The AuraWakingError must re-throw past the best-effort catch so
+    // `guard` surfaces the frozen 503 — a partial page with sameEra:[] while
+    // Aura is waking is worse than the calm countdown screen.
+    const spy = vi.spyOn(auraMod, 'auraQuery')
+    spy.mockResolvedValueOnce(DETAIL_MILES.data as auraMod.AuraResult)
+    spy.mockRejectedValueOnce(new auraMod.AuraWakingError())
+    const res = await handleDetail(ENV, 'wikidata:Q93341')
+    expect(res.status).toBe(503)
+    expect(res.headers.get('Retry-After')).toBe('10')
   })
 
   it('returns a misconfig 503 when Aura creds are absent', async () => {
