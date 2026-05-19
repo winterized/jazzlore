@@ -1,0 +1,331 @@
+@import 'tailwindcss';
+
+/* Drive Tailwind v4 dark: variant from data-theme="dark", not prefers-color-scheme.
+   Required for the manual theme toggle to override the OS preference. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+@source "../../../packages/ui/src";
+
+/* ════════════════════════════════════════════════════════════════════════
+   Musicians design-token layer — RE-FROZEN after the Phase-D a11y revision.
+   Base palette extracted from the Claude Design pass-5 handoff
+   (apps/musicians/docs/source/app/musicians3-styles.css + README.md
+   "Design tokens"). This is NOT the stone/amber system of scales/chords.
+
+   A11y revision (user-approved, post Phase-D axe pass): pass-5's vivid
+   `--accent` failed WCAG 2 AA contrast for text/UI use. Resolution =
+   SPLIT decorative vs text/UI:
+     • `--accent` / `--accent-soft` keep the vivid pass-5 hue and are for
+       PURELY DECORATIVE, NON-TEXT use only (graph node/edge fills, mosaic
+       pulse bg, decorative dots/legend swatches). WCAG contrast N/A there.
+     • `--accent-strong` (NEW) is AA-compliant in BOTH themes and is the
+       ONLY accent allowed for accent-colored text/links, focus rings,
+       active/selected signifiers, and any CTA where `--accent-fg` sits on
+       an accent background (that bg must be `--accent-strong`).
+     • `--dim` was sub-AA wherever it was used as text → retargeted to the
+       `--muted` values (both themes), measured AA on the flat token
+       surfaces it paints text on (bg/paper/card — NOT a blanket "every
+       surface": the .journey card's composited #333333 is the documented
+       exception, handled via --text-soft on .journey .blb in components.css).
+   Derived by measuring WCAG ratios against the ACTUAL surfaces each token
+   paints on (see commit body / final summary for the ratio table).
+   Downstream phases (C/D/E) must NOT edit this block; usages select the
+   right token, they do not redefine values.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Self-hosted fonts (latin subset, woff2, font-display: swap) ───────────
+   Vendored from Fontsource (Geist + Geist Mono = OFL, Newsreader = OFL) into
+   public/fonts/. Only the weights the design CSS actually RENDERS are loaded
+   (Phase-G perf pass — usage audited across components.css + graphView.css.ts):
+     • Geist 400/500/600/700  (sans)
+     • Geist Mono 400/500/600 (mono; the lone 700 use, .err-mark, faux-bolds
+       600 — no 700 cut shipped, unchanged by this pass)
+     • Newsreader 400/500/600 normal + 400 italic only
+   Newsreader 500-italic & 600-italic were vendored but NEVER selected by any
+   rule (no `font-style:italic` rule resolves to weight ≥500) → removed here
+   with their woff2 (≈49 KB of dead font payload off the network).
+   Served as separate cached requests, off the initial JS bundle.
+
+   CLS/FCP (Phase-G perf pass — authorized scoped unfreeze of THIS block only):
+   `swap` with no metrics-matched fallback reflowed text when the web fonts
+   arrived (Lighthouse throttled-mobile CLS 0.293, the dominant ≥90 miss).
+   Fix = a metrics-matched fallback `@font-face` per family ("… Fallback",
+   `src: local()` of the platform face) carrying a tuned `size-adjust` +
+   `ascent/descent/line-gap-override`, inserted into the stack BEFORE the
+   generic family so the pre-swap box is identical to the web font's.
+
+   `size-adjust` derivation — the OS/2 `xAvgCharWidth` ratio formula
+   (web xAvg/upm ÷ fallback xAvg/upm) was tried first and proved WRONG for
+   these faces: it yielded ~124% (Geist) / ~132% (Newsreader), which widened
+   the fallback so the hero h1 wrapped an extra line and CLS got WORSE
+   (verified: an unchanged 0.297 with the formula values). `xAvgCharWidth` is
+   not representative of these designs' real rendered width. The shipped
+   values are instead the MEASURED rendered-width ratio of each web font vs
+   its `local()` fallback at the app's real strings, in a real headless
+   Chrome (a setext span ratio probe):
+     Geist / Arial            ≈ 100.6–103.3% (weights 400/600)  → 102%
+     Geist Mono / Menlo       ≈ 99.66%  (mono advance is stable) → 99.66%
+     Newsreader / Times       ≈ 105.78% (verified 2-line h1 wrap
+                                 holds across SA 98–106%)        → 104%
+     Newsreader-it / Times-it ≈ 98.86%                           → 99%
+   ascent/descent-override = the web font's hhea ascent/|descent| ÷ upm ÷
+   size-adjust (web metrics via fontTools from the vendored 400 woff2: Geist
+   1005/-295 upm1000; Newsreader 1470/-530 upm2000) so a normal/auto
+   line-height box also stays pinned. The shipped layout uses a numeric
+   line-height for the hero, so width parity (size-adjust) is the load-bearing
+   term against CLS; the v/overrides are the belt-and-braces for auto-LH text.
+   `font-display: swap` is kept (now reflow-free with matched widths).
+   Above-the-fold woff2 (Geist 400/600 + Newsreader 500 used in the hero h1)
+   are <link rel=preload>'d in index.html — not all 11. */
+
+/* Metrics-matched system fallbacks — occupy the web font's exact line box so
+   the swap does not reflow (CLS≈0). Referenced ahead of system-ui/serif in
+   the --font-* stacks below.
+
+   Each fallback face MUST span `font-weight: 100 900` (and a matching italic
+   face where the family renders italic): the heading/hero text is weight 500
+   and body italic is style:italic — a weight-400-only fallback face would NOT
+   be selected for those, so the pre-swap render would fall through to the
+   generic family (Georgia/system-ui) and the override would never apply (the
+   reason the first cut left CLS unchanged). This is the next/font & fontaine
+   approach. Geist ships no true italic woff2 (only normal weights are
+   vendored) and no sans text renders italic, so the sans/mono fallbacks need
+   no italic face; Newsreader DOES render 400-italic (bios/captions) → a
+   dedicated italic fallback, matched to Times-italic metrics. */
+@font-face {
+  /* Geist → Arial. size-adjust 102% = measured Geist/Arial rendered-width
+     ratio (100.6–103.3% across the 400/600 weights actually used). */
+  font-family: 'Geist Fallback';
+  font-weight: 100 900;
+  src:
+    local('Arial'),
+    local('Helvetica Neue'),
+    local('Helvetica');
+  size-adjust: 102%;
+  ascent-override: 98.53%;
+  descent-override: 28.92%;
+  line-gap-override: 0%;
+}
+@font-face {
+  /* Geist Mono → Menlo. size-adjust 99.66% = measured ratio (both
+     monospace, advance width near-identical). */
+  font-family: 'Geist Mono Fallback';
+  font-weight: 100 900;
+  src:
+    local('Menlo'),
+    local('Consolas'),
+    local('Courier New');
+  size-adjust: 99.66%;
+  ascent-override: 100.84%;
+  descent-override: 29.60%;
+  line-gap-override: 0%;
+}
+@font-face {
+  /* Newsreader → Times New Roman. size-adjust 104% = measured ratio 105.78%
+     pulled to 104 (verified the hero-h1 2-line wrap holds for SA 98–106%;
+     ≥108% wraps a 3rd line → the CLS the first xAvg-formula cut caused). */
+  font-family: 'Newsreader Fallback';
+  font-weight: 100 900;
+  font-style: normal;
+  src:
+    local('Times New Roman'),
+    local('Times'),
+    local('Georgia');
+  size-adjust: 104%;
+  ascent-override: 70.67%;
+  descent-override: 25.48%;
+  line-gap-override: 0%;
+}
+@font-face {
+  /* Newsreader italic (bios, captions, blurbs) → Times New Roman italic.
+     size-adjust 99% = measured Newsreader-it/Times-it ratio (98.86%). */
+  font-family: 'Newsreader Fallback';
+  font-weight: 100 900;
+  font-style: italic;
+  src:
+    local('Times New Roman Italic'),
+    local('Times Italic'),
+    local('Georgia Italic');
+  size-adjust: 99%;
+  ascent-override: 74.24%;
+  descent-override: 26.77%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/geist-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/geist-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/geist-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/geist-700.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/geist-mono-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/geist-mono-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/geist-mono-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Newsreader';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/newsreader-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Newsreader';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/newsreader-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Newsreader';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/newsreader-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Newsreader';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/newsreader-400-italic.woff2') format('woff2');
+}
+/* Newsreader 500-italic & 600-italic intentionally NOT loaded — no rule
+   resolves italic at weight ≥500 (audited); their woff2 were deleted. */
+
+/* ─── Token palette ────────────────────────────────────────────────────────
+   Dark is the default (matches the design's `.mu3` base). Light is applied
+   via data-theme="light" on <html> (music-core applyTheme). The design's
+   prototype keyed light off `.mu3[data-theme="light"]`; here data-theme lives
+   on <html> per the monorepo convention, so both selectors are scoped to the
+   document root. Hex values are verbatim from the pass-5 handoff EXCEPT the
+   a11y-revised tokens flagged inline below (--accent-strong [new], --dim,
+   and dark --muted) — see the block header for the rationale. */
+@layer base {
+  :root {
+    --bg: #0a0a0a;
+    --bg-soft: #0d0d0d;
+    --paper: #161616;
+    --card: #181818;
+    --card-hover: #1d1d1d;
+    --text: #f4eede;
+    --text-soft: #d9d2c1;
+    /* --muted nudged from pass-5 #8a8378 to #928b80 (minimal neutral-warm-grey
+       drift) — clears AA on the flat token surfaces it paints text on
+       (bg/paper/card). It does NOT clear AA on the .journey card's *rendered*
+       surface, which composites card+line+page to ≈#333333 where #928b80 is
+       only 3.74:1; .journey .blb therefore uses --text-soft there (8.39:1
+       dark) instead of --muted (see components.css). Not "every surface". */
+    --muted: #928b80;
+    /* --dim retargeted to the --muted value: pass-5 #565047 measured 2.2–2.5:1
+       on dark surfaces (sub-AA) wherever it was used as text. #928b80 ≥ 4.6:1. */
+    --dim: #928b80;
+    --line: #242322;
+    --line-soft: #1c1c1b;
+    /* --accent / --accent-soft: DECORATIVE, NON-TEXT only (graph fills, pulse,
+       dots). On dark surfaces the pass-5 hue already measures 8.5–9.5:1, so the
+       AA text/UI token equals it here (zero perceptual drift). */
+    --accent: #f4a233;
+    --accent-fg: #1a1410;
+    --accent-soft: rgba(244, 162, 51, 0.14);
+    /* --accent-strong: AA text/links/focus/active/CTA-bg. Dark = --accent
+       (already AA: 8.5–9.5:1 on bg/paper/card; #1a1410-on-it CTA = 8.7:1). */
+    --accent-strong: #f4a233;
+    --shadow: 0 1px 0 rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
+    --pulse-bg: rgba(244, 162, 51, 0.2);
+    --kbd-bg: #1a1a1a;
+
+    /* Metrics-matched fallback sits between the web font and the generic
+       system family so the pre-swap render uses the web font's exact box
+       (CLS≈0). Variable NAMES are frozen; only the fallback chain changed. */
+    --font-sans: 'Geist', 'Geist Fallback', -apple-system, system-ui, sans-serif;
+    --font-mono: 'Geist Mono', 'Geist Mono Fallback', ui-monospace, monospace;
+    --font-serif: 'Newsreader', 'Newsreader Fallback', 'Source Serif 4', Georgia, serif;
+  }
+
+  html[data-theme='light'] {
+    --bg: #f4f1ea;
+    --bg-soft: #f8f5ee;
+    --paper: #ffffff;
+    --card: #ffffff;
+    --card-hover: #faf7f0;
+    --text: #1a1612;
+    --text-soft: #3a342c;
+    --muted: #6a6258;
+    /* --dim retargeted to the --muted value: pass-5 #9b9384 measured 2.7–3.0:1
+       on light surfaces (sub-AA) wherever it was used as text. #6a6258 = 5.3–6.0:1. */
+    --dim: #6a6258;
+    --line: #e2ddd0;
+    --line-soft: #ede8dc;
+    /* --accent / --accent-soft: DECORATIVE, NON-TEXT only. pass-5 #c87f1a
+       measures only 2.9–3.2:1 on light surfaces — kept verbatim for graph
+       fills / pulse / dots, never text. */
+    --accent: #c87f1a;
+    --accent-fg: #ffffff;
+    --accent-soft: rgba(244, 162, 51, 0.16);
+    /* --accent-strong: AA text/links/focus/active/CTA-bg. Darkened, minimal
+       perceptual drift (CIE76 dE 17.8 from #c87f1a, same warm-amber family).
+       Measured ≥4.5 on EVERY surface it paints on, incl. accent text sitting
+       on the translucent --accent-soft chip wash (the binding worst case):
+       5.01 vs --bg #f4f1ea, 5.19 vs --bg-soft, 5.65 vs --paper/--card,
+       4.53 on the .conn/.era accent-soft chip, white-on-it CTA 5.65,
+       4.17 vs --line (non-text focus ring ≥3:1). */
+    --accent-strong: #995700;
+    --shadow: 0 1px 0 rgba(0, 0, 0, 0.04), 0 8px 24px rgba(60, 50, 30, 0.06);
+    --pulse-bg: rgba(244, 162, 51, 0.2);
+    --kbd-bg: #f4f1ea;
+  }
+
+  /* Root background must live on <html>, not only on each page's <main>, so
+     the themed canvas covers overscroll and any translucent chrome. The
+     design's sticky header is translucent (bg + backdrop-blur); without a
+     themed root the browser's white canvas bleeds through in dark mode.
+     data-theme is set on <html> by music-core applyTheme(). */
+  html {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-feature-settings:
+      'ss01' on,
+      'cv11' on;
+    -webkit-font-smoothing: antialiased;
+  }
+}

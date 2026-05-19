@@ -1,0 +1,1476 @@
+/* Jazzlore Musicians — component styles (Phase D).
+ *
+ * Ported VERBATIM (structural rules only) from the Claude Design pass-5
+ * handoff: docs/source/app/musicians3-styles.css + musicians4-styles.css +
+ * musicians5-styles.css. The design scopes everything under `.mu3`; that
+ * class is applied by the <Shell> wrapper (the design's `Board3`).
+ *
+ * The design's CSS also re-declares the token palette inside `.mu3`. That is
+ * intentionally OMITTED here: the FROZEN token layer (src/index.css, Phase B)
+ * already sets every `--bg/--paper/--card/--accent/...` custom property on
+ * <html> (and on html[data-theme="light"]), so the same variables cascade
+ * into `.mu3`. Duplicating them would fork the frozen layer. Only structural
+ * / component / motion rules live here.
+ *
+ * `prefers-reduced-motion` clamps every animation (design "Motion specs":
+ * pulse single-frame, scroll instant, slide off).
+ */
+
+/* ─────────────────────── Artboard shell ─────────────────────────────── */
+.mu3 {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-feature-settings:
+    'ss01' on,
+    'cv11' on;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+.mu3 *,
+.mu3 *::before,
+.mu3 *::after {
+  box-sizing: border-box;
+}
+
+/* ─────────────────────── Duotone tile primitive ─────────────────────── */
+.duo3 {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  isolation: isolate;
+  border-radius: 4px;
+  background: #222;
+}
+.duo3::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 80% at 28% 22%, var(--duo-hi) 0%, transparent 55%),
+    radial-gradient(140% 100% at 78% 100%, var(--duo-lo) 0%, transparent 70%),
+    linear-gradient(
+      180deg,
+      var(--duo-lo) 0%,
+      color-mix(in srgb, var(--duo-lo) 60%, #000) 100%
+    );
+  z-index: 0;
+}
+.duo3::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1.5px),
+    radial-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1.5px);
+  background-size:
+    3px 3px,
+    5px 5px;
+  background-position:
+    0 0,
+    1px 2px;
+  mix-blend-mode: overlay;
+  opacity: 0.5;
+  z-index: 1;
+}
+.duo3 > * {
+  position: relative;
+  z-index: 2;
+}
+.duo3-initials {
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: color-mix(in srgb, var(--duo-hi) 70%, white);
+  opacity: 0.55;
+}
+/* photo:false → flat --card surface, centered lifted initials (design
+   "Mosaic · the orbit" fallback row + Duo3 spec). */
+.duo3.flat {
+  background: color-mix(in srgb, var(--card) 60%, transparent);
+}
+.duo3.flat::before,
+.duo3.flat::after {
+  opacity: 0.18;
+}
+.duo3.flat .duo3-initials {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  color: var(--text-soft);
+  opacity: 1;
+}
+
+/* ── Phase H — hero portrait photo (duotone → full-colour reveal) ──────
+ *
+ * The real <img> fills the SAME fixed box as the monogram (CLS = 0: the
+ * layout box is identical, the photo is an absolutely-positioned overlay
+ * inside it). Duotone treatment, CSS-only so the deterministic per-name
+ * `--duo-lo`/`--duo-hi` palette Duo3 already computes is reused:
+ *
+ *  - the image is desaturated to luminance (`grayscale(1)`),
+ *  - the existing `::before` `--duo-lo`/`--duo-hi` gradient is promoted
+ *    ABOVE the image and `mix-blend-mode: color` paints that luminance with
+ *    the lo→hi ramp → a true two-tone image, no SVG filter needed.
+ *
+ * On the focusable card/figure's `:hover` AND `:focus-visible` (a11y parity)
+ * the grayscale lifts and the colour tint fades → full natural colour. The
+ * colour change is transitioned; `prefers-reduced-motion: reduce` makes it
+ * INSTANT (transition removed — never an animation), see the reduced-motion
+ * block at the foot of this file. */
+.duo3.has-photo .duo3-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 22%;
+  display: block;
+  z-index: 0;
+  filter: grayscale(1) contrast(1.05) brightness(1.02);
+  transition: filter 0.32s ease;
+}
+/* The per-name duotone gradient becomes the colour tint over the greyscale
+ * image (instead of the standalone placeholder gradient). */
+.duo3.has-photo::before {
+  z-index: 1;
+  mix-blend-mode: color;
+  opacity: 0.92;
+  transition: opacity 0.32s ease;
+}
+/* Keep the fine grain on top for the magazine print feel. */
+.duo3.has-photo::after {
+  z-index: 2;
+  opacity: 0.35;
+}
+.duo3.has-photo .duo3-initials {
+  display: none;
+}
+/* Full-colour reveal — on the hero host's `:hover`, and on the curated
+ * card's `:focus-visible` (the card is a focusable <a> → keyboard parity
+ * with hover; the detail-hero <figure> is presentational, not tabbable, so
+ * it reveals on hover only). The bare `.duo3.has-photo:hover` covers the
+ * detail hero and any future host generically. */
+.mu3 .home-card:hover .duo3.has-photo .duo3-photo,
+.mu3 .home-card:focus-visible .duo3.has-photo .duo3-photo,
+.duo3.has-photo:hover .duo3-photo {
+  filter: grayscale(0) contrast(1) brightness(1);
+}
+.mu3 .home-card:hover .duo3.has-photo::before,
+.mu3 .home-card:focus-visible .duo3.has-photo::before,
+.duo3.has-photo:hover::before {
+  opacity: 0;
+}
+
+/* ─────────────────────── Header (mobile) ────────────────────────────── */
+.mu3 .hdr {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: 1px solid var(--line);
+}
+.mu3 .hdr-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+}
+.mu3 .brand {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.mu3 .brand b {
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+.mu3 .spacer {
+  flex: 1;
+}
+.mu3 .ic {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+.mu3 .ic:hover {
+  background: var(--card-hover);
+  color: var(--text);
+}
+.mu3 .ic-back {
+  transform: rotate(180deg);
+}
+.mu3 .crumb {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─────────────────────── Identity banner (mobile) ───────────────────── */
+.mu3 .ident {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 14px;
+  padding: 14px 14px 6px;
+}
+/* Phase H — the identity tile moved OUT of this strip into the full-width
+   AttribPhoto hero block above it (the real duotone portrait). The strip is
+   now a single text column; the image cell is gone. */
+.mu3 .ident.ident-text {
+  grid-template-columns: 1fr;
+  padding-top: 2px;
+}
+.mu3 .ident .duo3 {
+  width: 64px;
+  height: 64px;
+  padding: 8px;
+}
+.mu3 .ident .duo3-initials {
+  font-size: 22px;
+}
+.mu3 .ident .nm {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1;
+}
+.mu3 .ident .ml {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 5px;
+  letter-spacing: 0.02em;
+}
+.mu3 .ident .ml b {
+  color: var(--text-soft);
+  font-weight: 500;
+}
+
+/* ─────────────────────── Bio line + listen ──────────────────────────── */
+.mu3 .bio {
+  padding: 6px 14px 12px;
+}
+.mu3 .bio p {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--text-soft);
+  margin: 0;
+  text-wrap: pretty;
+}
+.mu3 .bio .more {
+  display: inline;
+  font-style: normal;
+  color: var(--accent-strong);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--accent-strong) 40%, transparent);
+  text-decoration: none;
+  cursor: pointer;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  margin-left: 6px;
+  white-space: nowrap;
+  padding: 0;
+}
+.mu3 .listen {
+  display: flex;
+  gap: 8px;
+  padding: 0 14px 14px;
+}
+.mu3 .listen .btn {
+  flex: 1;
+  height: 44px;
+  border-radius: 6px;
+  border: 1px solid var(--accent-strong);
+  background: var(--accent-strong);
+  color: var(--accent-fg);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  cursor: pointer;
+  text-decoration: none;
+}
+.mu3 .listen .btn.alt {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--line);
+}
+
+/* ─────────────────────── Mosaic header (image-only) ─────────────────── */
+.mu3 .mosaic-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 12px 14px 6px;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dim);
+  font-weight: 600;
+}
+.mu3 .mosaic-h .legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--muted);
+  text-transform: none;
+  letter-spacing: 0.04em;
+}
+.mu3 .mosaic-h .legend .dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.mu3 .mosaic {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-auto-rows: 44px;
+  gap: 3px;
+  padding: 0 14px 16px;
+}
+.mu3 .mtile {
+  position: relative;
+  overflow: hidden;
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  transition:
+    transform 0.14s,
+    box-shadow 0.14s;
+}
+.mu3 .mtile:hover {
+  transform: translateY(-1px);
+}
+.mu3 .mtile .duo3 {
+  position: absolute;
+  inset: 0;
+  border-radius: 0;
+}
+.mu3 .mtile-num {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(3px);
+  padding: 1.5px 4px;
+  border-radius: 2px;
+  letter-spacing: 0.02em;
+  z-index: 3;
+}
+.mu3 .mtile-init {
+  position: absolute;
+  top: 4px;
+  left: 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.78);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
+  z-index: 3;
+  pointer-events: none;
+}
+.mu3 .mtile.hero .mtile-init,
+.mu3 .mtile.s3 .mtile-init,
+.mu3 .mtile.s2.h2 .mtile-init {
+  font-size: 11px;
+  top: 6px;
+  left: 7px;
+}
+.mu3 .mtile.no-photo .duo3 {
+  background: color-mix(in srgb, var(--card) 60%, transparent);
+}
+.mu3 .mtile.no-photo .duo3::before,
+.mu3 .mtile.no-photo .duo3::after {
+  opacity: 0.18;
+}
+.mu3 .mtile.no-photo .mtile-init {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 0;
+  left: 0;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+  color: var(--text-soft);
+  text-shadow: none;
+}
+.mu3 .mtile.no-photo.hero .mtile-init,
+.mu3 .mtile.no-photo.s2.h2 .mtile-init {
+  font-size: 28px;
+}
+.mu3 .mtile.no-photo.s3 .mtile-init {
+  font-size: 22px;
+}
+.mu3 .mosaic-sparse {
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: 64px;
+}
+.mu3 .mtile.s2 {
+  grid-column: span 2;
+}
+.mu3 .mtile.s3 {
+  grid-column: span 3;
+}
+.mu3 .mtile.h2 {
+  grid-row: span 2;
+}
+.mu3 .mtile.h3 {
+  grid-row: span 3;
+}
+.mu3 .mtile.hero {
+  grid-column: span 3;
+  grid-row: span 3;
+}
+
+/* ─────────────────────── Section header ─────────────────────────────── */
+.mu3 .sec-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 18px 14px 10px;
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+  font-weight: 600;
+}
+.mu3 .sec-h em {
+  font-style: normal;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--muted);
+}
+
+/* ─────────────────────── Main rail (the spine) ──────────────────────── */
+.mu3 .rail {
+  padding: 0 14px;
+}
+.mu3 .conn {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 14px;
+  min-height: 88px;
+  border-bottom: 1px solid var(--line-soft);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  background: transparent;
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  color: inherit;
+  font: inherit;
+  transition: background 0.14s;
+  margin: 0 -14px;
+}
+.mu3 .conn:last-child {
+  border-bottom: 0;
+}
+.mu3 .conn:hover {
+  background: var(--card-hover);
+}
+.mu3 .conn.pulse {
+  animation: mu3-pulse 1.4s ease-out 1;
+}
+@keyframes mu3-pulse {
+  0% {
+    background: var(--pulse-bg);
+  }
+  100% {
+    background: transparent;
+  }
+}
+.mu3 .conn .duo3 {
+  width: 64px;
+  height: 64px;
+  padding: 6px;
+  border-radius: 4px;
+}
+.mu3 .conn .duo3-initials {
+  font-size: 22px;
+}
+.mu3 .conn .nm {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1.15;
+}
+.mu3 .conn .role {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+  letter-spacing: 0.02em;
+}
+.mu3 .conn .why {
+  font-size: 11.5px;
+  margin-top: 7px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: baseline;
+  line-height: 1.4;
+}
+.mu3 .conn .why .top {
+  color: var(--text);
+}
+.mu3 .conn .why .top .t {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 12.5px;
+  color: var(--text);
+}
+.mu3 .conn .why .ct {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  padding: 2px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.02em;
+}
+.mu3 .conn .why .rel {
+  font-size: 10.5px;
+  color: var(--muted);
+  font-style: italic;
+}
+.mu3 .conn-act {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: flex-end;
+}
+.mu3 .conn-act .ic {
+  width: 30px;
+  height: 30px;
+}
+
+/* ─────────────────────── Expansion CTA + tail-marker (pass 5) ───────── */
+.mu3 .conn-expand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 8px 14px 4px;
+  padding: 14px 12px;
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background 0.14s,
+    border-color 0.14s;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-strong);
+  letter-spacing: 0.005em;
+  text-align: center;
+  width: calc(100% - 28px);
+}
+.mu3 .conn-expand:hover {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent-strong) 30%, var(--line));
+}
+.mu3 .conn-expand .arrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.mu3 .conn-expand .sub {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  display: block;
+  margin-top: 4px;
+  font-weight: 500;
+}
+.mu3 .tail-marker {
+  position: relative;
+  margin: 16px 14px 6px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.mu3 .tail-marker .lab {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 14.5px;
+  color: var(--text);
+  letter-spacing: -0.005em;
+}
+.mu3 .tail-marker .lab b {
+  font-style: normal;
+  font-family: var(--font-sans);
+  font-weight: 600;
+}
+.mu3 .tail-marker .ct {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+.mu3 .tail-tail-note {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 12.5px;
+  color: var(--muted);
+  padding: 10px 14px 4px;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+/* ─────────────────────── "From the same era" ───────────────────────── */
+.mu3 .era {
+  margin-top: 18px;
+  padding: 18px 14px 12px;
+  border-top: 1px solid var(--line);
+  background: var(--bg-soft);
+}
+.mu3 .era-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 4px;
+}
+.mu3 .era-h .lab {
+  font-size: 12px;
+  letter-spacing: 0.005em;
+  font-weight: 600;
+  color: var(--text);
+}
+.mu3 .era-h .lab b {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  margin-left: 8px;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  padding: 2px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.02em;
+}
+.mu3 .era-h .blurb {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 4px;
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+.mu3 .era-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 10px 14px 4px;
+  margin: 0 -14px;
+  scrollbar-width: none;
+}
+.mu3 .era-strip::-webkit-scrollbar {
+  display: none;
+}
+.mu3 .era-tile {
+  flex: 0 0 140px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  transition:
+    transform 0.14s,
+    background 0.14s;
+}
+.mu3 .era-tile:hover {
+  transform: translateY(-2px);
+  background: var(--card-hover);
+}
+.mu3 .era-tile .duo3 {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 0;
+  padding: 8px;
+}
+.mu3 .era-tile .duo3-initials {
+  font-size: 26px;
+}
+.mu3 .era-tile .body {
+  padding: 8px 10px 10px;
+}
+.mu3 .era-tile .nm {
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1.15;
+}
+.mu3 .era-tile .hint {
+  font-size: 10.5px;
+  color: var(--muted);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* ─────────────────────── Records strip ──────────────────────────────── */
+.mu3 .rec-strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 6px 14px 16px;
+  scrollbar-width: none;
+}
+.mu3 .rec-strip::-webkit-scrollbar {
+  display: none;
+}
+.mu3 .rec-tile {
+  flex: 0 0 124px;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+.mu3 .rec-tile .duo3 {
+  width: 124px;
+  height: 124px;
+  padding: 0;
+}
+.mu3 .rec-tile .rt {
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+  margin-top: 8px;
+}
+.mu3 .rec-tile .rm {
+  font-size: 10.5px;
+  color: var(--muted);
+  margin-top: 3px;
+  letter-spacing: 0.03em;
+}
+.mu3 .rec-tile .ry {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent-strong);
+  margin-top: 2px;
+  letter-spacing: 0.04em;
+}
+
+/* ─────────────────────── Sparse-data treatment ─────────────────────── */
+.mu3 .sparse-note {
+  margin: 6px 14px 16px;
+  border: 1px dashed var(--line);
+  border-left: 2px solid var(--accent-strong);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+  padding: 12px 14px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+.mu3 .sparse-note b {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+  margin-bottom: 6px;
+}
+.mu3 .dupe-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--accent-strong);
+}
+.mu3 .empty-section {
+  padding: 22px 14px;
+  text-align: center;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--muted);
+  background: var(--bg-soft);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+/* ─────────────────────── Image attribution captions ────────────────── */
+.mu3 .ident-photo {
+  margin: 12px 14px 14px;
+}
+.mu3 .ident-photo .duo3 {
+  width: 100%;
+  aspect-ratio: 5/4;
+  border-radius: 6px;
+  padding: 16px;
+}
+.mu3 .ident-photo figcaption {
+  display: flex;
+  flex-direction: column;
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.mu3 .ident-photo figcaption .attr-missing {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--dim);
+}
+.mu3 figure.fig {
+  margin: 0;
+  padding: 0;
+}
+.mu3 .rec-tile figcaption {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: var(--dim);
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+}
+
+/* ═════════════════════ Home ═════════════════════════════════════════ */
+.mu3 .home-hero {
+  padding: 22px 18px 8px;
+}
+.mu3 .home-hero .kicker {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+  margin-bottom: 8px;
+}
+.mu3 .home-hero h1 {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 32px;
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  margin: 0 0 10px;
+  text-wrap: balance;
+}
+.mu3 .home-hero h1 em {
+  font-style: italic;
+  color: var(--text-soft);
+}
+.mu3 .home-hero .sub {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 0;
+  text-wrap: pretty;
+}
+.mu3 .home-search {
+  margin: 14px 14px 12px;
+}
+.mu3 .home-journeys-h {
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dim);
+  font-weight: 600;
+  padding: 6px 14px 8px;
+}
+.mu3 .journeys {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 0 14px 18px;
+  border-bottom: 1px solid var(--line);
+}
+.mu3 .journey {
+  border: 1px solid var(--line);
+  background: var(--card);
+  border-radius: 8px;
+  padding: 12px 10px 11px;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  transition: background 0.14s;
+}
+.mu3 .journey:hover {
+  background: var(--card-hover);
+}
+.mu3 .journey .icn {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  color: var(--accent-strong);
+  margin-bottom: 6px;
+}
+.mu3 .journey .lab {
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.mu3 .journey .blb {
+  font-size: 10.5px;
+  /* --text-soft, not --muted: this 10.5px blurb composites on the rendered
+     .journey surface #333333 (card+line+page blend), where dark --muted
+     #928b80 is only 3.74:1 (sub-AA). --text-soft clears AA with margin:
+     dark #d9d2c1 = 8.39:1, light #3a342c ≥ 10.9:1 on the same surface. */
+  color: var(--text-soft);
+  margin-top: 3px;
+  line-height: 1.4;
+}
+.mu3 .home-12-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 18px 14px 4px;
+}
+.mu3 .home-12-h .lab {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 16px;
+  color: var(--text);
+  letter-spacing: -0.005em;
+}
+.mu3 .home-12-h .ct {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+.mu3 .home-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  padding: 10px 14px 24px;
+  list-style: none;
+  margin: 0;
+}
+.mu3 .home-card-li {
+  list-style: none;
+}
+.mu3 .home-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: transform 0.14s;
+}
+.mu3 .home-card:hover {
+  transform: translateY(-1px);
+}
+/* Visible focus indicator — the curated card is the focusable hero host
+   whose `:focus-visible` triggers the duotone→colour reveal (keyboard
+   parity with hover); never color-only. */
+.mu3 .home-card:focus-visible {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 2px;
+}
+.mu3 .home-card-fig {
+  margin: 0;
+  padding: 0;
+}
+.mu3 .home-card .duo3 {
+  width: 100%;
+  aspect-ratio: 4/3;
+  border-radius: 0;
+  padding: 10px;
+}
+/* Magazine-style portrait credit (LEGAL — rendered whenever a license /
+ * attribution field is non-empty). Small + unobtrusive; a fixed min-height
+ * reserves space so a card WITH a credit and one WITHOUT keep an identical
+ * footprint (CLS = 0 — the caption never reflows the grid). */
+.mu3 .home-card-credit {
+  min-height: 16px;
+  padding: 5px 11px 0;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  line-height: 1.35;
+  letter-spacing: 0.04em;
+  color: var(--dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mu3 .home-card .body {
+  padding: 6px 11px 11px;
+}
+.mu3 .home-card .nm {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1.15;
+}
+.mu3 .home-card .ml {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+  letter-spacing: 0.02em;
+}
+.mu3 .home-card .hook {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--text-soft);
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+/* ─────────────────────── Autosuggest (combobox) ────────────────────── */
+.mu3 .search-wrap {
+  position: relative;
+}
+.mu3 .search-input {
+  width: 100%;
+  height: 46px;
+  padding: 0 12px 0 38px;
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  color: var(--text);
+}
+.mu3 .search-input:focus-visible {
+  outline: none;
+  border-color: var(--accent-strong);
+}
+.mu3 .search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+.mu3 .suggest-listbox {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1.5px solid var(--accent-strong);
+  border-radius: 8px;
+  background: var(--card);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  z-index: 100;
+}
+.mu3 .suggest-row {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line-soft);
+  cursor: pointer;
+  opacity: 0;
+  animation: mu3-suggest-in 0.18s ease-out forwards;
+}
+@keyframes mu3-suggest-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.mu3 .suggest-row:last-child {
+  border-bottom: 0;
+}
+.mu3 .suggest-row:hover {
+  background: var(--card-hover);
+}
+.mu3 .suggest-row[aria-selected='true'] {
+  background: var(--accent-soft);
+}
+.mu3 .suggest-row .duo3 {
+  width: 44px;
+  height: 44px;
+  padding: 4px;
+  border-radius: 4px;
+}
+.mu3 .suggest-row .duo3-initials {
+  font-size: 16px;
+}
+.mu3 .suggest-row .nm {
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.mu3 .suggest-row .nm em {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  color: var(--text);
+  font-style: normal;
+  padding: 0 1px;
+  border-radius: 1px;
+}
+.mu3 .suggest-row .meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 3px;
+  letter-spacing: 0.04em;
+}
+.mu3 .suggest-empty {
+  padding: 14px 12px;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ═════════════════════ "More about" sheet ═══════════════════════════ */
+.mu3-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 60;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.mu3-sheet-backdrop.open {
+  opacity: 1;
+}
+.mu3-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 61;
+  width: 100%;
+  background: var(--paper);
+  color: var(--text);
+  border-radius: 14px 14px 0 0;
+  border-top: 1px solid var(--line);
+  padding: 8px 0 24px;
+  max-height: 78vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -20px 40px rgba(0, 0, 0, 0.35);
+  transform: translateY(100%);
+  transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.mu3-sheet.open {
+  transform: translateY(0);
+}
+.mu3-sheet .more-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--dim);
+  opacity: 0.5;
+  margin: 6px auto 12px;
+}
+.mu3-sheet .more-head {
+  padding: 0 18px 8px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+}
+.mu3-sheet .more-head .ttl {
+  font-family: var(--font-serif);
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+}
+.mu3-sheet .more-head .ttl em {
+  font-style: italic;
+  color: var(--accent-strong);
+}
+.mu3-sheet .more-head .close {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+.mu3-sheet .more-body {
+  padding: 14px 18px;
+  overflow-y: auto;
+}
+.mu3-sheet .more-body p {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text);
+  margin: 0 0 12px;
+  text-wrap: pretty;
+}
+.mu3-sheet .more-body p:first-of-type::first-letter {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 46px;
+  line-height: 0.85;
+  float: left;
+  padding: 6px 8px 0 0;
+  color: var(--text);
+}
+.mu3-sheet .more-body .attribution {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--dim);
+  letter-spacing: 0.08em;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+/* ═════════════════════ Waking / error state ═════════════════════════ */
+.mu3 .err {
+  padding: 80px 28px 40px;
+  text-align: center;
+}
+.mu3 .err-mark {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-strong);
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+}
+.mu3 .err h1 {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 26px;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin: 0 0 10px;
+  text-wrap: balance;
+}
+.mu3 .err h1 em {
+  font-style: italic;
+  color: var(--text-soft);
+}
+.mu3 .err p {
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 0 0 8px;
+  text-wrap: pretty;
+}
+.mu3 .err .meta {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--dim);
+  margin-top: 22px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.mu3 .err .actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 22px;
+}
+.mu3 .err .actions .btn {
+  flex: 1;
+  height: 44px;
+  border-radius: 6px;
+  border: 1px solid var(--accent-strong);
+  background: var(--accent-strong);
+  color: var(--accent-fg);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.mu3 .err .actions .btn.alt {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--line);
+}
+.mu3 .err .fallback {
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+  text-align: left;
+}
+.mu3 .err .fallback-h {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--dim);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.mu3 .err .fallback-list {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  color: var(--text-soft);
+  line-height: 1.7;
+  font-style: italic;
+}
+.mu3 .err .fallback-list a {
+  font-style: normal;
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+}
+.mu3 .err .fallback-list a:hover {
+  color: var(--accent-strong);
+}
+
+/* ═════════════════════ Desktop ══════════════════════════════════════ */
+.mu3 .desk-hdr {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: 1px solid var(--line);
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.mu3 .desk-brand {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.mu3 .desk-brand b {
+  color: var(--accent-strong);
+}
+.mu3 .desk-nav {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mu3 .desk-detail {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  min-height: 100%;
+}
+.mu3 .desk-graph {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle at 50% 40%,
+      color-mix(in srgb, var(--accent) 6%, transparent) 0%,
+      transparent 60%
+    ),
+    var(--bg-soft);
+  min-height: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+@media (min-width: 1024px) {
+  .mu3 .desk-detail {
+    grid-template-columns: 480px 1fr;
+  }
+  .mu3 .desk-rail {
+    border-right: 1px solid var(--line);
+    background: var(--bg);
+  }
+  .mu3 .home-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .mu3 .home-hero h1 {
+    font-size: 48px;
+  }
+}
+@media (min-width: 640px) {
+  .mu3 .home-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ═════════════════════ Reduced motion ═══════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  .mu3 .conn.pulse {
+    animation: none;
+    background: var(--pulse-bg);
+  }
+  .mu3 .suggest-row {
+    animation: none;
+    opacity: 1;
+  }
+  .mu3-sheet {
+    transition: none;
+  }
+  .mu3-sheet-backdrop {
+    transition: none;
+  }
+  /* Phase H — the duotone→colour reveal is INSTANT under reduced motion
+     (the colour change still happens on hover/focus, but never tweened —
+     CLAUDE.md "reduced-motion = snap", never an animation). */
+  .mu3 .duo3.has-photo .duo3-photo,
+  .mu3 .duo3.has-photo::before {
+    transition: none;
+  }
+}

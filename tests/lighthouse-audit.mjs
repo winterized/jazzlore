@@ -33,6 +33,16 @@ import lighthouse from 'lighthouse'
 const TARGETS = [
   { app: 'scales', filter: '@jazzlore/scales', port: 4173, path: '/scales/C' },
   { app: 'chords', filter: '@jazzlore/chords', port: 4174, path: '/chords/C' },
+  // Phase G: the musicians home is the public entry (the detail screen IS the
+  // product but the home page is the cold-load the budget targets). The SPA
+  // is fixture-fed (no /api on the preview), so this measures the real
+  // initial-bundle perf the ≤100 KB-gz budget protects.
+  {
+    app: 'musicians',
+    filter: '@jazzlore/musicians',
+    port: 4175,
+    path: '/musicians',
+  },
 ]
 
 const GATES = { performance: 90, accessibility: 95 } // perf is a single-run measurement and is noisy near the boundary (chords ~88–90); re-run 2–3× before treating a borderline failure as a real regression

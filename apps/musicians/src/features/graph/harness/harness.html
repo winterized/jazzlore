@@ -1,0 +1,27 @@
+<!doctype html>
+<!--
+  Throwaway visual-baseline harness for GraphView (Phase E).
+
+  Renders ONLY <GraphView> in isolation with the seed-pinned Miles-like
+  fixture so a Playwright-MCP screenshot can be captured for the SEEDED
+  reference (landmine 6: NOT the repo's MD5 gate — physics is only stable
+  *because* the layout is seeded off hash(focusId); the baseline is
+  seed-pinned + tolerance-compared, never byte-equal).
+
+  Not shipped, not routed (App.tsx / pages are Phase D's; out of scope here).
+  Theme is read from ?theme=dark|light and set on <html data-theme>.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GraphView baseline harness</title>
+  </head>
+  <body style="margin: 0">
+    <div
+      id="root"
+      style="width: 1280px; height: 760px; margin: 0 auto"
+    ></div>
+    <script type="module" src="./harness.tsx"></script>
+  </body>
+</html>

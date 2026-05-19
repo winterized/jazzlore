@@ -3,6 +3,8 @@
   "references": [
     { "path": "./apps/scales/tsconfig.app.json" },
     { "path": "./apps/chords/tsconfig.app.json" },
+    { "path": "./apps/musicians/tsconfig.app.json" },
+    { "path": "./apps/musicians/tsconfig.worker.json" },
     { "path": "./packages/music-core" },
     { "path": "./packages/ui" },
     { "path": "./tsconfig.node.json" }

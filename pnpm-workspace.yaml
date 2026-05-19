@@ -3,3 +3,12 @@ packages:
   - 'packages/*'
 allowBuilds:
   esbuild: true
+  # wrangler's Cloudflare runtime (musicians unified Worker dev/deploy). Its
+  # postinstall resolves the platform workerd binary; without this pnpm's
+  # deps-status precheck errors and `pnpm -F @jazzlore/musicians dev:worker`
+  # is friction-y. Legitimate, justified runtime dep — not slop.
+  workerd: true
+  # wrangler transitive image-optimization dep — NOT exercised by the
+  # musicians app's dev/deploy/build. Declined deliberately to keep install
+  # lean (explicit decision, not a dangling pnpm stub).
+  sharp: false

@@ -1,0 +1,30 @@
+// Unified Cloudflare Worker for the musicians app (locked Phase A runtime
+// decision — see apps/musicians/CLAUDE.md). Unlike its siblings
+// wrangler.jsonc / wrangler.chords.jsonc (assets-ONLY: scales + chords are
+// static SPAs deployed to Workers Static Assets), this app is the first with
+// a backend, so it carries BOTH a Worker `main` entry (the `/api/*` BFF +
+// HTMLRewriter OG injection) AND an `assets` binding for the SPA.
+//
+// Routing: no `run_worker_first` — Cloudflare serves a request directly from
+// `assets` only when it matches a built file; everything else (the `/api/*`
+// endpoints, `/sitemap.xml`, and `/musicians/:id` document navigations needing
+// per-request OG) has no matching file and so reaches the Worker's `fetch`,
+// which then either handles it or hands off to `env.ASSETS` (with
+// `not_found_handling: "single-page-application"` serving index.html 200 for
+// React Router). This is exactly the contract worker/index.ts is tested
+// against (worker/index.test.ts). `compatibility_date` matches the siblings.
+//
+// Secrets (NEO4J_*) are NEVER here — Cloudflare project env + local `.dev.vars`
+// only (landmine 12). Deploy is USER-GATED (landmine 14); the out-of-repo
+// dashboard steps are in apps/musicians/docs/deploy-checklist.md.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "jazzlore-musicians",
+  "compatibility_date": "2026-05-12",
+  "main": "./apps/musicians/worker/index.ts",
+  "assets": {
+    "directory": "./apps/musicians/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  }
+}

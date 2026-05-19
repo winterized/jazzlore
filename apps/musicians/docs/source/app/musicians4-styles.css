@@ -1,0 +1,309 @@
+/* Jazzlore Musicians · Pass 4 additions.
+ * Extends pass-3 mu3 styles with: density-tier rail, always-on mosaic
+ * initials + missing-photo fallback, magazine-style image attribution
+ * captions, deterministic radial-graph polish, error state.
+ */
+
+/* ─────────────────────── Mosaic v4 ─────────────────────────────────── */
+/* Always-on subdued corner initials. When tile has no photo (photo:false),
+ * we drop the duotone gradient to a flat stone surface and lift the
+ * initials to a large centered identifier. */
+
+.mu3 .mtile .mtile-init {
+  position: absolute;
+  top: 4px; left: 5px;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(255,255,255,0.78);
+  text-shadow: 0 1px 0 rgba(0,0,0,0.45);
+  z-index: 3;
+  pointer-events: none;
+}
+/* Larger initials on hero / multi-cell tiles */
+.mu3 .mtile.hero .mtile-init,
+.mu3 .mtile.s3 .mtile-init,
+.mu3 .mtile.s2.h2 .mtile-init { font-size: 11px; top: 6px; left: 7px; }
+
+/* Missing-photo fallback: muted background + centered initials become the
+ * primary identifier. Same component, graceful degradation. */
+.mu3 .mtile.no-photo .duo3 {
+  background: color-mix(in srgb, var(--card) 60%, transparent);
+}
+.mu3 .mtile.no-photo .duo3::before,
+.mu3 .mtile.no-photo .duo3::after { opacity: 0.18; }
+.mu3 .mtile.no-photo .mtile-init {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  top: 0; left: 0;
+  font-family: "Geist", sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+  color: var(--text-soft);
+  text-shadow: none;
+}
+.mu3 .mtile.no-photo.hero .mtile-init,
+.mu3 .mtile.no-photo.s2.h2 .mtile-init { font-size: 28px; }
+.mu3 .mtile.no-photo.s3 .mtile-init { font-size: 22px; }
+
+/* When ALL data is sparse (Antoine), the mosaic shrinks gracefully — at
+ * most 4 tiles, no hero. We still preserve the "size = count" idea, but
+ * the smallest mosaic = a single hero tile centred. */
+.mu3 .mosaic-sparse {
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: 64px;
+}
+
+/* ─────────────────────── Density-tier rail ──────────────────────────── */
+/* After the 16 fat headliners, the long tail is rendered as compact rows:
+ *   smaller portrait (32 px) · single line · no inline Spotify/Apple.
+ * Visual rhythm signals "you've left the headliners — this is discovery." */
+
+.mu3 .tier-divider {
+  position: relative;
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin: 22px 14px 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+.mu3 .tier-divider .lab {
+  font-family: "Newsreader", serif;
+  font-style: italic;
+  font-size: 15px;
+  color: var(--text);
+  letter-spacing: -0.005em;
+}
+.mu3 .tier-divider .lab b {
+  font-style: normal; font-family: "Geist", sans-serif;
+  font-weight: 600; color: var(--text);
+}
+.mu3 .tier-divider .ct {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 10px; color: var(--muted);
+  letter-spacing: 0.08em;
+}
+.mu3 .tier-blurb {
+  padding: 0 14px 6px;
+  font-family: "Newsreader", serif;
+  font-style: italic;
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.mu3 .dense-list {
+  padding: 0 14px;
+}
+.mu3 .dense-row {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line-soft);
+  cursor: pointer;
+}
+.mu3 .dense-row:last-child { border-bottom: 0; }
+.mu3 .dense-row:hover { background: var(--card-hover); margin: 0 -14px; padding-left: 14px; padding-right: 14px; }
+.mu3 .dense-row .duo3 {
+  width: 32px; height: 32px; padding: 3px; border-radius: 3px;
+  position: relative;
+}
+.mu3 .dense-row .duo3 .ini {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: "Geist Mono", monospace;
+  font-size: 10px; font-weight: 600;
+  color: rgba(255,255,255,0.86);
+  text-shadow: 0 1px 0 rgba(0,0,0,0.4);
+}
+.mu3 .dense-row.no-photo .duo3 {
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+.mu3 .dense-row.no-photo .duo3::before,
+.mu3 .dense-row.no-photo .duo3::after { opacity: 0.15; }
+.mu3 .dense-row.no-photo .duo3 .ini {
+  color: var(--text-soft); text-shadow: none;
+}
+.mu3 .dense-row .dn {
+  font-size: 14px; font-weight: 500;
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+}
+.mu3 .dense-row .dm {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 10px; color: var(--muted);
+  margin-top: 2px;
+  letter-spacing: 0.04em;
+}
+.mu3 .dense-row .dy {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 10.5px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 2px 5px; border-radius: 3px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* ─────────────────────── Image attribution caption ─────────────────── */
+.mu3 .attr {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  color: var(--dim);
+  padding: 6px 0 0;
+  line-height: 1.55;
+}
+.mu3 .attr-line1 { color: var(--muted); }
+.mu3 .attr-line2 { color: var(--dim); }
+.mu3 .attr-missing {
+  font-family: "Newsreader", serif;
+  font-style: italic;
+  font-size: 11px; color: var(--dim);
+  margin-top: 4px;
+}
+
+/* Magazine-style figure used in the hero photo block + album covers */
+.mu3 figure.fig {
+  margin: 0; padding: 0;
+}
+.mu3 figure.fig .duo3 { width: 100%; }
+.mu3 figure.fig figcaption {
+  display: block;
+  margin-top: 6px;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 9.5px; color: var(--dim);
+  letter-spacing: 0.04em;
+  line-height: 1.55;
+}
+.mu3 figure.fig figcaption b {
+  color: var(--muted); font-weight: 500;
+}
+
+/* For hero figures on the detail page — display caption inline below the
+ * hero photo, NOT in a separate footer. */
+.mu3 .ident-photo {
+  margin: 0 14px 14px;
+}
+.mu3 .ident-photo .duo3 {
+  width: 100%; aspect-ratio: 5/4; border-radius: 6px;
+  padding: 16px;
+}
+.mu3 .ident-photo figcaption {
+  display: flex; flex-direction: column;
+  margin-top: 6px;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+}
+.mu3 .ident-photo figcaption .a1 { color: var(--muted); }
+.mu3 .ident-photo figcaption .a2 { color: var(--dim); }
+
+/* Album figures inside records strip */
+.mu3 .rec-tile figcaption {
+  display: block;
+  margin-top: 4px;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 8.5px;
+  color: var(--dim);
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+}
+
+/* ─────────────────────── Radial graph (deterministic) ──────────────── */
+.mu3 .desk-graph-svg .ring {
+  fill: none;
+  stroke: var(--line);
+  stroke-dasharray: 2 4;
+  opacity: 0.4;
+}
+.mu3 .desk-graph-svg .ring-label {
+  font-family: "Geist Mono", monospace;
+  font-size: 8.5px;
+  fill: var(--dim);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ─────────────────────── Error state ───────────────────────────────── */
+.mu3 .err {
+  padding: 80px 28px 40px;
+  text-align: center;
+}
+.mu3 .err-mark {
+  width: 56px; height: 56px;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent);
+  font-family: "Geist Mono", monospace;
+  font-size: 22px; font-weight: 700;
+}
+.mu3 .err h1 {
+  font-family: "Newsreader", serif;
+  font-weight: 500;
+  font-size: 26px; line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin: 0 0 10px;
+  text-wrap: balance;
+}
+.mu3 .err h1 em { font-style: italic; color: var(--text-soft); }
+.mu3 .err p {
+  font-size: 14.5px; line-height: 1.5;
+  color: var(--muted);
+  margin: 0 0 8px;
+  text-wrap: pretty;
+}
+.mu3 .err .meta {
+  font-family: "Geist Mono", monospace;
+  font-size: 9.5px;
+  color: var(--dim);
+  margin-top: 22px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.mu3 .err .actions {
+  display: flex; gap: 8px;
+  margin-top: 22px;
+}
+.mu3 .err .actions .btn {
+  flex: 1; height: 38px;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: var(--accent); color: var(--accent-fg);
+  font-size: 12.5px; font-weight: 600;
+}
+.mu3 .err .actions .btn.alt {
+  background: transparent; color: var(--text);
+  border-color: var(--line);
+}
+.mu3 .err .fallback {
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+  text-align: left;
+}
+.mu3 .err .fallback-h {
+  font-family: "Geist Mono", monospace;
+  font-size: 10px;
+  color: var(--dim);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.mu3 .err .fallback-list {
+  font-family: "Newsreader", serif;
+  font-size: 14px;
+  color: var(--text-soft);
+  line-height: 1.7;
+  font-style: italic;
+}
+.mu3 .err .fallback-list b {
+  font-style: normal; color: var(--text); font-weight: 600;
+}
