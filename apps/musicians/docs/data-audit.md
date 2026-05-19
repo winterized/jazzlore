@@ -339,3 +339,27 @@ reconciliation is required; the frozen contract holds. The only *behavioural*
 feedback (not a code change in Phase 0) is the design emphasis in §3/§4: the
 sparse / `photo:false` state is the **modal** path for high-degree musicians,
 not an edge case — Phases D/E should treat it as such.
+
+---
+
+## 7. Post-enrichment update (2026-05-19) — appended, audit above is a snapshot
+
+The coverage numbers in §1–§5 are a **pre-enrichment snapshot** and are kept
+verbatim as the historical baseline. Since then the following landed upstream
+(per the authoritative DB-populator hand-off):
+
+- **P0 duplicate-merge** — ~698 musicbrainz↔wikidata twin pairs merged; the
+  `wikidata:` node is the surviving canonical id (ids stable from here). Every
+  surviving node carries `also_known_as_ids` so legacy `musicbrainz:` URLs
+  still resolve (`MATCH (m:Musician) WHERE $oldId IN m.also_known_as_ids
+  RETURN m`). Authoritative old→new map: `data/id_aliases.jsonl` (761 lines).
+- **12 curated + top-50 sidemen enriched** this pass (bio / picture /
+  instruments now hydrate).
+- **Nationality normalization** — bare codes like `"US"` → `"United States"`.
+
+The curated picks are re-pinned to the canonical `wikidata:` ids (see
+`src/data/curated.ts`); §5's "substitution / 0-12" reconciliation is
+superseded by that re-pin. Full top-2,000 enrichment is a later populator
+run, so non-curated high-degree nodes may still render sparse (handled by
+design, per §3/§4). No schema/query change resulted — the §6 frozen contract
+still holds 1:1.

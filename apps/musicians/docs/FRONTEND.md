@@ -15,6 +15,18 @@ it lives, and what to ignore.
 
 ## What's in the graph
 
+> **Correction (2026-05-19, populator-reported).** An earlier read of this
+> handoff inferred that the 10 user-facing fields (`bio_summary`,
+> `picture_url`, `picture_license`, `picture_attribution`, `birth_year`,
+> `death_year`, `primary_instruments`, `genres`, `nationality`,
+> `wikipedia_url`) were "dropped at export" / "not yet exposed in Neo4j".
+> **That is wrong.** All 10 were *always* exported — the schema table below
+> has always been accurate. Field coverage rose because upstream nodes are
+> now **enriched** (the P0 duplicate-merge + 12-curated + top-50 + nationality
+> normalization landed), **not** from any export/schema change. The query
+> contract is unchanged: **no query changes are needed.** The schema
+> reference below stands as-is.
+
 ### Nodes
 
 **`:Musician`** — one per musician (canonical jazz figures plus sidemen

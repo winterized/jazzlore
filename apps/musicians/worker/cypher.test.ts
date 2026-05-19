@@ -93,8 +93,8 @@ describe('reshapeMusicianRows → faithful RawMusician[] (no dedup)', () => {
   it('curated hydration returns only the resolvable picks, in row order', () => {
     const rows = reshapeMusicianRows(toResult(CURATED_PARTIAL))
     expect(rows.map((m) => m.id)).toEqual([
-      'musicbrainz:561d854a-6a28-4aa7-8c99-323e6ce46c2a',
-      'musicbrainz:b625448e-bf4a-41c3-a421-72ad46cdb831',
+      'wikidata:Q93341',
+      'wikidata:Q7346',
     ])
   })
 })

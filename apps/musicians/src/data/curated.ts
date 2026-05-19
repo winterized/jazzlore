@@ -5,35 +5,33 @@
 // name / photo / subtitle from Neo4j — Neo4j stays the single source of truth
 // for facts; this file owns only the *selection* and the *editorial voice*.
 //
-// ✅ RESTORED ICONIC CANON (2026-05-18, live Aura HTTP lookup — see
-// docs/data-audit.md §5 + docs/db-feedback.md). USER DECISION: no substitutes —
-// the originally-intended 12 iconic figures (Miles Davis, John Coltrane, Bill
-// Evans, Thelonious Monk, Bobby Timmons, Charles Mingus, Art Blakey, Herbie
-// Hancock, Wayne Shorter, Cannonball Adderley, Sonny Rollins, Wes Montgomery)
-// with their original hand-written hooks (kept VERBATIM — each hook was
-// authored for that specific musician). The original placeholder
-// `wikidata:Q…` ids resolved 0/12; each `id` below is now the REAL Neo4j node
-// `id` found via a read-only case-insensitive name lookup against live Aura.
-// Every one resolves (smoke: 12/12) — but ALL 12 are currently sparse
-// `musicbrainz:` stubs (no bio, no picture, no instruments). When a name had
-// multiple nodes the highest-collaboration node was chosen so the card at
-// least has a populated graph (recorded in docs/data-audit.md §5).
+// ✅ CANONICAL IDS RE-PINNED (2026-05-19, post P0 duplicate-merge, per the
+// authoritative DB-populator hand-off). The canonical id scheme is now
+// `wikidata:Q…` post-enrichment: `musicbrainz:<uuid>` was only ever the
+// pre-enrichment placeholder, the P0 merge (698 pairs) made the `wikidata:`
+// node the survivor of each musicbrainz↔wikidata twin, and **ids are stable
+// from here**. Each `id` below is the canonical survivor; the hand-written
+// hooks are kept VERBATIM (each was authored for that specific musician).
 //
-// ⚠️ BY DESIGN FOR v1: these cards render SPARSE — name + hook only, no photo
-// and no bio — because the canonical giants are not yet enriched upstream.
-// This is an ACCEPTED PRODUCT DECISION, not a frontend bug: the deficiency is
-// owned by the Neo4j DB-populator. The full enrichment brief (priority,
-// required fields, the duplicate-merge keystone) is in
-// `apps/musicians/docs/db-feedback.md`. Once the populator enriches these 12
-// (and merges the musicbrainz↔wikidata twin pairs), the same ids hydrate with
-// real photos + bios with NO frontend change.
+// Old→new mapping: `data/id_aliases.jsonl` in the populator repo is the
+// authoritative old→new map (761 `{old_id,new_id,name}` lines), and every
+// surviving node carries an `also_known_as_ids` list so legacy
+// `musicbrainz:` URLs still resolve:
+//   MATCH (m:Musician) WHERE $oldId IN m.also_known_as_ids RETURN m
+//
+// Enrichment status: the 12 curated picks + the top-50 sidemen are enriched
+// this pass (real name / photo / bio / instruments hydrate with NO frontend
+// change). The full top-2,000 enrichment is a later populator run, so some
+// NON-curated detail pages may still render sparse — that sparse state is
+// handled by design (Antoine-style absent-field rendering), not a bug.
 //
 // This list is pure data (no React, no fetch) so it is importable from both
 // the worker and the frontend.
 
 export interface CuratedPick {
-  /** Neo4j node `id`. Currently a sparse `musicbrainz:<uuid>` stub for all 12
-   * (upstream enrichment pending — see docs/db-feedback.md). */
+  /** Canonical Neo4j node `id` — `wikidata:Q…` post-enrichment (the P0 merge
+   * made the `wikidata:` node the survivor; ids stable from here). Legacy
+   * `musicbrainz:` ids still resolve via each node's `also_known_as_ids`. */
   id: string
   /** Hand-written editorial hook line. Kept short — one breath. */
   hook: string
@@ -41,63 +39,69 @@ export interface CuratedPick {
 
 export const CURATED: readonly CuratedPick[] = [
   {
-    // Miles Davis — sparse stub (pending upstream enrichment)
-    id: 'musicbrainz:561d854a-6a28-4aa7-8c99-323e6ce46c2a',
+    // Miles Davis (wikidata:Q93341) — canonical survivor, enriched this pass
+    id: 'wikidata:Q93341',
     hook: 'Reinvented jazz five times and never looked back.',
   },
   {
-    // John Coltrane — sparse stub (pending upstream enrichment)
-    id: 'musicbrainz:b625448e-bf4a-41c3-a421-72ad46cdb831',
+    // John Coltrane (wikidata:Q7346) — canonical survivor, enriched this pass
+    id: 'wikidata:Q7346',
     hook: 'Chased one sound so hard it became a kind of prayer.',
   },
   {
-    // Bill Evans — sparse stub; highest-collab node of 3 same-name nodes
-    id: 'musicbrainz:8c7aa18e-9392-47c7-9d56-97d34d746a8b',
+    // Bill Evans the PIANIST (wikidata:Q208205, 1929–1980) — the iconic trio
+    // pianist. The previously-pinned musicbrainz:8c7aa18e… was Bill Evans the
+    // SAXOPHONIST (wikidata:Q862106), a different person. Q862106 still carries
+    // ~112 mis-attributed collaboration edges (an upstream MusicBrainz issue,
+    // tracked as populator repo issue #2, not yet split) — that over-connection
+    // is a known upstream data artifact, not ours to fix; Q208205 is the
+    // correct node for this curated card.
+    id: 'wikidata:Q208205',
     hook: 'The most lyrical touch the piano trio ever knew.',
   },
   {
-    // Thelonious Monk — sparse stub (pending upstream enrichment)
-    id: 'musicbrainz:8e8c7417-c905-46b1-b42a-5260b4274ed4',
+    // Thelonious Monk (wikidata:Q109612) — canonical survivor, enriched this pass
+    id: 'wikidata:Q109612',
     hook: 'Wrote the angles everyone else has been rounding off since.',
   },
   {
-    // Bobby Timmons — sparse stub (pending upstream enrichment)
-    id: 'musicbrainz:ef05197e-aacb-4dbf-9cc4-2a9abee82f03',
+    // Bobby Timmons (wikidata:Q132341) — canonical survivor, enriched this pass
+    id: 'wikidata:Q132341',
     hook: 'Found the church in hard bop and made it swing.',
   },
   {
-    // Charles Mingus — sparse stub (pending upstream enrichment)
-    id: 'musicbrainz:f3b8e107-abe8-4743-b6a3-4a4ee995e71f',
+    // Charles Mingus (wikidata:Q107432) — canonical survivor, enriched this pass
+    id: 'wikidata:Q107432',
     hook: 'Composed like a novelist and led like a storm.',
   },
   {
-    // Art Blakey — sparse stub (pending upstream enrichment)
-    id: 'musicbrainz:601e7466-eaf5-4a91-9909-ffd770b7e04a',
+    // Art Blakey (wikidata:Q311715) — canonical survivor, enriched this pass
+    id: 'wikidata:Q311715',
     hook: 'The drummer whose press roll launched a thousand careers.',
   },
   {
-    // Herbie Hancock — sparse stub (pending upstream enrichment)
-    id: 'musicbrainz:27613b78-1b9d-4ec3-9db5-fa0743465fdd',
+    // Herbie Hancock (wikidata:Q105875) — canonical survivor, enriched this pass
+    id: 'wikidata:Q105875',
     hook: 'Bridged acoustic fire and electric futures without a seam.',
   },
   {
-    // Wayne Shorter — sparse stub (pending upstream enrichment)
-    id: 'musicbrainz:2379937f-6e0d-46a2-b8ff-633fafd72002',
+    // Wayne Shorter (wikidata:Q317161) — canonical survivor, enriched this pass
+    id: 'wikidata:Q317161',
     hook: 'The composer the composers listened to.',
   },
   {
-    // Cannonball Adderley — sparse stub (pending upstream enrichment)
-    id: 'musicbrainz:a4c73ebe-b2c7-4f13-b99d-2fe1f9f27da8',
+    // Cannonball Adderley (wikidata:Q110477) — canonical survivor, enriched this pass
+    id: 'wikidata:Q110477',
     hook: 'Made the alto sound like a man laughing and weeping at once.',
   },
   {
-    // Sonny Rollins — sparse stub (pending upstream enrichment)
-    id: 'musicbrainz:3b47247e-5b57-49b6-a0ed-bad80243802a',
+    // Sonny Rollins (wikidata:Q299208) — canonical survivor, enriched this pass
+    id: 'wikidata:Q299208',
     hook: 'Took the tenor to the bridge and came back changed.',
   },
   {
-    // Wes Montgomery — sparse stub (pending upstream enrichment)
-    id: 'musicbrainz:663f8232-8c46-4851-803f-a91d31593b14',
+    // Wes Montgomery (wikidata:Q298601) — canonical survivor, enriched this pass
+    id: 'wikidata:Q298601',
     hook: 'Played the guitar with his thumb and outran everyone anyway.',
   },
 ] as const

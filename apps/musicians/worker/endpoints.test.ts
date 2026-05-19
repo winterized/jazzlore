@@ -50,16 +50,14 @@ describe('handleCurated', () => {
     const body = (await res.json()) as {
       curated: { id: string; name: string; subtitle?: string }[]
     }
-    // Only the 2 resolvable picks survive (faithful — the other 10 restored
-    // iconic picks are absent from this stub and dropped). Restored real
-    // node ids per docs/data-audit.md §5 + docs/db-feedback.md.
+    // Only the 2 resolvable picks survive (faithful — the other 10 curated
+    // picks are absent from this stub and dropped). Canonical `wikidata:`
+    // survivor ids per src/data/curated.ts (post P0 duplicate-merge).
     expect(body.curated.map((c) => c.id)).toEqual([
-      'musicbrainz:561d854a-6a28-4aa7-8c99-323e6ce46c2a',
-      'musicbrainz:b625448e-bf4a-41c3-a421-72ad46cdb831',
+      'wikidata:Q93341',
+      'wikidata:Q7346',
     ])
-    const coltrane = body.curated.find(
-      (c) => c.id === 'musicbrainz:b625448e-bf4a-41c3-a421-72ad46cdb831',
-    )!
+    const coltrane = body.curated.find((c) => c.id === 'wikidata:Q7346')!
     expect(coltrane.name).toBe('John Coltrane')
     expect(coltrane.subtitle).toBe('Avant-garde · tenor saxophone') // era · instrument
   })
