@@ -77,6 +77,13 @@ export function peersByEraCypher(): string {
      MATCH (p:Musician)
      WHERE p.id <> m.id
        AND any(g IN coalesce(p.genres, []) WHERE g IN genres)
+       // coalesce defaults: missing years_active_* → peer is EXCLUDED.
+       // "Still active" (end = NULL) gets 0 >= yas - 10, which is false for
+       // any focus with yas > 10. This is intentional: the false-positive risk
+       // of silently including peers with no recorded active window outweighs
+       // the false-negative of excluding sparse records. To relax to half-open
+       // intervals (e.g. still-active peers included), swap the defaults to
+       // coalesce(p.years_active_start, yas - 10) / coalesce(yae, 9999).
        AND coalesce(p.years_active_start, 9999) <= coalesce(yae, 9999) + 10
        AND coalesce(p.years_active_end,    0)    >= coalesce(yas, 0)    - 10
        AND NOT EXISTS {

@@ -176,6 +176,19 @@ describe('cold-Aura waking path', () => {
     expect(await res.json()).toEqual({ status: 'waking', retryAfter: 10 })
   })
 
+  it('propagates AuraWakingError from the peers query (cold mid-request)', async () => {
+    // Detail query succeeds, but the peers query (second call) hits a cold
+    // Aura. The AuraWakingError must re-throw past the best-effort catch so
+    // `guard` surfaces the frozen 503 — a partial page with sameEra:[] while
+    // Aura is waking is worse than the calm countdown screen.
+    const spy = vi.spyOn(auraMod, 'auraQuery')
+    spy.mockResolvedValueOnce(DETAIL_MILES.data as auraMod.AuraResult)
+    spy.mockRejectedValueOnce(new auraMod.AuraWakingError())
+    const res = await handleDetail(ENV, 'wikidata:Q93341')
+    expect(res.status).toBe(503)
+    expect(res.headers.get('Retry-After')).toBe('10')
+  })
+
   it('returns a misconfig 503 when Aura creds are absent', async () => {
     const res = await handleHealth({ ASSETS: ENV.ASSETS } as Env)
     expect(res.status).toBe(503)
