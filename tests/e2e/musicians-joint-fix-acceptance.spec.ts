@@ -163,32 +163,57 @@ function sumGridTrackPx(gridTemplateColumns: string): number {
  * Run against EVERY captured snapshot so the integration check at
  * post-merge prod has end-to-end coverage. Failures here are the joint
  * fix's reason to exist — they MUST pass once Stream A's CSS lands on
- * prod. Pre-fix on the current broken prod, the m390-Miles + d* aside
- * predicates fail (by design); that's the "before" baseline that proves
- * we measure the bug. Each predicate carries the diagnostic citation so
- * a future regression reads as "diagnostics/CRIT-{1,2} re-broken at
- * <file>:<line>", not as a mystery test failure.
+ * prod. Each predicate carries the diagnostic citation so a future
+ * regression reads as "diagnostics/CRIT-{1,2} re-broken at <file>:<line>".
+ *
+ * EXPECTED SOFT-ASSERTION FAILURES against pre-Stream-A prod (current
+ * broken state — these flip to PASS once Stream A's CSS lands on main):
+ *   - A1.1: Miles only (m390 track blowout, ~14 624 px)
+ *   - A1.3: Miles only (portrait width symptom, ~14 596 px)
+ *   - A1.4: Miles m390 only (page scroll height tens of thousands px)
+ *   - A2.1: Miles desktop viewports (aside height ~2 926 px)
+ *   - A2.2: Miles desktop viewports (position: relative, not sticky)
+ * Antoine predicates were already passing on broken prod (3 records, no
+ * blowout) and serve as regression guards.
  */
 function assertStreamAPredicates(
   snap: Awaited<ReturnType<typeof readLayoutSnapshot>>,
   label: string,
 ): void {
-  // A1.1 — grid track ≤ container × 1.1 (pre-fix Miles m390: 14 624 px;
-  // post-fix: ~container width). The track inflation IS the bug. See
-  // diagnostics/CRIT-1.
-  if (snap.detail) {
+  // A1.1 — grid track sum ≤ min(container, viewport) × 1.1.
+  // Pre-fix Miles m390: track 14 624 px, container 390 px — ratio ≈ 37×.
+  // Post-fix: track ≈ container ≈ viewport width.
+  //
+  // Guard: only fire when the grid is actually laid out (display:grid AND
+  // at least one resolved px track). When gridTemplateColumns is "none"
+  // (unlaid-out grid or display:none ancestor) sumGridTrackPx returns 0
+  // and 0 ≤ anything would be a trivially-true silent pass — the wrong
+  // signal. See diagnostics/CRIT-1.
+  //
+  // Bound by min(container, viewport): if a future regression also blows
+  // the container, containerPx and trackPx move in lockstep and the
+  // container-only ratio stays ≤ 1 — silent pass. Anchoring to the
+  // viewport width (which never blows out) keeps the predicate honest.
+  if (
+    snap.detail &&
+    snap.detail.display === 'grid' &&
+    /\d+px/.test(snap.detail.gridTemplateColumns)
+  ) {
     const trackPx = sumGridTrackPx(snap.detail.gridTemplateColumns)
     const containerPx = snap.detail.rect ? snap.detail.rect.width : snap.viewport.w
+    const bound = Math.min(containerPx, snap.viewport.w) * 1.1
     expect.soft(
       trackPx,
-      `${label} · A1.1 grid track sum=${trackPx}px must be ≤ container ${containerPx}px × 1.1 (cols=${snap.detail.gridTemplateColumns})`,
-    ).toBeLessThanOrEqual(containerPx * 1.1)
+      `${label} · A1.1 grid track sum=${trackPx}px must be ≤ min(container ${containerPx}px, viewport ${snap.viewport.w}px) × 1.1 = ${bound.toFixed(0)}px (cols=${snap.detail.gridTemplateColumns})`,
+    ).toBeLessThanOrEqual(bound)
   }
 
-  // A1.2 — records strip itself still scrolls (it should NOT be visually
-  // collapsed by `min-width: 0`; the user-facing horizontal scroll is the
-  // designed overflow). Only assert when the strip exists (sparse Antoine
-  // ships only a few records — strip may or may not exceed clientWidth).
+  // A1.2 — records strip itself still scrolls after containment fix.
+  // `min-width: 0` should NOT collapse the strip's scroll — `overflow-x:
+  // auto` is the user-facing overflow. Threshold >4 children: Antoine
+  // ships 3 records (childCount 3 → strip may not overflow at any
+  // viewport), so we only assert the scroll when there are clearly enough
+  // tiles to overflow (≥5 = definitely beyond the strip's client width).
   if (snap.recStrip && snap.recStrip.childCount > 4) {
     expect.soft(
       snap.recStrip.scrollWidth,
@@ -294,7 +319,12 @@ test.describe('joint-fix acceptance — Phase 0 scaffolding', () => {
             // A2.4 — sticky behavior: scroll the page 800 px and verify
             // the aside stays pinned (`top ≤ 1`). Without the sticky
             // binding, scrolling drags the panel off the viewport.
+            // `waitForFunction` after scrollTo ensures the compositor has
+            // committed the scroll before we read the bounding rect —
+            // avoids a race where scrollY hasn't advanced yet under
+            // headless Chromium.
             await page.evaluate(() => window.scrollTo(0, 800))
+            await page.waitForFunction(() => window.scrollY >= 799)
             const stickyTop = await page.evaluate(() => {
               const a = document.querySelector('aside.desk-graph')
               return a ? a.getBoundingClientRect().top : null

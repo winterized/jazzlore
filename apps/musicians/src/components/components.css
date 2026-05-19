@@ -1465,11 +1465,15 @@
      - `100vh` baseline, `100dvh` overrides it where supported (iOS
        Safari's collapsing URL bar correctness). The dual-declaration
        pattern degrades gracefully on UAs without dvh.
+     - `min-height: 0` overrides the base rule's `min-height: 480px` so
+       the explicit `height: 100dvh` always wins even on hypothetical
+       sub-480 px desktop viewports.
      See diagnostics/CRIT-2. */
   .mu3 .desk-graph {
     position: sticky;
     top: 0;
     align-self: start;
+    min-height: 0;
     height: 100vh;
     height: 100dvh;
   }
