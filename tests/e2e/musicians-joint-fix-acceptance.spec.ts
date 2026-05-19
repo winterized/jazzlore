@@ -251,22 +251,29 @@ function assertStreamAPredicates(
 }
 
 /**
- * Phase B3 — era strip is present on Miles (rich peers), absent on Antoine
- * (sparse). The strip is a `<section aria-label="From the same era">` that
- * `EraStrip.tsx` self-hides on an empty `items` array — so the absence
- * assertion is structurally meaningful (NOT a CSS suppression).
+ * Phase B3 — era strip is present on Miles (rich peers).
  *
  * This test runs LIVE-ONLY (PREVIEW_BASE) and is the post-merge integration
- * gate for Group B's data wiring. Before Group B merges to main + deploys,
- * the prod BFF doesn't supply `sameEra`, so the strip is absent for both
- * musicians — that's the documented "before" state in
- * apps/musicians/docs/diagnostics/era-strip-missing.md. After merge + deploy,
- * Miles must show ≥ 1 tile; Antoine remains absent (sparse — 0 peers).
+ * gate for Group B's data wiring. Before Group B merged to main + deployed,
+ * the prod BFF didn't supply `sameEra`, so the strip was absent for everyone
+ * (the documented "before" state in apps/musicians/docs/diagnostics/era-
+ * strip-missing.md). After merge + deploy, Miles shows ≥ 1 tile. Verified
+ * live 2026-05-20: 12 peers including Freddie Hubbard, Sun Ra, Art Pepper.
  *
- * One viewport × one theme is enough for this assertion: presence/absence
- * is a DOM predicate, not a visual-baseline pixel match. The visual rail
- * composition (strip in slot 4) is already enforced by DetailView.tsx and
- * doesn't need a multi-viewport sweep here.
+ * Why no "Antoine absent" assertion live: the spec originally also asserted
+ * `[aria-label="From the same era"]` had count 0 on Antoine (sparse → self-
+ * hide). Live verification post-merge showed Antoine actually returns 12
+ * peers — but they're era-inappropriate (Benny Goodman, Lionel Hampton,
+ * Sinatra). This is because Antoine's `years_active_*` are NULL in the live
+ * DB, so the year-window filter is wide-open and any genre overlap qualifies.
+ * The strip therefore RENDERS for Antoine, which is the opposite of the
+ * "sparse self-hide" assumption. The plan anticipated this ("Antoine:
+ * depending on B1's live result — either outcome valid"). The EraStrip
+ * self-hide behavior is unit-tested at primitives.test.tsx:239 — that's
+ * the right place to assert it. The semantic data-quality concern
+ * (Antoine paired with big-band figures) is captured as a Group C item:
+ * deriveEra + peers-query NULL-handling. Tracking note in
+ * docs/plans/2026-05-19-joint-crit-fix.md.
  */
 test.describe('joint-fix acceptance — Phase B3 era strip', () => {
   test.skip(!ENABLED, 'PREVIEW_BASE not set — joint-fix acceptance suite is no-op')
@@ -286,21 +293,6 @@ test.describe('joint-fix acceptance — Phase B3 era strip', () => {
     await expect(strip).toBeVisible({ timeout: 15_000 })
     // At least one tile rendered — EraStrip emits one `.era-tile` per peer.
     await expect(strip.locator('.era-tile').first()).toBeVisible()
-  })
-
-  test('Antoine · "From the same era" section is absent (sparse → self-hide)', async ({
-    page,
-  }) => {
-    await page.goto(ANTOINE)
-    await expect(
-      page.getByRole('heading', { level: 1, name: /antoine herv/i }),
-    ).toBeVisible({ timeout: 15_000 })
-    // EraStrip returns null on items.length === 0 — the section MUST NOT
-    // be in the DOM (this is the meaningful "no peers" signal, not CSS
-    // suppression).
-    await expect(
-      page.locator('[aria-label="From the same era"]'),
-    ).toHaveCount(0)
   })
 })
 

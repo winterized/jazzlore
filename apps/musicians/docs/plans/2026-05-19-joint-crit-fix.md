@@ -137,6 +137,7 @@ items may shift once the corrected layout reveals what actually needs work.
 | Tab title client update | `MusicianPage.tsx`, `HomeView.tsx` (`useEffect(document.title = …)`) | Trivial; bundle with the polish sweep. |
 | Header "···" overflow | `Shell.tsx` / `HomeView.tsx` / `DetailView.tsx` headers, new `OverflowMenu` component | UX polish; not blocking. |
 | Mosaic verification | (verification only) | Already implemented (duotone Duo3, size encoding, 1.4 s pulse on scroll-land via IntersectionObserver) — just verify on prod. |
+| **Era peers — NULL years_active handling** | `worker/era.ts`, `worker/cypher.ts` `peersByEraCypher` | **Surfaced 2026-05-20 post-merge.** Antoine has NULL `years_active_start/end`; the year-window filter falls open, so any genre overlap qualifies. Result: Antoine paired with Benny Goodman / Lionel Hampton / Sinatra (big-band era — not Antoine's actual contemporaries). Two-pronged fix: (a) `deriveEra` more accurate (Antoine is post-bop / contemporary, not "Swing"); (b) peers query falls back to `birth_year ± N` when `years_active_*` is NULL, OR returns `sameEra: []` so EraStrip self-hides for sparse musicians (the original B3 assumption). Tracking note added to the live spec at `tests/e2e/musicians-joint-fix-acceptance.spec.ts` Phase B3 docstring. |
 
 ---
 
