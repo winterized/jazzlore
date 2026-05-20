@@ -1,8 +1,8 @@
-// Pure helpers for DetailIdentity's identity-meta-chain (Group C item 2).
-// Lives in its OWN module — co-locating with `DetailIdentity.tsx` would trip
-// `react-refresh/only-export-components` (the rule reserves component files
-// for components + their direct dependencies, not pure helpers callers may
-// want to import elsewhere).
+// Pure helpers for DetailIdentity's identity-meta-chain (Group C item 2) and
+// bio teaser (Group C item 3). Lives in its OWN module — co-locating with
+// `DetailIdentity.tsx` would trip `react-refresh/only-export-components`
+// (the rule reserves component files for components + their direct
+// dependencies, not pure helpers callers may want to import elsewhere).
 
 import type { MusicianDetail } from '../../lib/types'
 
@@ -34,4 +34,14 @@ export function metaLine(d: MusicianDetail): string {
     bits.push(end !== undefined ? `${start}–${end}` : `${start}–present`)
   }
   return bits.join(' · ')
+}
+
+/** Returns the FIRST sentence of a bio string — text up to and including the
+ * first `.`, `!` or `?`. If none found, returns the whole trimmed string.
+ * Used by Item 3 to render a one-line italic teaser on the detail page; the
+ * full bio still renders in the "More about" sheet (sheet is a separate
+ * context — deliberate non-dedup per the Group C plan). */
+export function firstSentence(s: string): string {
+  const match = s.match(/^[^.!?]+[.!?]/)
+  return match ? match[0].trim() : s.trim()
 }

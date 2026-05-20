@@ -9,7 +9,7 @@ import type { MusicianDetail } from '../../lib/types'
 import { spotifyMusicianUrl, appleMusicMusicianUrl } from '../../lib/links'
 import { AttribPhoto } from '../../components/Attrib'
 import { SpotifyIcon, AppleIcon } from '../../components/icons'
-import { metaLine } from './detailIdentityMeta'
+import { metaLine, firstSentence } from './detailIdentityMeta'
 
 export function DetailIdentity({
   d,
@@ -47,8 +47,8 @@ export function DetailIdentity({
 
       <section className="bio" aria-label="Biography">
         {d.bioSummary ? (
-          <p>
-            {d.bioSummary}
+          <p className="bio-teaser">
+            <em>{firstSentence(d.bioSummary)}</em>
             <a className="more" href="#about">
               More about {firstName} →
             </a>

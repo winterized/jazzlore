@@ -508,6 +508,50 @@ test.describe('joint-fix acceptance — Group C meta (item 2)', () => {
   })
 })
 
+/**
+ * Group C item 3 — bio teaser + sheet full-bio (PR `fix/musicians-c-meta`).
+ *
+ * The detail-page bio is now a single italic first-sentence teaser inside
+ * `.bio-teaser em`. The full bio still renders in the "More about" sheet
+ * (deliberate non-dedup — the sheet is a separate context, having the full
+ * bio with the teaser-sentence at top is fine per the Group C plan).
+ */
+test.describe('joint-fix acceptance — Group C bio (item 3)', () => {
+  test.skip(!ENABLED, 'PREVIEW_BASE not set — joint-fix acceptance suite is no-op')
+
+  test.use({ viewport: { width: 390, height: 844 } })
+
+  test('Miles bio teaser is one italic line; sheet shows the full bio', async ({
+    page,
+  }) => {
+    await page.goto(MILES)
+    await expect(
+      page.getByRole('heading', { level: 1, name: /miles davis/i }),
+    ).toBeVisible({ timeout: 15_000 })
+    const teaser = page.locator('.bio-teaser em').first()
+    await expect(teaser).toBeVisible()
+    const teaserText = (await teaser.textContent()) ?? ''
+    expect(teaserText.length).toBeGreaterThan(0)
+    // First sentence — bounded above so a regression that prints the whole
+    // multi-paragraph bio inline fails loudly.
+    expect(teaserText.length).toBeLessThan(250)
+    // Italic style — the `.mu3 .bio p` CSS already provides italic; the
+    // <em> inherits it. Reading computed style ensures the rendered effect.
+    const fontStyle = await teaser.evaluate(
+      (el) => getComputedStyle(el).fontStyle,
+    )
+    expect(fontStyle).toBe('italic')
+
+    // Open the "More about" sheet via the disclosure link.
+    await page.getByRole('link', { name: /more about miles/i }).click()
+    const dialog = page.getByRole('dialog', { name: /more about miles/i })
+    await expect(dialog).toBeVisible({ timeout: 15_000 })
+    const sheetText = (await dialog.textContent()) ?? ''
+    // Full bio is longer than the teaser — sheet shows the full body.
+    expect(sheetText.length).toBeGreaterThan(300)
+  })
+})
+
 test.describe('joint-fix acceptance — Phase 0 scaffolding', () => {
   test.skip(!ENABLED, 'PREVIEW_BASE not set — joint-fix acceptance suite is no-op')
 

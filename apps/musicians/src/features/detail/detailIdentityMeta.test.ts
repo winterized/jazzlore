@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from 'vitest'
 import type { MusicianDetail } from '../../lib/types'
-import { metaLine } from './detailIdentityMeta'
+import { metaLine, firstSentence } from './detailIdentityMeta'
 
 // Minimal `MusicianDetail` shaped just enough for `metaLine`. Anything the
 // helper does not touch can stay as empty arrays / undefined — keeping the
@@ -97,5 +97,29 @@ describe('metaLine (Group C item 2 — identity meta chain)', () => {
       birthYear: 1960,
     })
     expect(metaLine(d)).toBe('Piano · Post-bop · 1960–present')
+  })
+})
+
+describe('firstSentence (Group C item 3 — bio teaser splitter)', () => {
+  it('returns the first sentence of a multi-sentence bio', () => {
+    const bio =
+      'American trumpeter, bandleader and composer who was among the most influential figures in jazz. He recorded for over four decades.'
+    expect(firstSentence(bio)).toBe(
+      'American trumpeter, bandleader and composer who was among the most influential figures in jazz.',
+    )
+  })
+
+  it('returns the whole string when there is no terminal punctuation', () => {
+    const bio = 'A leading hard-bop voice with no period'
+    expect(firstSentence(bio)).toBe('A leading hard-bop voice with no period')
+  })
+
+  it('recognises ! and ? as sentence terminators', () => {
+    expect(firstSentence('Wow! That was a take. And another.')).toBe('Wow!')
+    expect(firstSentence('Really? Yes, really.')).toBe('Really?')
+  })
+
+  it('trims surrounding whitespace', () => {
+    expect(firstSentence('  Padded start. Tail.')).toBe('Padded start.')
   })
 })
