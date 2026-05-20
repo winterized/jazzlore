@@ -70,6 +70,13 @@ export function searchIndexCypher(): string {
 export function peersByEraCypher(): string {
   return assertReadOnly(
     `MATCH (m:Musician {id: $id})
+     // NULL gate: a focus musician with no recorded active window gives the
+     // year-filter nothing to anchor on (coalesce defaults would otherwise
+     // open the window to all eras). Return zero peers — EraStrip self-hides
+     // on []. Diagnosed 2026-05-20: Antoine (years_active_* both NULL) was
+     // paired with Benny Goodman / Sinatra under the open-window behavior.
+     WHERE m.years_active_start IS NOT NULL
+       AND m.years_active_end   IS NOT NULL
      WITH m,
           coalesce(m.genres, []) AS genres,
           m.years_active_start AS yas,

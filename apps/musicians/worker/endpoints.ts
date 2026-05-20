@@ -100,6 +100,13 @@ export function handleHealth(env: Env): Promise<Response> {
   })
 }
 
+/** Capitalize the first character of a non-empty string. Used for the curated
+ * subtitle's era half — Aura's `genres` come lowercased (`'cool jazz'`); the
+ * subtitle slot is a label and reads as one in Title Case. */
+function capitalizeFirst(s: string): string {
+  return s.length === 0 ? s : s[0]!.toUpperCase() + s.slice(1)
+}
+
 export function handleCurated(env: Env): Promise<Response> {
   return guard(env, async (c) => {
     const ids = CURATED.map((p) => p.id)
@@ -111,8 +118,19 @@ export function handleCurated(env: Env): Promise<Response> {
       const m = byId.get(pick.id)
       if (m === undefined) return []
       const card = mapCuratedCard(pick, m)
-      const era = deriveEra(m)
-      const facet = [era, card.subtitle].filter((s) => !!s).join(' · ')
+      // The era half of the home-card subtitle is the FIRST Aura genre (one
+      // label, mobile-card constrained). The detail-page meta chain (Wave 2,
+      // C-meta) renders the FULL `genres` list — different surface, different
+      // need. See apps/musicians/docs/plans/2026-05-20-group-c-polish.md
+      // item 4a for the rationale; the single-label `deriveEra(m)` was the
+      // previous behavior and silently collapsed multi-era careers (Miles =
+      // Bebop only) to a single bucket.
+      const genres = Array.isArray(m.genres) ? m.genres : []
+      const firstGenre = genres.find(
+        (g): g is string => typeof g === 'string' && g.length > 0,
+      )
+      const eraLabel = firstGenre !== undefined ? capitalizeFirst(firstGenre) : undefined
+      const facet = [eraLabel, card.subtitle].filter((s) => !!s).join(' · ')
       return [{ ...card, subtitle: facet === '' ? undefined : facet }]
     })
     const body: CuratedResponse = { curated }
