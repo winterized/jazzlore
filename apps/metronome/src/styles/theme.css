@@ -1,0 +1,107 @@
+/* Jazzlore Metronome — design tokens + component CSS.
+ *
+ * Token block is lifted verbatim from
+ * apps/metronome/docs/design_handoff_metronome/app/metronome-styles.css
+ * (lines 8–54: light + dark anchors). Component CSS is ported in task #160 —
+ * this file currently carries only the tokens so the placeholder page paints
+ * with the right palette.
+ */
+
+.mt {
+  /* dark default — same anchor values as Musicians v5 */
+  --bg: #0a0a0a;
+  --bg-soft: #111110;
+  --paper: #161616;
+  --card: #181818;
+  --card-hover: #1d1d1d;
+  --line: #242322;
+  --line-soft: #1c1c1b;
+  --text: #f4eede;
+  --text-soft: #d9d2c1;
+  --muted: #8a8378;
+  --dim: #565047;
+  --accent: #f4a233;
+  --accent-fg: #1a1410;
+  --accent-soft: rgba(244, 162, 51, 0.14);
+  --accent-line: rgba(244, 162, 51, 0.32);
+  --beat-off: rgba(244, 238, 222, 0.06);
+  --beat-rest: rgba(244, 238, 222, 0);
+  --kbd-bg: #161513;
+
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Geist', -apple-system, system-ui, sans-serif;
+  font-feature-settings: 'ss01' on, 'cv11' on;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+html[data-theme='light'] .mt,
+.mt[data-theme='light'] {
+  --bg: #f4f1ea;
+  --bg-soft: #ece8de;
+  --paper: #ffffff;
+  --card: #ffffff;
+  --card-hover: #faf7f0;
+  --line: #ddd6c5;
+  --line-soft: #e8e2d2;
+  --text: #1a1612;
+  --text-soft: #3a342c;
+  --muted: #6a6258;
+  --dim: #9b9384;
+  --accent: #c87f1a;
+  --accent-fg: #ffffff;
+  --accent-soft: rgba(200, 127, 26, 0.12);
+  --accent-line: rgba(200, 127, 26, 0.32);
+  --beat-off: rgba(26, 22, 18, 0.06);
+  --beat-rest: rgba(26, 22, 18, 0);
+  --kbd-bg: #ede8dc;
+}
+
+.mt *,
+.mt *::before,
+.mt *::after {
+  box-sizing: border-box;
+}
+
+/* Sticky header — minimal styles for the PR 1 placeholder. Full chrome lands
+ * with the rest of the component CSS in task #160. */
+.mt .hdr {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: 1px solid var(--line);
+}
+.mt .brand {
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--text);
+}
+.mt .brand b {
+  color: var(--accent);
+  font-weight: 600;
+}
+.mt .brand .div {
+  color: var(--dim);
+  font-weight: 400;
+  margin: 0 6px;
+}
+.mt .brand .sub {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.mt .page {
+  padding: 14px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}

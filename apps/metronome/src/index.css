@@ -1,0 +1,31 @@
+@import 'tailwindcss';
+
+/* Drive Tailwind v4 dark: variant from data-theme="dark", not prefers-color-scheme.
+   Same pattern as apps/scales — the app's theme toggle sets data-theme on <html>
+   via @jazzlore/music-core's applyTheme(), so the variant must follow it. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* Component-scoped tokens + design CSS live in styles/theme.css under the .mt
+   class, mirroring the handoff's scope discipline (so the metronome's tokens
+   never bleed into a sibling app or vice-versa). */
+@import './styles/theme.css';
+
+/* The root background needs to live on <html> so the sticky translucent header
+   doesn't have the browser's default white canvas bleeding through. Mirrors
+   apps/scales/src/index.css; data-theme is set on <html> by music-core
+   applyTheme(). The values come from the .mt tokens (--bg) so light and dark
+   match exactly between the body and the .mt scope. */
+@layer base {
+  html {
+    background-color: #f4f1ea;
+    color: #1a1612;
+  }
+  html[data-theme='dark'] {
+    background-color: #0a0a0a;
+    color: #f4eede;
+  }
+  body {
+    margin: 0;
+    min-height: 100vh;
+  }
+}
