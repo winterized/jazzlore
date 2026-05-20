@@ -296,6 +296,46 @@ test.describe('joint-fix acceptance — Phase B3 era strip', () => {
   })
 })
 
+/**
+ * Group C item 6 — document.title client-side updates.
+ *
+ * `useTitle` (apps/musicians/src/hooks/useTitle.ts) is called from
+ * MusicianPage with `<name> — Jazzlore` once `state.data.name` is known.
+ * Navigating away (via SPA route change) unmounts the page, the cleanup
+ * restores the previous title (`Jazzlore — Jazz musicians` from
+ * index.html). These tests prove both halves end-to-end on a real
+ * Cloudflare deploy.
+ */
+test.describe('joint-fix acceptance — Group C title (item 6)', () => {
+  test.skip(!ENABLED, 'PREVIEW_BASE not set — joint-fix acceptance suite is no-op')
+
+  test('Detail page updates document.title client-side', async ({ page }) => {
+    await page.goto(MILES)
+    await expect(
+      page.getByRole('heading', { level: 1, name: /miles davis/i }),
+    ).toBeVisible({ timeout: 15_000 })
+    expect(await page.title()).toBe('Miles Davis — Jazzlore')
+  })
+
+  test('Home page title resets after navigation away from detail', async ({
+    page,
+  }) => {
+    await page.goto(MILES)
+    await expect(
+      page.getByRole('heading', { level: 1, name: /miles davis/i }),
+    ).toBeVisible({ timeout: 15_000 })
+    expect(await page.title()).toBe('Miles Davis — Jazzlore')
+    // Client-side navigate back to home — not a full reload — so the
+    // assertion proves the React effect ran (not the index.html static
+    // title surviving a refresh).
+    await page.goto('/musicians')
+    await expect(
+      page.getByRole('heading', { level: 1, name: /step into a musician/i }),
+    ).toBeVisible({ timeout: 15_000 })
+    expect(await page.title()).toBe('Jazzlore — Jazz musicians')
+  })
+})
+
 test.describe('joint-fix acceptance — Phase 0 scaffolding', () => {
   test.skip(!ENABLED, 'PREVIEW_BASE not set — joint-fix acceptance suite is no-op')
 

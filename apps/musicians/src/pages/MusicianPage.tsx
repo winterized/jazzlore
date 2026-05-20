@@ -12,6 +12,7 @@ import {
   useBffResource,
   type DataSource,
 } from '../hooks/useMusicianData'
+import { useTitle } from '../hooks/useTitle'
 import { DetailView } from '../features/detail/DetailView'
 import { WakingState } from '../features/status/WakingState'
 import { CURATED, SPARSE_DUPLICATE_ID } from '../test/fixtures'
@@ -32,6 +33,12 @@ export default function MusicianPage({
     () => source.detail(id),
     [source, id, attempt],
   )
+  // Reflect the loaded musician in the tab title. Called before any early
+  // return so the hook order is stable across all render paths (waking /
+  // error / loading / ready). Passing `null` while we don't yet have a name
+  // keeps the default; the hook restores the default on unmount.
+  const name = state.kind === 'ready' ? state.data.name : null
+  useTitle(name ? `${name} — Jazzlore` : null)
 
   if (state.kind === 'waking') {
     return (
