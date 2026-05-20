@@ -359,6 +359,70 @@ test.describe('joint-fix acceptance — Group C title (item 6)', () => {
   })
 })
 
+/**
+ * Group C BFF predicates (items 1 + 4a, PR `fix/musicians-c-bff`).
+ *
+ * Item 1: `peersByEraCypher` gates on `years_active_start IS NOT NULL AND
+ * years_active_end IS NOT NULL`. Antoine (Q586360, both fields NULL in live
+ * Aura) → `sameEra: []`. Miles (Q93341, both fields populated) → `sameEra`
+ * still ≥ 1 (regression guard).
+ *
+ * Item 4a: curated subtitle's era half is `genres[0]` capitalized (mobile
+ * card, space-constrained) instead of the single-bucket `deriveEra(m)`.
+ * Miles' previous subtitle `Bebop · trumpet` becomes `Cool jazz · trumpet`
+ * (or whatever his first Aura genre is — the assertion is "not Bebop, and
+ * matches one of his actual genres").
+ *
+ * NOTE on PRE-merge run: when `PREVIEW_BASE=https://musicians.jazzlore.com`,
+ * these tests run against current prod, where the C-bff fix is not yet
+ * deployed. The Item 1 predicate (Antoine empty) and Item 4a predicate
+ * (Miles subtitle not Bebop) will FAIL until merge + deploy. Post-merge,
+ * Cloudflare auto-deploys on push to main; these flip to PASS.
+ */
+test.describe('joint-fix acceptance — Group C BFF (items 1 + 4a)', () => {
+  test.skip(!ENABLED, 'PREVIEW_BASE not set — joint-fix acceptance suite is no-op')
+
+  test('Item 1 — Antoine (NULL years_active) sameEra is empty', async ({
+    request,
+  }) => {
+    const res = await request.get(
+      `${PREVIEW_BASE}/api/musicians/${encodeURIComponent(ANTOINE_ID)}`,
+    )
+    expect(res.ok()).toBe(true)
+    const body = (await res.json()) as { sameEra: unknown[] }
+    expect(body.sameEra).toEqual([])
+  })
+
+  test('Item 1 regression guard — Miles sameEra still populated', async ({
+    request,
+  }) => {
+    const res = await request.get(
+      `${PREVIEW_BASE}/api/musicians/${encodeURIComponent(MILES_ID)}`,
+    )
+    expect(res.ok()).toBe(true)
+    const body = (await res.json()) as { sameEra: unknown[] }
+    expect(body.sameEra.length).toBeGreaterThanOrEqual(1)
+  })
+
+  test('Item 4a — Miles curated subtitle era half is the first Aura genre, not deriveEra', async ({
+    request,
+  }) => {
+    const res = await request.get(`${PREVIEW_BASE}/api/musicians/curated`)
+    expect(res.ok()).toBe(true)
+    const body = (await res.json()) as {
+      curated: { id: string; subtitle?: string }[]
+    }
+    const miles = body.curated.find((c) => c.id === MILES_ID)
+    expect(miles).toBeDefined()
+    const subtitle = miles?.subtitle ?? ''
+    // Pre-fix the era half was the single deriveEra bucket `Bebop`. Post-fix
+    // it's Miles' first Aura genre (capitalized) — cool/modal/fusion/jazz
+    // are all documented in his live record.
+    expect(subtitle).not.toMatch(/^Bebop\b/)
+    expect(subtitle).toMatch(/cool|modal|fusion|jazz/i)
+  })
+})
+
 test.describe('joint-fix acceptance — Phase 0 scaffolding', () => {
   test.skip(!ENABLED, 'PREVIEW_BASE not set — joint-fix acceptance suite is no-op')
 

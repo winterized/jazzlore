@@ -57,9 +57,46 @@ describe('handleCurated', () => {
       'wikidata:Q93341',
       'wikidata:Q7346',
     ])
+    // C-bff item 4a: the era half of the subtitle is `genres[0]` capitalized
+    // (single label, mobile-card constrained), NOT the single-bucket
+    // `deriveEra(m)`. Miles' Aura genres = ['cool jazz', 'modal jazz'] →
+    // `Cool jazz · trumpet` (was `Bebop · trumpet` under deriveEra).
+    const miles = body.curated.find((c) => c.id === 'wikidata:Q93341')!
+    expect(miles.subtitle).toBe('Cool jazz · trumpet')
     const coltrane = body.curated.find((c) => c.id === 'wikidata:Q7346')!
     expect(coltrane.name).toBe('John Coltrane')
-    expect(coltrane.subtitle).toBe('Avant-garde · tenor saxophone') // era · instrument
+    // Coltrane's Aura genres = ['free jazz'] → `Free jazz · tenor saxophone`
+    // (was `Avant-garde · tenor saxophone` under deriveEra's free-jazz match).
+    expect(coltrane.subtitle).toBe('Free jazz · tenor saxophone')
+  })
+
+  it('falls back to instrument-only subtitle when genres are missing/empty', async () => {
+    // C-bff item 4a fallback shape: empty/missing genres → era half is
+    // dropped, subtitle is just the primary instrument (no leading separator
+    // — the existing `[era, instrument].filter(Boolean).join(' · ')` shape
+    // handles this naturally).
+    stubAura({
+      data: {
+        fields: ['m'],
+        values: [
+          [
+            {
+              id: 'wikidata:Q93341',
+              name: 'Miles Davis',
+              primary_instruments: ['trumpet'],
+              genres: [],
+              wikidata_id: 'Q93341',
+            },
+          ],
+        ],
+      },
+    })
+    const res = await handleCurated(ENV)
+    const body = (await res.json()) as {
+      curated: { id: string; subtitle?: string }[]
+    }
+    const miles = body.curated.find((c) => c.id === 'wikidata:Q93341')!
+    expect(miles.subtitle).toBe('trumpet')
   })
 })
 
