@@ -60,6 +60,19 @@ describe('Cypher builders are parameterized + read-only', () => {
     expect(q).not.toMatch(/\b(CREATE|MERGE|SET|DELETE|REMOVE)\b/)
   })
 
+  it('peersByEra NULL-gates the focus musician on both years_active fields', () => {
+    // C-bff item 1: when the focus's years_active_start or years_active_end
+    // is NULL, the query must return zero peers (rather than opening the
+    // year-window to all eras via the coalesce defaults). The gate is an
+    // early WHERE on `m`, before the genre/year filtering on peers. This
+    // assertion is regex-loose enough that whitespace/comment changes don't
+    // brittle it; tight enough that "gated on both fields" is the contract.
+    const q = peersByEraCypher()
+    expect(q).toMatch(
+      /MATCH \(m:Musician \{id: \$id\}\)[\s\S]*?WHERE[\s\S]*?m\.years_active_start IS NOT NULL[\s\S]*?m\.years_active_end\s+IS NOT NULL[\s\S]*?WITH m/,
+    )
+  })
+
   it('assertReadOnly rejects write clauses', () => {
     expect(() => assertReadOnly('MATCH (m) SET m.x = 1')).toThrow()
     expect(() => assertReadOnly('MERGE (m:Musician)')).toThrow()
