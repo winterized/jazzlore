@@ -59,7 +59,11 @@ function themeOf(page: Page): Promise<string | null> {
 async function setTheme(page: Page, want: 'light' | 'dark'): Promise<void> {
   if ((await themeOf(page)) !== want) {
     const before = await themeOf(page)
-    await page.getByRole('button', { name: 'Toggle theme' }).first().click()
+    // Group C item 7: the theme toggle now lives inside the header "···"
+    // overflow menu — open the menu (when present) before clicking it.
+    const more = page.getByRole('button', { name: 'More options' })
+    if (await more.count()) await more.first().click()
+    await page.getByRole('button', { name: 'Toggle theme' }).click()
     await expect.poll(() => themeOf(page)).not.toBe(before)
   }
   await expect.poll(() => themeOf(page)).toBe(want)
