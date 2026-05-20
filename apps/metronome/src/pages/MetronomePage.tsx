@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import type { Action } from '../features/state/metronomeReducer'
+import { primeAudio } from '@jazzlore/music-core'
 import { useTheme } from '../lib/useTheme'
 import {
   metronomeReducer,
@@ -11,6 +13,9 @@ import {
 } from '../features/state/persistence'
 import { useKeyboardShortcuts } from '../features/keyboard/useKeyboardShortcuts'
 import { useLayoutMode } from '../features/ui/useLayoutMode'
+import { useWakeLock } from '../features/wakeLock/useWakeLock'
+import { isWkwebview } from '../features/wakeLock/detectWkwebview'
+import { createMetronomeEngine, type EngineHandle } from '../features/audio/engine'
 import { Header } from '../features/ui/Header'
 import { BpmHero } from '../features/ui/BpmHero'
 import { TempoSlider } from '../features/ui/TempoSlider'
@@ -22,6 +27,7 @@ import { ModeCards } from '../features/ui/ModeCards'
 import { StartStopButton } from '../features/ui/StartStopButton'
 import { KbdFooter } from '../features/ui/KbdFooter'
 import { DesktopLeftRail, DesktopRightRail } from '../features/ui/DesktopSideRails'
+import { WkwebviewBanner } from '../features/ui/WkwebviewBanner'
 
 /** Lazy initializer for the reducer's first state — hydrate from
  *  localStorage on mount (per the plan, the four jazzlore:metronome:* keys).
@@ -40,20 +46,21 @@ function initState() {
 }
 
 const TAP_DISARM_MS = 2000
-/** The 400 ms warmup window before the first beat fires — a non-negotiable
- *  audio constraint per the original spec (so the iOS USB DAC is fully
- *  streaming before the leading edge of the first click). In PR 1 we have
- *  no audio, so the priming → running transition is driven by this
- *  setTimeout; in PR 2 the same transition will be driven by the audio
- *  engine's `ready` signal at the end of its own 400 ms warmup, and this
- *  setTimeout is replaced by the engine's callback. The duration stays the
- *  same — the source of the "warmup complete" event changes. */
-const WARMUP_MS = 400
 
 export default function MetronomePage() {
   const { theme, toggle: toggleTheme } = useTheme()
   const layout = useLayoutMode()
+  const wakeLock = useWakeLock()
   const [state, dispatch] = useReducer(metronomeReducer, undefined, initState)
+
+  // The audio engine — created lazily on first start. Lives in a ref so it
+  // survives re-renders without React knowing about it.
+  const engineRef = useRef<EngineHandle | null>(null)
+
+  // WKWebView detection runs once at mount via the lazy useState
+  // initializer. `isWkwebview()` is SSR-guarded (returns false when
+  // navigator is undefined), so it's safe to call during render.
+  const [showWkwebviewBanner] = useState<boolean>(() => isWkwebview())
 
   // Debounced persistence: any of the four persisted slices changes →
   // schedule a write 200 ms later. The closure is stable across renders so
@@ -69,6 +76,16 @@ export default function MetronomePage() {
     })
   }, [state.bpm, state.beats, state.pattern, state.mode])
 
+  // Push live state changes into the running engine. The engine reads bpm
+  // and pattern fresh on each scheduler tick so the next beat picks up the
+  // new values; no rebuild needed.
+  useEffect(() => {
+    engineRef.current?.setBpm(state.bpm)
+  }, [state.bpm])
+  useEffect(() => {
+    engineRef.current?.setPattern(state.pattern, state.mode)
+  }, [state.pattern, state.mode])
+
   // TAP timeout: 2 s after the latest tap, dispatch TAP_DISARM. Each TAP
   // restarts the timer. The reducer trims to a 6-tap window so memory is
   // bounded.
@@ -81,29 +98,114 @@ export default function MetronomePage() {
     return () => clearTimeout(handle)
   }, [state.tapArmed, state.tapTimestamps])
 
-  // priming → running after the 400 ms warmup. In PR 1, this useEffect is
-  // the warmup driver. In PR 2 the audio engine drives the transition (the
-  // engine schedules the first click at ctx.currentTime + 0.4 and fires the
-  // ready callback then); this useEffect will be removed in favor of the
-  // engine's callback wiring.
-  useEffect(() => {
-    if (state.status !== 'priming') return
-    const handle = setTimeout(() => dispatch({ type: 'PRIMED' }), WARMUP_MS)
-    return () => clearTimeout(handle)
-  }, [state.status])
+  // onBeat handler — fires from the audio engine for every beat (including
+  // empty ones; see engine.ts). Flashes the corresponding pattern dot via
+  // DOM mutation (NOT React state, per the design — at 240 BPM that would
+  // be 4 renders/sec of the whole tree). The .flash class is removed on
+  // animationend so the next tick of the same dot fires cleanly.
+  const handleBeat = useCallback((beatIndexInBar: number) => {
+    const dot = document.querySelector<HTMLElement>(
+      `.mt .pattern .pttn-row:first-child .dot[data-beat-index="${beatIndexInBar}"]`,
+    )
+    if (dot) {
+      // Re-trigger CSS animation: remove the class first (in case it's
+      // still set from a prior tick), force reflow, then add it.
+      dot.classList.remove('flash')
+      void dot.offsetWidth
+      dot.classList.add('flash')
+      const onAnimEnd = (): void => {
+        dot.classList.remove('flash')
+        dot.removeEventListener('animationend', onAnimEnd)
+      }
+      dot.addEventListener('animationend', onAnimEnd)
+    }
+    const pulse = document.querySelector<HTMLElement>('.mt .bpm-hero .pulse')
+    if (pulse) {
+      pulse.classList.remove('beating')
+      void pulse.offsetWidth
+      pulse.classList.add('beating')
+      const onAnimEnd = (): void => {
+        pulse.classList.remove('beating')
+        pulse.removeEventListener('animationend', onAnimEnd)
+      }
+      pulse.addEventListener('animationend', onAnimEnd)
+    }
+  }, [])
 
-  // Start/Stop handler — the surface where primeAudio() + Wake Lock +
-  // NoSleep will land in PR 2, all synchronously before any await. For PR
-  // 1, just toggle status; the priming stub above bridges to 'running'.
+  // Track whether the engine has fired its first beat — used to flip
+  // priming → running. Each Start cycle resets it.
+  const firstBeatFiredRef = useRef(false)
+
+  // Start/Stop handler. CLAUDE.md item 9 + the original spec: primeAudio()
+  // MUST be the first synchronous statement of any play handler, BEFORE
+  // any await. Same gesture also fires both wake-lock layers
+  // synchronously — NoSleep's video.play() requires the gesture to still
+  // be active.
   const onToggleStartStop = useCallback(() => {
-    // PR 2: primeAudio()  ← FIRST sync statement
-    // PR 2: wakeLock.requestSync()
-    if (state.status === 'idle') {
-      dispatch({ type: 'START' })
-    } else {
+    if (state.status !== 'idle') {
+      // Stop path
+      engineRef.current?.stop()
+      wakeLock.release()
       dispatch({ type: 'STOP' })
+      return
+    }
+
+    // Start path — order matters and is SYNCHRONOUS until engine.start().
+    primeAudio() //                       1. iOS audio session → 'playback'
+    wakeLock.requestSync() //              2. Wake Lock + NoSleep, both engaged
+
+    // Create engine on first start (lazy) or after a prior stop closed it.
+    if (!engineRef.current) {
+      const engine = createMetronomeEngine({
+        bpm: state.bpm,
+        pattern: state.pattern,
+        mode: state.mode,
+      })
+      firstBeatFiredRef.current = false
+      engine.onBeat((i) => {
+        if (!firstBeatFiredRef.current) {
+          firstBeatFiredRef.current = true
+          dispatch({ type: 'PRIMED' })
+        }
+        handleBeat(i)
+      })
+      engineRef.current = engine
+    } else {
+      // Re-use existing engine instance — push latest state in
+      engineRef.current.setBpm(state.bpm)
+      engineRef.current.setPattern(state.pattern, state.mode)
+      firstBeatFiredRef.current = false
+    }
+
+    dispatch({ type: 'START' })
+    // If engine.start() rejects (AudioContext construction failed,
+    // unsupported browser), tear down the half-started state so the UI
+    // returns to idle instead of stuck in 'priming'.
+    engineRef.current.start().catch(() => {
+      engineRef.current?.stop()
+      engineRef.current = null
+      wakeLock.release()
+      dispatch({ type: 'STOP' } satisfies Action)
+    })
+  }, [state.status, state.bpm, state.pattern, state.mode, wakeLock, handleBeat])
+
+  // Tear down the engine when status returns to 'idle' (Stop button OR a
+  // programmatic dispatch from the engine.start() catch handler).
+  useEffect(() => {
+    if (state.status === 'idle' && engineRef.current) {
+      engineRef.current.stop()
+      engineRef.current = null
     }
   }, [state.status])
+
+  // Cleanup on unmount — release engine + wake lock if the component is
+  // torn down mid-play (hot reload during dev, future multi-page mode).
+  useEffect(() => {
+    return () => {
+      engineRef.current?.stop()
+      wakeLock.release()
+    }
+  }, [wakeLock])
 
   const onTap = useCallback(() => {
     dispatch({ type: 'TAP', t: performance.now() })
@@ -168,6 +270,7 @@ export default function MetronomePage() {
   return (
     <main className="mt" data-layout={layout} data-theme={theme}>
       <Header theme={theme} status={state.status} onToggleTheme={toggleTheme} />
+      {showWkwebviewBanner && <WkwebviewBanner />}
       {layout === 'desktop' ? (
         <div className="desk-wrap">
           <DesktopLeftRail />

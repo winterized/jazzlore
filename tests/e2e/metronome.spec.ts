@@ -132,3 +132,69 @@ test.describe('metronome — accessibility (axe-core)', () => {
     }
   }
 })
+
+test.describe('metronome — PWA manifest', () => {
+  test('serves /manifest.webmanifest as JSON', async ({ request }) => {
+    const res = await request.get(`${BASE}/manifest.webmanifest`)
+    expect(res.status()).toBe(200)
+    const body = await res.json()
+    expect(body.name).toBe('Jazzlore Metronome')
+    expect(body.short_name).toBe('Metronome')
+    expect(body.display).toBe('standalone')
+    expect(body.start_url).toBe('/')
+    expect(body.icons).toHaveLength(2)
+    expect(body.icons[0].sizes).toBe('192x192')
+    expect(body.icons[1].sizes).toBe('512x512')
+  })
+
+  test('serves the 192 + 512 icons as PNG', async ({ request }) => {
+    const res192 = await request.get(`${BASE}/icons/icon-192.png`)
+    expect(res192.status()).toBe(200)
+    expect(res192.headers()['content-type']).toContain('image/png')
+
+    const res512 = await request.get(`${BASE}/icons/icon-512.png`)
+    expect(res512.status()).toBe(200)
+    expect(res512.headers()['content-type']).toContain('image/png')
+  })
+
+  test('index.html links the manifest + Apple meta tags', async ({ page }) => {
+    await page.goto(BASE)
+    await expect(page.locator('link[rel="manifest"]')).toHaveAttribute(
+      'href',
+      '/manifest.webmanifest',
+    )
+    await expect(page.locator('meta[name="apple-mobile-web-app-capable"]')).toHaveAttribute(
+      'content',
+      'yes',
+    )
+    await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute(
+      'href',
+      '/icons/icon-192.png',
+    )
+  })
+})
+
+test.describe('metronome — engine wiring (no audio in headless)', () => {
+  test('Start cycles status pill idle → priming → (engine may or may not run depending on audio support)', async ({
+    page,
+  }) => {
+    // Audio in headless Chromium is silent by default but the engine state
+    // transitions still fire. We assert the priming state appears; the
+    // 'running' transition depends on whether the AudioContext could be
+    // constructed at all (it should in Chromium).
+    await gotoWithTheme(page, 'dark')
+    const startBtn = page.getByRole('button', { name: 'Start metronome' })
+    await expect(startBtn).toBeVisible()
+    await startBtn.click()
+    // Status pill should leave 'idle'.
+    await expect(page.locator('.mt .hdr .status')).not.toHaveText('idle', { timeout: 1000 })
+    // And the Start button should become Stop.
+    await expect(page.getByRole('button', { name: 'Stop metronome' })).toBeVisible({
+      timeout: 2000,
+    })
+    // Clicking Stop returns to idle.
+    await page.getByRole('button', { name: 'Stop metronome' }).click()
+    await expect(page.getByRole('button', { name: 'Start metronome' })).toBeVisible()
+    await expect(page.locator('.mt .hdr .status')).toContainText('idle')
+  })
+})

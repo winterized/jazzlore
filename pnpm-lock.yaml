@@ -120,6 +120,9 @@ importers:
       '@jazzlore/music-core':
         specifier: workspace:*
         version: link:../../packages/music-core
+      nosleep.js:
+        specifier: ^0.12.0
+        version: 0.12.0
       react:
         specifier: ^19.2.5
         version: 19.2.6
@@ -3283,6 +3286,9 @@ packages:
 
   node-releases@2.0.38:
     resolution: {integrity: sha512-3qT/88Y3FbH/Kx4szpQQ4HzUbVrHPKTLVpVocKiLfoYvw9XSGOX2FmD2d6DrXbVYyAQTF2HeF6My8jmzx7/CRw==}
+
+  nosleep.js@0.12.0:
+    resolution: {integrity: sha512-9d1HbpKLh3sdWlhXMhU6MMH+wQzKkrgfRkYV0EBdvt99YJfj0ilCJrWRDYG2130Tm4GXbEoTCx5b34JSaP+HhA==}
 
   object-inspect@1.13.4:
     resolution: {integrity: sha512-W67iLl4J2EXEGTbfeHCffrjDfitvLANg0UlX3wFUUSTx92KXRFegMHUVgSqE+wvhAbi4WqjGg9czysTV2Epbew==}
@@ -7208,6 +7214,8 @@ snapshots:
   netmask@2.1.1: {}
 
   node-releases@2.0.38: {}
+
+  nosleep.js@0.12.0: {}
 
   object-inspect@1.13.4: {}
 
