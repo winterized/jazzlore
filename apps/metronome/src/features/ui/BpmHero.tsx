@@ -116,7 +116,15 @@ export function BpmHero({
         {bpmEditing && <span className="edit-caret" aria-hidden />}
         {bpmEditing && (
           <BpmEditInput
-            onCommit={onEditCommit}
+            onCommit={(b) => {
+              // Clear the parent's draft mirror BEFORE flipping bpmEditing
+              // off — otherwise the next edit session briefly renders the
+              // previous typed string until the first keystroke (e.g. user
+              // types "999" → commits as clamped 240 → re-opens → hero
+              // momentarily shows "999" instead of "240").
+              setDisplayedDraft('')
+              onEditCommit(b)
+            }}
             onCancel={() => {
               setDisplayedDraft('')
               onEditCancel()
