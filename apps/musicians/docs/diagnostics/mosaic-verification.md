@@ -21,14 +21,14 @@
 
 ### 2. Size encodes record count (ratio > 1.5 threshold)
 
-- **Largest tile (Kenny Clarke, drum kit, 15 records):** `.mtile.hero` at **179 × 138 px**.
+- **Hero tile (Kenny Clarke, drum kit, 15 records):** `.mtile.hero` at **179 × 138 px**.
 - **Smallest tile (no-photo, 1 record):** `.mtile.no-photo` at **58 × 44 px**.
 - **Width ratio: 3.10** (≫ 1.5). Size encoding works.
-- Other size classes observed: `.s2` (119 × 44), `.s3 .h2` (180 × 91) — matches the `sizeClass(sharedRecordCount)` mapping at `apps/musicians/src/components/MosaicV4.tsx`.
+- Other size classes observed: `.s2` (119 × 44), `.s3 .h2` (180 × 91, Percy Heath — also 15 records but a non-hero "wide" variant) — matches the `sizeClass(sharedRecordCount)` mapping at `apps/musicians/src/components/MosaicV4.tsx`. The widest *overall* tile is the `.s3 .h2` at 180 px, but the spec's reference is the hero; the ratio is the same either way (180/58 ≈ 3.10).
 
 ### 3. Duotone tiles paint via CSS gradient on `::before`
 
-The duotone is rendered as a layered radial+linear gradient on the `.duo3 ::before` pseudo-element, using the inline CSS custom properties from MosaicV4's render:
+Each `.mtile` button renders a `<Duo3>` child (`<div class="duo3">`) at `MosaicV4.tsx:69`. The gradient is on that inner div's `::before`, not on the button itself. The duotone is a layered radial+linear gradient using the inline CSS custom properties MosaicV4 sets per collaborator:
 
 - `.duo3` direct style: `--duo-lo: #241a2a; --duo-hi: #7a5b9a;` (per-collaborator palette from `paletteFor(c.name)`).
 - `.duo3::before` computed `background-image`:

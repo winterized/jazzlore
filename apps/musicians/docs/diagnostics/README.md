@@ -42,7 +42,18 @@ CSS / no frozen lib).
 
 ## Status
 
-Plan-mode planning; **no code touched**. The full RCA scratch also lives at
-`~/.claude/plans/temporal-bouncing-bubble.md` (transient — these repo files are the
-durable record). Next: a single joint fix plan covering the shared-root CRIT cluster,
-the Era data wiring, and the separate audit items above — then execute.
+**Resolution shipped 2026-05-20** — live on `musicians.jazzlore.com`.
+
+The joint fix plan at [`docs/plans/2026-05-19-joint-crit-fix.md`](../plans/2026-05-19-joint-crit-fix.md)
+addressed CRIT-1 + CRIT-2 + records-dump (PR #29) and the Era data wiring (PR #28).
+The Group C polish plan at [`docs/plans/2026-05-20-group-c-polish.md`](../plans/2026-05-20-group-c-polish.md)
+shipped 5 of the 7 audit items above across PRs #31 / #32 / #33 / #34 (era peers
+NULL-handling, home subtitle era half, tab title, header overflow menu, identity
+meta chain, bio teaser) plus this verification (item 8, [`mosaic-verification.md`](./mosaic-verification.md) — PASS).
+
+**Deferred:**
+- **ConnRow relationship/context** — no editorial data source yet; ships in a future cycle once a source is chosen.
+- **Home subtitle instrument half (Mingus shown as pianist)** — upstream populator-side data-quality bug; see [`../follow-ups/2026-05-20-populator-instrument-data-quality.md`](../follow-ups/2026-05-20-populator-instrument-data-quality.md). Don't shim the consumer.
+
+These files remain the **durable diagnostic record** — they document what was wrong
+and why. The plans + verification doc track the resolution.
