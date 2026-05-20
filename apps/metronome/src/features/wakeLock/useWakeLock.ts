@@ -15,7 +15,7 @@
 // handler, before any `await`. NoSleep's video.play() requires the
 // gesture to still be "active" — sitting behind an await invalidates it.
 
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import NoSleep from 'nosleep.js'
 
 interface WakeLockSentinelLike {
@@ -137,5 +137,9 @@ export function useWakeLock(): UseWakeLockHandle {
     return () => release()
   }, [release])
 
-  return { requestSync, release }
+  // Stable returned object — `requestSync` and `release` are useCallback-
+  // memoized so the memo key is stable, which keeps the consuming
+  // useCallbacks (onToggleStartStop etc.) from re-creating on every render
+  // and avoids churning the keyboard-shortcut listener registration.
+  return useMemo(() => ({ requestSync, release }), [requestSync, release])
 }

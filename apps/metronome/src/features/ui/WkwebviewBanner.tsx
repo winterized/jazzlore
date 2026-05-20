@@ -13,7 +13,9 @@ const DISMISS_KEY = 'metronome:wkwebview-dismissed'
  *  x-safari-https:// URL scheme (iOS-only — silently falls back to a
  *  normal navigation elsewhere). */
 export function WkwebviewBanner() {
-  const initialDismissed = read<unknown>(DISMISS_KEY) === true
+  // read() returns T | null; the explicit `=== true` collapses both `null`
+  // and any (impossible-but-defensive) `false` to a clean boolean.
+  const initialDismissed = read<boolean>(DISMISS_KEY) === true
   const [dismissed, setDismissed] = useState<boolean>(initialDismissed)
   if (dismissed) return null
 
