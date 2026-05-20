@@ -32,6 +32,12 @@
   --dim: #565047;
   --accent: #f4a233;
   --accent-fg: #1a1410;
+  /* --accent-text is the accent color when used AS TEXT against the page bg.
+   * In dark mode the bright amber already meets AA (~8:1 on #0a0a0a). In
+   * light mode the brand amber #c87f1a fails AA on the warm-beige bg, so a
+   * darker shade is used for text — the brand identity is preserved but the
+   * text passes WCAG 2 AA 4.5:1. */
+  --accent-text: #f4a233;
   --accent-soft: rgba(244, 162, 51, 0.14);
   --accent-line: rgba(244, 162, 51, 0.32);
   --beat-off: rgba(244, 238, 222, 0.06);
@@ -59,7 +65,16 @@ html[data-theme='light'] .mt,
   --muted: #6a6258;
   --dim: #9b9384;
   --accent: #c87f1a;
-  --accent-fg: #ffffff;
+  /* Dark text on amber — the design's white-on-amber would fail AA (white
+   * on #c87f1a is mathematically capped at ~3.3:1). The dark stone tone here
+   * mirrors the dark theme's accent-fg and lands at ~8:1 on the amber. */
+  --accent-fg: #1a1410;
+  /* Darker amber for text-on-bg uses (brand wordmark, italic tempo label,
+   * active mode-card label). Tuned so it passes 4.5:1 against BOTH #f4f1ea
+   * (the page bg) AND the active mode-card bg (#efe3d1 from accent-soft
+   * over the page bg). The bright accent #c87f1a remains the brand identity
+   * for non-text uses (button fills, dot fills, borders). */
+  --accent-text: #8e5210;
   --accent-soft: rgba(200, 127, 26, 0.12);
   --accent-line: rgba(200, 127, 26, 0.32);
   --beat-off: rgba(26, 22, 18, 0.06);
@@ -93,11 +108,11 @@ html[data-theme='light'] .mt,
   color: var(--text);
 }
 .mt .brand b {
-  color: var(--accent);
+  color: var(--accent-text);
   font-weight: 600;
 }
 .mt .brand .div {
-  color: var(--dim);
+  color: var(--muted);
   font-weight: 400;
   margin: 0 6px;
 }
@@ -176,7 +191,7 @@ html[data-theme='light'] .mt,
   font-size: 10px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--dim);
+  color: var(--muted);
   margin-bottom: 2px;
 }
 .mt .bpm-num {
@@ -229,7 +244,7 @@ html[data-theme='light'] .mt,
   margin-top: 4px;
 }
 .mt .bpm-hero .lab b {
-  color: var(--accent);
+  color: var(--accent-text);
   font-weight: 500;
   font-style: italic;
   font-family: 'Newsreader', serif;
@@ -313,7 +328,7 @@ html[data-theme='light'] .mt,
   transform: translate(-50%, 4px);
   font-family: 'Geist Mono', monospace;
   font-size: 8.5px;
-  color: var(--dim);
+  color: var(--muted);
   letter-spacing: 0.04em;
 }
 .mt .slider input[type='range'] {
@@ -351,7 +366,7 @@ html[data-theme='light'] .mt,
   justify-content: space-between;
   font-family: 'Geist Mono', monospace;
   font-size: 9.5px;
-  color: var(--dim);
+  color: var(--muted);
   letter-spacing: 0.08em;
   padding: 0 4px;
   margin-top: 16px;
@@ -399,7 +414,7 @@ html[data-theme='light'] .mt,
   font-family: 'Geist Mono', monospace;
   font-size: 7px;
   letter-spacing: 0.08em;
-  color: var(--dim);
+  color: var(--muted);
 }
 .mt .nudge.classic-prev .chev,
 .mt .nudge.classic-next .chev {
@@ -471,7 +486,7 @@ html[data-theme='light'] .mt,
   font-size: 9.5px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--dim);
+  color: var(--muted);
   font-weight: 600;
   margin-top: 2px;
 }
@@ -543,7 +558,7 @@ html[data-theme='light'] .mt,
   font-family: 'Geist Mono', monospace;
   font-size: 8.5px;
   letter-spacing: 0.18em;
-  color: var(--dim);
+  color: var(--muted);
   text-transform: uppercase;
   margin-right: auto;
 }
@@ -749,7 +764,7 @@ html[data-theme='light'] .mt,
   border-color: var(--accent);
 }
 .mt .mode.on .lab {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .mt .mode.on .sub {
   color: var(--text-soft);
@@ -806,7 +821,10 @@ html[data-theme='light'] .mt,
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.06em;
-  opacity: 0.7;
+  /* Was opacity 0.7 in the handoff CSS, but at that level the dark
+   * accent-fg composites with the amber bg to only 3.56:1 in light theme.
+   * 0.85 keeps the "subtle" affordance while passing 4.5:1. */
+  opacity: 0.85;
   margin-left: 6px;
 }
 .mt .start.running {
@@ -865,7 +883,7 @@ html[data-theme='light'] .mt,
   font-size: 9.5px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--dim);
+  color: var(--muted);
   font-weight: 600;
   margin: 0 0 10px;
 }
@@ -924,7 +942,7 @@ html[data-theme='light'] .mt,
   font-size: 9px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--accent-text);
   display: block;
   margin-bottom: 6px;
   font-weight: 500;
