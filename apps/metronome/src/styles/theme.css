@@ -1,3 +1,8 @@
+/* Font imports must precede all rules (CSS @import constraint). Geist +
+ * Geist Mono + Newsreader from Google Fonts — the same family Jazzlore
+ * uses across all apps. */
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500&family=Newsreader:ital,wght@1,400;1,500&display=swap');
+
 /* Jazzlore Metronome — design tokens + component CSS.
  *
  * Lifted from apps/metronome/docs/design_handoff_metronome/app/metronome-styles.css.
@@ -938,8 +943,3 @@ html[data-theme='light'] .mt,
   display: none;
 }
 
-/* ─────────────────────────── Font imports ───────────────────────────── */
-/* Geist + Geist Mono + Newsreader come from Google Fonts. The musicians and
- * other Jazzlore apps already link them; for the metronome's own dev/preview
- * we import them here so the font stack resolves locally too. */
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500&family=Newsreader:ital,wght@1,400;1,500&display=swap');
