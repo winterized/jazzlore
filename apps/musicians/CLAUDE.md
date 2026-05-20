@@ -59,7 +59,13 @@ Duplicates (e.g. the known Antoine Hervé double-node) are an **upstream data-qu
 
 ## Neo4j read-only policy
 
-<!-- TODO(user): fill after verifying the Neo4j MCP works -->
+- The `mcp__neo4j__*` MCP tools default to database `neo4j` and **fail on Aura's `d30e12cc`** with `Neo.ClientError.Database.DatabaseNotFound`. Per-call database override is not available; the MCP server's `NEO4J_DATABASE` env would have to be set at the server level, not the tool call.
+- **Use the BFF as the read surface** for any schema discovery or live-data probing during dev. `curl https://musicians.jazzlore.com/api/musicians/search-index | jq '.corpus[0]'` returns the full corpus shape; `/api/musicians/<id>` returns a detail; `/api/musicians/<id>/graph` returns the neighborhood graph. The mapped fields cover every property the Cypher builders need to reference.
+- **Schema source of truth** for new Cypher queries: read `apps/musicians/worker/cypher.ts` for the existing queries' shape; cross-check property names against the BFF response.
+
+## Acceptance harness (the canonical post-deploy gate)
+
+`tests/e2e/musicians-joint-fix-acceptance.spec.ts` is the **live-prod predicate surface** added in Phase 0 of the 2026-05-19 joint fix plan. Gated by `PREVIEW_BASE` env var (skipped when unset); run with `PREVIEW_BASE=https://musicians.jazzlore.com pnpm test:e2e musicians-joint-fix-acceptance --project=chromium`. Streams add their predicates additively (each as its own `test.describe(...)` block — see the parallel-OMC shared-spec convention). Use this spec for any future feature that needs a "this passes on real prod data" gate.
 
 ## Definition of done (per feature)
 
@@ -88,4 +94,10 @@ This project is also a learning instrument and the first to use the oh-my-claude
 
 ## Deploy posture
 
-**User-gated first deploy** (the standing auto-merge autonomy does NOT extend to this app — it has live external deps + secrets). Cloudflare project/domain + `NEO4J_*` env vars + GitHub auto-deploy hookup are out-of-repo dashboard actions the user must perform; Phase F documents the exact checklist. Do not auto-merge.
+**Auto-merge on green** — the standing autonomy DOES extend to this app now that the live deps + secrets are wired (post-Phase-F). A PR can be merged once it passes (a) localhost typecheck/lint/unit/a11y gates, (b) a `oh-my-claudecode:code-reviewer` pass per the standing always-code-reviewer policy, and (c) any pre-merge live-prod verification described in the PR body. The user tests in prod after deploy.
+
+- Cloudflare auto-deploys on push to `main` via the GitHub integration (~2–4 min end-to-end for the musicians worker; observed range 120–260s).
+- After merge, poll for the **new bundle CONTENT** (grep for a marker string from the new PR's code), not just the bundle-hash change — back-to-back merges race the hash poll.
+- The post-deploy gate is `PREVIEW_BASE=https://musicians.jazzlore.com pnpm test:e2e musicians-joint-fix-acceptance --project=chromium`. Run it after every merge that affects user-visible behavior.
+
+**Historical context:** the first deploy was user-gated (`apps/musicians/docs/plans/2026-05-18-musicians-v1.md` Phase F documents the dashboard checklist for Cloudflare project/domain + `NEO4J_*` env vars + GitHub integration). After that initial wiring, the autonomy is on.
