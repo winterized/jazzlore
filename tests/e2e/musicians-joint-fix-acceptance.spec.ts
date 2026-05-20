@@ -467,6 +467,47 @@ test.describe('joint-fix acceptance — Group C overflow menu (item 7)', () => {
   })
 })
 
+/**
+ * Group C item 2 — identity meta chain (PR `fix/musicians-c-meta`).
+ *
+ * The detail-page meta line under the H1 now renders the FULL `genres` chain
+ * (each capitalized) + capitalized primary instrument + the years range —
+ * NOT the single-bucket `deriveEra` label. Pre-fix Miles read
+ * `trumpet · Bebop · 1926–1991`; post-fix it reads
+ * `Trumpet · Cool jazz · Modal jazz · Jazz fusion · 1926–1991`
+ * (or whatever ordering Aura emits — we assert shape, not exact wording).
+ *
+ * Pre-merge run against current prod will FAIL until this PR deploys; that
+ * is the same shape as the other Group C acceptance gates.
+ */
+test.describe('joint-fix acceptance — Group C meta (item 2)', () => {
+  test.skip(!ENABLED, 'PREVIEW_BASE not set — joint-fix acceptance suite is no-op')
+
+  test.use({ viewport: { width: 390, height: 844 } })
+
+  test('Miles meta line is the cap-instrument + genre-chain + years format', async ({
+    page,
+  }) => {
+    await page.goto(MILES)
+    await expect(
+      page.getByRole('heading', { level: 1, name: /miles davis/i }),
+    ).toBeVisible({ timeout: 15_000 })
+    const meta = page.locator('.ml').first()
+    await expect(meta).toBeVisible()
+    const text = (await meta.textContent()) ?? ''
+    // Capitalized instrument leads.
+    expect(text).toMatch(/^Trumpet/)
+    // At least one of Miles' documented Aura genres is present (cool / modal
+    // / fusion / jazz — covers the chain whatever ordering Aura returns).
+    expect(text).toMatch(/cool|modal|fusion|jazz/i)
+    // Years range (en-dash, em-dash, or hyphen — the existing code uses an
+    // en-dash but we keep the predicate forgiving against typographic drift).
+    expect(text).toMatch(/1926[–-]1991/)
+    // NOT the old single-Bebop format.
+    expect(text).not.toMatch(/^trumpet · Bebop/)
+  })
+})
+
 test.describe('joint-fix acceptance — Phase 0 scaffolding', () => {
   test.skip(!ENABLED, 'PREVIEW_BASE not set — joint-fix acceptance suite is no-op')
 
