@@ -314,25 +314,48 @@ test.describe('joint-fix acceptance — Group C title (item 6)', () => {
     await expect(
       page.getByRole('heading', { level: 1, name: /miles davis/i }),
     ).toBeVisible({ timeout: 15_000 })
-    expect(await page.title()).toBe('Miles Davis — Jazzlore')
+    // Poll rather than point-in-time read: the useTitle effect fires after
+    // paint, so a synchronous read can race the commit on slow runners.
+    await expect.poll(() => page.title(), { timeout: 5_000 }).toBe('Miles Davis — Jazzlore')
   })
 
-  test('Home page title resets after navigation away from detail', async ({
+  test('Home page title resets after client-side navigation away from detail', async ({
     page,
   }) => {
     await page.goto(MILES)
     await expect(
       page.getByRole('heading', { level: 1, name: /miles davis/i }),
     ).toBeVisible({ timeout: 15_000 })
-    expect(await page.title()).toBe('Miles Davis — Jazzlore')
-    // Client-side navigate back to home — not a full reload — so the
-    // assertion proves the React effect ran (not the index.html static
-    // title surviving a refresh).
-    await page.goto('/musicians')
+    await expect.poll(() => page.title(), { timeout: 5_000 }).toBe('Miles Davis — Jazzlore')
+
+    // Plant a sentinel on the JS global BEFORE navigating. If the navigation
+    // is a full document reload the sentinel will be gone; if it's a client-
+    // side push it survives. This ensures the test actually exercises the
+    // hook's unmount cleanup rather than the static <title> in index.html.
+    await page.evaluate(() => {
+      ;(window as unknown as { __preNavSentinel: number }).__preNavSentinel =
+        Date.now()
+    })
+
+    // Click the "Search" button in the detail header — aria-label="Search",
+    // calls React Router's navigate('/musicians') — a true SPA push with no
+    // document reload.
+    await page.getByRole('button', { name: 'Search' }).click()
     await expect(
       page.getByRole('heading', { level: 1, name: /step into a musician/i }),
     ).toBeVisible({ timeout: 15_000 })
-    expect(await page.title()).toBe('Jazzlore — Jazz musicians')
+
+    // Verify sentinel survived — confirms client-side navigation.
+    const sentinel = await page.evaluate(
+      () =>
+        (window as unknown as { __preNavSentinel: number | undefined })
+          .__preNavSentinel,
+    )
+    expect(sentinel, 'navigation must be client-side (sentinel survives)').toBeDefined()
+
+    // The hook's unmount cleanup restores the previous title (the default
+    // that was current when MusicianPage mounted).
+    await expect.poll(() => page.title(), { timeout: 5_000 }).toBe('Jazzlore — Jazz musicians')
   })
 })
 
