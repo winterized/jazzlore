@@ -20,8 +20,8 @@ The third sub-site of the Jazzlore portfolio: a public, polished, mobile-first j
 - **Build:** Vite (config at `apps/musicians/vite.config.ts`). Dev server pinned to **port 5175** so Playwright's multi-app `webServer` array targets all three apps deterministically (scales 5173, chords 5174, musicians 5175).
 - **Framework:** React 19 + TypeScript strict (`erasableSyntaxOnly` → no enums / no parameter-properties; `verbatimModuleSyntax` → type-only imports via `import type`; `noUncheckedIndexedAccess` → guard every index access — applies to d3-force typings too).
 - **Routing:** React Router v7 (`react-router`, `BrowserRouter`). Routes: `/` → `/musicians`, `/musicians` (home), `/musicians/:id` (detail; `:id` is the Neo4j node `id`, e.g. `wikidata:Q132341`), catch-all → `/musicians`. The "More about" sheet is a `#about` hash on the detail route, not a separate route. SPA fallback via the unified Worker's `not_found_handling: "single-page-application"`.
-- **Styling:** Tailwind v4 (CSS-first). The musicians app ships its **own design-token system** (`--bg/--paper/--card/--accent`; fonts Geist / Geist Mono / Newsreader) — **NOT** the stone/amber tokens of scales/chords, and **no StickyHeader**. The token layer + self-hosted fonts are built and **frozen in Phase B**; `src/index.css` carries only a minimal placeholder until then. Dark mode via `data-theme="dark"` (set on `<html>` by `@jazzlore/music-core` `applyTheme`).
-- **Data:** Neo4j Aura Free, read-only from this app. Schema in `apps/musicians/docs/FRONTEND.md`; confirmed field names land in `apps/musicians/docs/data-audit.md` after Phase 0.
+- **Styling:** Tailwind v4 (CSS-first). The musicians app ships its **own design-token system** (`--bg/--paper/--card/--accent`; fonts Geist / Geist Mono / Newsreader) — **NOT** the stone/amber tokens of scales/chords, and **no StickyHeader**. The token layer + self-hosted fonts were built and **frozen in Phase B**; they live in `src/index.css` (~330 lines). Dark mode via `data-theme="dark"` (set on `<html>` by `@jazzlore/music-core` `applyTheme`).
+- **Data:** Neo4j Aura Free, read-only from this app. Schema in `apps/musicians/docs/FRONTEND.md`; confirmed field names live in `apps/musicians/docs/data-audit.md`.
 - **Data access:** the BFF talks to Aura via the **Aura HTTP Query API + `fetch`** — **NEVER `neo4j-driver`** (Cloudflare's V8 runtime doesn't support it; do not `npm i neo4j-driver`).
 - **Runtime:** a single **unified Cloudflare Worker** — static assets + `/api/*` fetch handler + (Phase 4) HTMLRewriter OG injection. `wrangler.musicians.jsonc` at repo root has a Worker `main` entry + an `ASSETS` assets binding. **There is no Pages `functions/` directory and there will not be one.** Worker entry: `apps/musicians/worker/index.ts`.
 - **Shared UI:** reuse is limited to `@jazzlore/ui` `ThemeToggle` + the app `useTheme()` pattern (`src/lib/useTheme.ts`). `@jazzlore/music-core` contributes only `applyTheme/resolveInitialTheme/setOverride`; no music-theory code here (the ESLint `no-restricted-imports` boundary is unchanged).
@@ -30,11 +30,18 @@ The third sub-site of the Jazzlore portfolio: a public, polished, mobile-first j
 ## Source structure (`apps/musicians/src/`)
 
 ```
-data/             curated.ts — hand-picked musician IDs + hand-written hook lines (Phase B/C)
-lib/              pure, React-free, fetch-free domain types + mappers + link/caption builders + accent-fold (Phase B); useTheme wrapper
+App.tsx           Router shell (BrowserRouter + Routes)
+main.tsx          Entry; mounts <App/>; applies initial theme
+index.css         Frozen token layer + self-hosted fonts (Phase B)
+components/       Cross-feature presentational pieces (OverflowMenu, ConnRow, EraStrip, Duo3, MosaicV4, …)
+features/         Feature-scoped views + hooks (detail/, graph/, home/, search/, status/)
+hooks/            Cross-feature hooks (useTitle, useIsDesktop, useMosaicScrollPulse, …)
+data/             curated.ts — hand-picked musician IDs + hand-written hook lines
+lib/              Pure, React-free, fetch-free domain types + mappers + builders + accent-fold (FROZEN — byte-identical since cfd3540); useTheme wrapper
 pages/            Route components (HomePage, MusicianPage)
-test/setup.ts     vitest setup (jest-dom + localStorage polyfill for Node 26 + jsdom 29 + Vitest 4)
-worker/index.ts   unified Cloudflare Worker (static assets + /api/*; Phase C fills the BFF)
+test/             vitest setup (jest-dom + localStorage polyfill for Node 26 + jsdom 29 + Vitest 4) + fixtures
+
+apps/musicians/worker/   unified Cloudflare Worker (index, cypher, endpoints, era, aura, duplicates, og)
 ```
 
 ## BFF / Cypher conventions
@@ -45,9 +52,9 @@ worker/index.ts   unified Cloudflare Worker (static assets + /api/*; Phase C fil
 - Endpoints (Phase C): `/api/musicians/curated`, `/api/musicians/:id`, `/api/musicians/:id/graph`, `/api/musicians/search-index`, `/api/health`. Edge cache: curated 12h, detail 1–2h, search-index 6h, health no-store.
 - Credentials (`NEO4J_URI/USERNAME/PASSWORD`) live only in Cloudflare env + local `.dev.vars` (gitignored) — never in the bundle or repo.
 
-### Live-Aura-smoke rule
+### Live-Aura-smoke rule (evergreen)
 
-> Before any Phase C commit that changes Cypher or Aura-response parsing, run the Aura smoke against live Aura locally and record the result in the PR. Not CI, not every commit — a mandatory manual gate for declaring Phase C green.
+> Before any commit that changes Cypher or Aura-response parsing, run the Aura smoke against live Aura locally and record the result in the PR. Not CI, not every commit — a mandatory manual gate for any BFF / data-shape change. (Originally scoped to Phase C; now evergreen post-shipping.)
 
 ## Image attribution (legal requirement, not polish)
 
