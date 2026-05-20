@@ -70,7 +70,11 @@ function themeOf(page: Page): Promise<string | null> {
 async function setTheme(page: Page, want: 'light' | 'dark'): Promise<void> {
   if ((await themeOf(page)) === want) return
   const before = await themeOf(page)
-  await page.getByRole('button', { name: 'Toggle theme' }).first().click()
+  // Group C item 7: the theme toggle now lives inside the header "···"
+  // overflow menu — open the menu (when present) before clicking it.
+  const more = page.getByRole('button', { name: 'More options' })
+  if (await more.count()) await more.first().click()
+  await page.getByRole('button', { name: 'Toggle theme' }).click()
   await expect.poll(() => themeOf(page)).not.toBe(before)
   await expect.poll(() => themeOf(page)).toBe(want)
 }
@@ -420,6 +424,46 @@ test.describe('joint-fix acceptance — Group C BFF (items 1 + 4a)', () => {
     // are all documented in his live record.
     expect(subtitle).not.toMatch(/^Bebop\b/)
     expect(subtitle).toMatch(/cool|modal|fusion|jazz/i)
+  })
+})
+
+/**
+ * Group C item 7 — header "···" overflow menu acceptance.
+ *
+ * The top-right slot of the header is now an overflow-menu trigger
+ * (aria-label "More options"). Clicking it opens a role="menu" containing
+ * the theme toggle as a menuitem. This is a DOM-structure assertion (the
+ * a11y shape is the contract), so one viewport is enough.
+ */
+test.describe('joint-fix acceptance — Group C overflow menu (item 7)', () => {
+  test.skip(!ENABLED, 'PREVIEW_BASE not set — joint-fix acceptance suite is no-op')
+
+  test.use({ viewport: { width: 1024, height: 768 } })
+
+  test('Top-right slot is the "More options" button + opens to menu containing the theme toggle', async ({
+    page,
+  }) => {
+    await page.goto('/musicians')
+    await expect(
+      page.getByRole('heading', { level: 1, name: /step into a musician/i }),
+    ).toBeVisible({ timeout: 15_000 })
+    const trigger = page.getByRole('button', { name: /more options/i })
+    await expect(trigger).toBeVisible()
+    // While closed: ARIA wiring announces a collapsed menu button.
+    await expect(trigger).toHaveAttribute('aria-haspopup', 'menu')
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+    // Theme toggle is not in the DOM until the menu opens.
+    await expect(page.getByRole('button', { name: /toggle theme/i })).toHaveCount(0)
+
+    await trigger.click()
+    await expect(trigger).toHaveAttribute('aria-expanded', 'true')
+    const menu = page.getByRole('menu', { name: /more options/i })
+    await expect(menu).toBeVisible()
+    await expect(
+      menu.getByRole('menuitem').filter({
+        has: page.getByRole('button', { name: /toggle theme/i }),
+      }),
+    ).toBeVisible()
   })
 })
 

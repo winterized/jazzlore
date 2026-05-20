@@ -225,6 +225,60 @@
   text-overflow: ellipsis;
 }
 
+/* ─────────────────────── Overflow menu (header top-right) ───────────
+ *
+ * Group C item 7. Replaces the bare `<ThemeToggleButton />` in the header.
+ * The trigger is a `.ic`-sized affordance ("⋯") that opens a small popover
+ * containing the theme toggle (and any future menu items).
+ *
+ * Position: the wrapper is `position: relative` so the popover anchors to
+ * the trigger; the popover floats RIGHT-aligned just below the trigger
+ * and is given `z-index` higher than the sticky `.hdr` (z-index 20 above)
+ * so it never gets clipped by the header. */
+.mu3 .overflow-menu {
+  position: relative;
+  display: inline-flex;
+}
+.mu3 .overflow-trigger {
+  /* Inherits .ic sizing (32 × 32, rounded border, hover ink). The "⋯"
+     glyph wants a touch more line-height to optically center. */
+  font-size: 18px;
+  line-height: 1;
+  letter-spacing: 0;
+  padding: 0 0 4px;
+}
+.mu3 .overflow-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 160px;
+  padding: 6px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.18);
+  z-index: 30; /* above .hdr (z-index 20) so it never gets clipped */
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.mu3 .overflow-menuitem {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.mu3 .overflow-menuitem > button {
+  width: 100%;
+  justify-content: flex-start;
+}
+/* Focus-visible ring on the trigger — matches the `.home-card:focus-visible`
+   pattern (line 1081). The browser default ring composites poorly against
+   the header's backdrop-filter blur, so we set an explicit outline. */
+.mu3 .overflow-trigger:focus-visible {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 2px;
+}
+
 /* ─────────────────────── Identity banner (mobile) ───────────────────── */
 .mu3 .ident {
   display: grid;

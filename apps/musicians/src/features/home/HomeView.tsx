@@ -12,7 +12,7 @@ import type { CuratedCard } from '../../lib/types'
 import { attributionCaption } from '../../lib/attribution'
 import { Shell } from '../../components/Shell'
 import { Duo3 } from '../../components/Duo3'
-import { ThemeToggleButton } from '../../components/ThemeToggleButton'
+import { OverflowMenu } from '../../components/OverflowMenu'
 import { HomeSearchInput } from './HomeSearchInput'
 
 /** First home row eager-loads its portraits so the above-the-fold LCP image
@@ -42,7 +42,7 @@ export function HomeView({ curated, searchSlot }: Props) {
             Jazz<b>lore</b> · Musicians
           </div>
           <div className="spacer" />
-          <ThemeToggleButton />
+          <OverflowMenu />
         </div>
       </header>
 

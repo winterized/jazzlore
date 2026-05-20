@@ -72,10 +72,16 @@ function theme(page: Page): Promise<string | null> {
   return page.locator('html').getAttribute('data-theme')
 }
 
-/** Flip the theme via the toggle and wait for the <html data-theme> flip. */
+/** Flip the theme via the toggle and wait for the <html data-theme> flip.
+ *  The header toggle moved INSIDE the "···" overflow menu (Group C item 7).
+ *  The waking-state preview still renders a bare `<ThemeToggleButton />`
+ *  with no overflow wrapper, so we conditionally open the menu only when
+ *  it's present. */
 async function flipTheme(page: Page): Promise<void> {
   const before = await theme(page)
-  await page.getByRole('button', { name: 'Toggle theme' }).first().click()
+  const more = page.getByRole('button', { name: 'More options' })
+  if (await more.count()) await more.first().click()
+  await page.getByRole('button', { name: 'Toggle theme' }).click()
   await expect.poll(() => theme(page)).not.toBe(before)
 }
 
