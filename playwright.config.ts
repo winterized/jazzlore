@@ -39,5 +39,11 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
     },
+    {
+      command: 'pnpm -F @jazzlore/metronome dev',
+      url: 'http://localhost:5176',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+    },
   ],
 })

@@ -1,0 +1,20 @@
+// Cloudflare Workers Static Assets — `metronome.jazzlore.com`.
+// Clone of wrangler.chords.jsonc: assets-only SPA (no Worker `main`). The
+// metronome has no backend; everything runs client-side. React-Router is NOT
+// used here (single screen, no routes), but `not_found_handling:
+// "single-page-application"` still applies so any URL serves index.html.
+//
+// Custom-domain binding (metronome.jazzlore.com) is a one-time Cloudflare
+// dashboard step — first deploy lands at jazzlore-metronome.workers.dev.
+//
+// Compatibility date matches the siblings (jazzlore / jazzlore-chords /
+// jazzlore-musicians).
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "jazzlore-metronome",
+  "compatibility_date": "2026-05-12",
+  "assets": {
+    "directory": "./apps/metronome/dist",
+    "not_found_handling": "single-page-application"
+  }
+}
