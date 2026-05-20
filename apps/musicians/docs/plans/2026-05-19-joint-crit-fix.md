@@ -603,3 +603,30 @@ B3 against the corrected layout.
 
 **No code is touched by this plan.** The next action after approval is Phase 0
 PR #0, not stream kickoff.
+
+---
+
+## Resolution (2026-05-20) — shipped end-to-end
+
+This plan executed cleanly. All four PRs merged to `main` and are live on
+`https://musicians.jazzlore.com`:
+
+| PR | Stream | Commit | Notes |
+|---|---|---|---|
+| [#27](https://github.com/winterized/jazzlore/pull/27) | Phase 0 — harness + diagnostics + plan persistence | `f8c7733` | Coordinator-owned. `tests/e2e/musicians-joint-fix-acceptance.spec.ts` (NEW), parameterized a11y + baseline-capture, `--url` on lighthouse. Antoine fixture ID `Q2856321` kept as the test double; live-DB Antoine `Q586360` used for live-prod predicates only. |
+| [#29](https://github.com/winterized/jazzlore/pull/29) | Group A — CSS structural fix | `b6ae6f4` | `.mu3 .desk-rail { min-width: 0 }` (CRIT-1 cure) + `.mu3 .desk-graph { position: sticky; top: 0; align-self: start; height: 100vh; height: 100dvh }` inside `@media (min-width: 1024px)` (CRIT-2 cure). Records-dump self-resolves via the same `min-width:0` on the grid item. |
+| [#28](https://github.com/winterized/jazzlore/pull/28) | Group B — era-strip data wiring | `2e6f935` | New `peersByEraCypher` (through-record collaborator exclusion); `sameEra: EraItem[]` attached as a sibling on `/api/musicians/:id` (frozen `MusicianDetail` untouched). |
+| [#30](https://github.com/winterized/jazzlore/pull/30) | Phase B3 follow-up | `a32f59b` | Post-merge data finding: Antoine returns 12 era-inappropriate peers (NULL `years_active_*` opens the year window). Live-test predicate "Antoine absent" was wrong given actual data; relaxed and filed the data-shape concern to Group C. |
+
+**Live-verified evidence:**
+- `miles-m390-light.png` went from **14624 × 14129 px (~80 MB)** pre-fix to
+  **390 × 3297 px (580 KB)** post-fix — the CRIT-1 prediction reproduced
+  exactly as a screenshot, then cured.
+- Miles `sameEra` = 12 peers (Freddie Hubbard, Sun Ra, Art Pepper, …).
+- 21-test acceptance matrix passed against `musicians.jazzlore.com` at
+  the end of Group A+B (later extended to 29 with Group C's predicates).
+
+The diagnostics at `apps/musicians/docs/diagnostics/` remain the
+authoritative record of what was wrong; this plan is the record of how
+it was fixed. The `docs/plans/2026-05-20-group-c-polish.md` plan picked
+up the polish + the deferred Phase B3 data-shape concern.

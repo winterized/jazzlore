@@ -235,3 +235,34 @@ In every fallback, **C-bff first** (highest user-value), then the rest.
 
 **No code is touched by this plan.** Next action after approval is the
 pre-flight `comm -12` against the table above + Wave 1 spawn.
+
+---
+
+## Resolution (2026-05-20) — shipped end-to-end
+
+All five PRs merged to `main` and are live on `https://musicians.jazzlore.com`:
+
+| PR | Wave | Items | Commit |
+|---|---|---|---|
+| [#31](https://github.com/winterized/jazzlore/pull/31) | 1 — BFF cluster | Item 1 (era peers NULL gate) + item 4a (curated subtitle uses `genres[0]`) + plan + populator follow-up note | `f47c347` |
+| [#32](https://github.com/winterized/jazzlore/pull/32) | 1 — title hook | Item 6 (`useTitle` with planted-sentinel e2e proving client-side nav) | `169f187` |
+| [#33](https://github.com/winterized/jazzlore/pull/33) | 1 — header menu | Item 7 (`OverflowMenu` with full WAI-ARIA menu-button pattern) | `b7edda4` |
+| [#34](https://github.com/winterized/jazzlore/pull/34) | 2 — identity polish | Items 2 (meta chain — cap instrument + full `genres` array) + 3 (bio teaser = first sentence, full bio in sheet) | `3877349` |
+| [#35](https://github.com/winterized/jazzlore/pull/35) | (verify only) | Item 8 (mosaic verification — PASS on prod, duotone + size ratio 3.10 + pulse 151ms onset / 1540ms offset) | `bce8360` |
+
+**Deferred items, tracked as GitHub issues:**
+- [#36](https://github.com/winterized/jazzlore/issues/36) — Item 4b
+  (populator-side primary_instrument data quality; Mingus = piano in Aura
+  is an upstream bug we own; don't shim the consumer).
+- [#37](https://github.com/winterized/jazzlore/issues/37) — Item 5
+  (ConnRow relationship/context; needs editorial data source — three
+  candidate sources documented).
+
+**Live acceptance gate:** 29 predicates pass against `musicians.jazzlore.com`
+at the end of Wave 2 (Stream A + Stream B + Group C items 1, 2, 3, 4a,
+6, 7).
+
+The diagnostics at `apps/musicians/docs/diagnostics/` are the
+authoritative record of what was wrong; this plan + the joint fix plan
+at `docs/plans/2026-05-19-joint-crit-fix.md` are the records of how
+they were fixed.
