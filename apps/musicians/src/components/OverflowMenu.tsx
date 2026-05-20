@@ -11,8 +11,14 @@
 //     aria-controls={menuId}> — the WAI-ARIA "menu button" pattern.
 //   - Popover: <div role="menu" id={menuId}> — children are role="menuitem".
 //   - Close on: Escape (returns focus to the trigger), outside-click,
-//     selecting a menu item, or losing focus to outside the menu.
+//     or losing keyboard focus to outside the menu.
 //   - Open: focus moves into the first menu item.
+//
+// NOTE — we intentionally do NOT auto-close after the theme toggle is
+// activated. The toggle is a fast-preview action: users may want to flip
+// light → dark, observe, then flip back without re-opening the menu each
+// time. If future menu items are added (navigation, settings) they should
+// close the menu on activation per APG.
 //
 // We deliberately do NOT focus-trap the menu — it's a popover, not a modal.
 // Tabbing OUT of the menu closes it and leaves focus where Tab landed (the
@@ -58,7 +64,6 @@ export function OverflowMenu() {
     if (!open) return
     function onKeyDown(e: KeyboardEvent): void {
       if (e.key === 'Escape') {
-        e.preventDefault()
         setOpen(false)
         triggerRef.current?.focus()
       }

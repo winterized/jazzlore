@@ -98,6 +98,16 @@ describe('OverflowMenu', () => {
     expect(screen.queryByRole('menu')).toBeNull()
   })
 
+  it('clicking the trigger while open closes the menu', async () => {
+    const user = userEvent.setup()
+    render(<OverflowMenu />)
+    const trigger = screen.getByRole('button', { name: /more options/i })
+    await user.click(trigger)
+    expect(screen.getByRole('menu')).toBeInTheDocument()
+    await user.click(trigger) // toggle close
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+  })
+
   it('keeps the menu open when clicking inside it', async () => {
     const user = userEvent.setup()
     render(<OverflowMenu />)

@@ -271,6 +271,13 @@
   width: 100%;
   justify-content: flex-start;
 }
+/* Focus-visible ring on the trigger — matches the `.home-card:focus-visible`
+   pattern (line 1081). The browser default ring composites poorly against
+   the header's backdrop-filter blur, so we set an explicit outline. */
+.mu3 .overflow-trigger:focus-visible {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 2px;
+}
 
 /* ─────────────────────── Identity banner (mobile) ───────────────────── */
 .mu3 .ident {
