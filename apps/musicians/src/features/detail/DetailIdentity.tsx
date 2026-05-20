@@ -9,19 +9,7 @@ import type { MusicianDetail } from '../../lib/types'
 import { spotifyMusicianUrl, appleMusicMusicianUrl } from '../../lib/links'
 import { AttribPhoto } from '../../components/Attrib'
 import { SpotifyIcon, AppleIcon } from '../../components/icons'
-
-function metaLine(d: MusicianDetail): string {
-  const bits: string[] = []
-  const inst = d.primaryInstruments[0]
-  if (inst) bits.push(inst)
-  if (d.era) bits.push(d.era)
-  const start = d.birthYear ?? d.yearsActiveStart
-  if (start !== undefined) {
-    const end = d.deathYear
-    bits.push(end !== undefined ? `${start}–${end}` : `${start}–present`)
-  }
-  return bits.join(' · ')
-}
+import { metaLine, firstSentence } from './detailIdentityMeta'
 
 export function DetailIdentity({
   d,
@@ -59,8 +47,8 @@ export function DetailIdentity({
 
       <section className="bio" aria-label="Biography">
         {d.bioSummary ? (
-          <p>
-            {d.bioSummary}
+          <p className="bio-teaser">
+            <em>{firstSentence(d.bioSummary)}</em>
             <a className="more" href="#about">
               More about {firstName} →
             </a>

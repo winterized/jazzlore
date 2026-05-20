@@ -467,6 +467,91 @@ test.describe('joint-fix acceptance — Group C overflow menu (item 7)', () => {
   })
 })
 
+/**
+ * Group C item 2 — identity meta chain (PR `fix/musicians-c-meta`).
+ *
+ * The detail-page meta line under the H1 now renders the FULL `genres` chain
+ * (each capitalized) + capitalized primary instrument + the years range —
+ * NOT the single-bucket `deriveEra` label. Pre-fix Miles read
+ * `trumpet · Bebop · 1926–1991`; post-fix it reads
+ * `Trumpet · Cool jazz · Modal jazz · Jazz fusion · 1926–1991`
+ * (or whatever ordering Aura emits — we assert shape, not exact wording).
+ *
+ * Pre-merge run against current prod will FAIL until this PR deploys; that
+ * is the same shape as the other Group C acceptance gates.
+ */
+test.describe('joint-fix acceptance — Group C meta (item 2)', () => {
+  test.skip(!ENABLED, 'PREVIEW_BASE not set — joint-fix acceptance suite is no-op')
+
+  test.use({ viewport: { width: 390, height: 844 } })
+
+  test('Miles meta line is the cap-instrument + genre-chain + years format', async ({
+    page,
+  }) => {
+    await page.goto(MILES)
+    await expect(
+      page.getByRole('heading', { level: 1, name: /miles davis/i }),
+    ).toBeVisible({ timeout: 15_000 })
+    const meta = page.locator('.ml').first()
+    await expect(meta).toBeVisible()
+    const text = (await meta.textContent()) ?? ''
+    // Capitalized instrument leads.
+    expect(text).toMatch(/^Trumpet/)
+    // At least one of Miles' documented Aura genres is present (cool / modal
+    // / fusion / jazz — covers the chain whatever ordering Aura returns).
+    expect(text).toMatch(/cool|modal|fusion|jazz/i)
+    // Years range (en-dash, em-dash, or hyphen — the existing code uses an
+    // en-dash but we keep the predicate forgiving against typographic drift).
+    expect(text).toMatch(/1926[–-]1991/)
+    // NOT the old single-Bebop format.
+    expect(text).not.toMatch(/^trumpet · Bebop/)
+  })
+})
+
+/**
+ * Group C item 3 — bio teaser + sheet full-bio (PR `fix/musicians-c-meta`).
+ *
+ * The detail-page bio is now a single italic first-sentence teaser inside
+ * `.bio-teaser em`. The full bio still renders in the "More about" sheet
+ * (deliberate non-dedup — the sheet is a separate context, having the full
+ * bio with the teaser-sentence at top is fine per the Group C plan).
+ */
+test.describe('joint-fix acceptance — Group C bio (item 3)', () => {
+  test.skip(!ENABLED, 'PREVIEW_BASE not set — joint-fix acceptance suite is no-op')
+
+  test.use({ viewport: { width: 390, height: 844 } })
+
+  test('Miles bio teaser is one italic line; sheet shows the full bio', async ({
+    page,
+  }) => {
+    await page.goto(MILES)
+    await expect(
+      page.getByRole('heading', { level: 1, name: /miles davis/i }),
+    ).toBeVisible({ timeout: 15_000 })
+    const teaser = page.locator('.bio-teaser em').first()
+    await expect(teaser).toBeVisible()
+    const teaserText = (await teaser.textContent()) ?? ''
+    expect(teaserText.length).toBeGreaterThan(0)
+    // First sentence — bounded above so a regression that prints the whole
+    // multi-paragraph bio inline fails loudly.
+    expect(teaserText.length).toBeLessThan(250)
+    // Italic style — the `.mu3 .bio p` CSS already provides italic; the
+    // <em> inherits it. Reading computed style ensures the rendered effect.
+    const fontStyle = await teaser.evaluate(
+      (el) => getComputedStyle(el).fontStyle,
+    )
+    expect(fontStyle).toBe('italic')
+
+    // Open the "More about" sheet via the disclosure link.
+    await page.getByRole('link', { name: /more about miles/i }).click()
+    const dialog = page.getByRole('dialog', { name: /more about miles/i })
+    await expect(dialog).toBeVisible({ timeout: 15_000 })
+    const sheetText = (await dialog.textContent()) ?? ''
+    // Full bio is longer than the teaser — sheet shows the full body.
+    expect(sheetText.length).toBeGreaterThan(300)
+  })
+})
+
 test.describe('joint-fix acceptance — Phase 0 scaffolding', () => {
   test.skip(!ENABLED, 'PREVIEW_BASE not set — joint-fix acceptance suite is no-op')
 
