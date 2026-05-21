@@ -269,9 +269,20 @@ html[data-theme='light'] .mt,
     opacity: 0;
   }
 }
+/* The .bpm-num-wrap holds .bpm-num + the off-screen input as siblings.
+ * Wrapping them lets the input absolutely-position over just the number
+ * (not the whole hero) without nesting an interactive inside the
+ * role=button .bpm-num (axe: 'nested-interactive'). */
+.mt .bpm-num-wrap {
+  position: relative;
+  display: inline-block;
+}
+
 /* The off-screen input that captures iOS virtual-keyboard for BPM editing.
  * Visually invisible but focusable; per CLAUDE.md item 10, must be >=16 px or
- * iOS Safari auto-zooms on focus. */
+ * iOS Safari auto-zooms on focus. pointer-events: none lets taps pass
+ * through to .bpm-num (the click target); programmatic .focus() still
+ * fires the iOS keyboard because focus is gesture-tied, not pointer-tied. */
 .mt .bpm-num-input {
   position: absolute;
   inset: 0;
@@ -285,6 +296,7 @@ html[data-theme='light'] .mt,
   outline: 0;
   caret-color: transparent;
   text-align: center;
+  pointer-events: none;
 }
 .mt .bpm-hero .lab {
   font-family: 'Geist Mono', ui-monospace, monospace;

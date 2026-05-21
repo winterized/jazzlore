@@ -131,7 +131,18 @@ export function metronomeReducer(state: MetronomeState, action: Action): Metrono
     }
 
     case 'SET_MODE': {
-      if (action.mode === state.mode) return state
+      if (action.mode === state.mode) {
+        // Altmeasure has an explicit toggle-off: tapping the active card
+        // returns to 'custom' (the implicit fourth state). The other modes
+        // ('all', 'backbeat') only deactivate via dot edits per the design
+        // — that asymmetry exists because altmeasure is a measure-level
+        // flag with no pattern-edit affordance to clear it through, while
+        // the other two leave their imprint on the pattern itself.
+        if (action.mode === 'altmeasure') {
+          return { ...state, mode: 'custom', altMeasureSilent: false }
+        }
+        return state
+      }
       const pattern = modeToPattern(action.mode, state.beats, state.pattern)
       return {
         ...state,

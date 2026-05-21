@@ -151,6 +151,34 @@ describe('SET_MODE', () => {
     expect(after.mode).toBe('custom')
     expect(after.pattern).toEqual(before.pattern)
   })
+
+  it("SET_MODE 'altmeasure' when already 'altmeasure' UNTOGGLES to 'custom'", () => {
+    let s = metronomeReducer(init(), { type: 'SET_MODE', mode: 'altmeasure' })
+    expect(s.mode).toBe('altmeasure')
+    // Pretend the engine flipped the silent flag on the off bar
+    s = { ...s, altMeasureSilent: true }
+    s = metronomeReducer(s, { type: 'SET_MODE', mode: 'altmeasure' })
+    expect(s.mode).toBe('custom')
+    expect(s.altMeasureSilent).toBe(false) // re-armed for the next session
+  })
+
+  it("SET_MODE 'all' / 'backbeat' when already active is a no-op (clear via dot edits)", () => {
+    // 'all' is the default initial mode
+    const before = init()
+    expect(before.mode).toBe('all')
+    const afterAll = metronomeReducer(before, { type: 'SET_MODE', mode: 'all' })
+    expect(afterAll).toBe(before)
+
+    const backbeatActive = metronomeReducer(init(), {
+      type: 'SET_MODE',
+      mode: 'backbeat',
+    })
+    const afterBackbeat = metronomeReducer(backbeatActive, {
+      type: 'SET_MODE',
+      mode: 'backbeat',
+    })
+    expect(afterBackbeat).toBe(backbeatActive)
+  })
 })
 
 describe('BPM editing', () => {
