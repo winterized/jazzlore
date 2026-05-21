@@ -93,18 +93,17 @@ describe('HomeView', () => {
     expect(credits.length).toBeLessThan(CURATED.length)
   })
 
-  it('renders the overflow menu trigger (theme toggle moved inside the menu — Group C item 7)', () => {
+  it('renders the theme toggle directly in the header (no overflow menu)', () => {
     setup()
-    // Header now renders the "···" overflow menu, not the bare theme
-    // toggle (which is one of its menu items, reachable after the menu
-    // opens — see OverflowMenu.test.tsx for the menu behaviour).
+    // User feedback overrode the Group C item 7 design: the theme toggle
+    // was buried behind a "···" overflow trigger that obscured it
+    // visually. Header now renders <ThemeToggleButton /> directly in the
+    // top-right slot. The overflow menu is gone.
     expect(
-      screen.getByRole('button', { name: /more options/i }),
+      screen.getByRole('button', { name: /toggle theme/i }),
     ).toBeInTheDocument()
-    // The theme toggle is mounted only once the menu opens; while closed
-    // it must NOT be in the DOM (the popover is hidden, not present).
     expect(
-      screen.queryByRole('button', { name: /toggle theme/i }),
+      screen.queryByRole('button', { name: /more options/i }),
     ).toBeNull()
   })
 })
