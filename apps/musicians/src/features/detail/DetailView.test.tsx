@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MODERATE, RICH, SPARSE } from '../../test/fixtures'
-import { fixtureSource } from '../../hooks/useMusicianData'
+import { fixtureSource, type DataSource } from '../../hooks/useMusicianData'
 import { DetailView } from './DetailView'
 
 function setup(detail = MODERATE, opts: { duplicate?: boolean } = {}) {
@@ -248,5 +248,77 @@ describe('DetailView — desktop graph panel (lazy, ≥1024px only)', () => {
         expect.stringContaining('Miles Davis'),
       ),
     )
+  })
+})
+
+describe('DetailView — collaborator portraits via byIds', () => {
+  it('mosaic and ConnRow render <img> once byIds resolves with portrait data', async () => {
+    // Build a source that returns portrait data for the first collaborator.
+    const firstCollab = RICH.collaborators[0]!
+    const portraitUrl = 'https://example.test/collab-portrait.jpg'
+
+    const sourceWithPortraits: DataSource = {
+      ...fixtureSource,
+      byIds: async () => ({
+        items: [
+          {
+            id: firstCollab.id,
+            name: firstCollab.name,
+            photo: true,
+            portrait: {
+              url: portraitUrl,
+              license: 'CC BY-SA 3.0',
+              attribution: 'Test Photographer',
+            },
+            primaryInstrument: firstCollab.instrument,
+          },
+        ],
+      }),
+    }
+
+    render(
+      <MemoryRouter>
+        <DetailView detail={RICH} source={sourceWithPortraits} />
+      </MemoryRouter>,
+    )
+
+    // After byIds resolves, the mosaic tile and the ConnRow for the first
+    // collaborator should both render an <img> with the portrait URL.
+    await waitFor(() => {
+      // At least one <img> with the portrait URL must appear (mosaic or rail).
+      const imgs = screen.getAllByRole('img')
+      const portraitImgs = imgs.filter(
+        (img) => img.getAttribute('src') === portraitUrl,
+      )
+      expect(portraitImgs.length).toBeGreaterThan(0)
+    })
+  })
+
+  it('keeps monogram fallback (no collab portrait imgs) when byIds rejects', async () => {
+    // Use SPARSE (Antoine — photo:false, no portrait) so the identity hero
+    // emits zero <img> elements. If byIds fails, collaborator tiles also
+    // emit zero <img> elements → total remains 0.
+    const failingSource: DataSource = {
+      ...fixtureSource,
+      byIds: async () => {
+        throw new Error('byIds failed')
+      },
+    }
+
+    render(
+      <MemoryRouter>
+        <DetailView detail={SPARSE} source={failingSource} />
+      </MemoryRouter>,
+    )
+
+    // Give the failure a tick to settle, then confirm the page renders fine.
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', { level: 1, name: /antoine herv/i }),
+      ).toBeInTheDocument()
+    })
+
+    // SPARSE has no portrait (photo:false) and byIds failed → zero <img>.
+    expect(screen.queryAllByRole('img')).toHaveLength(0)
   })
 })

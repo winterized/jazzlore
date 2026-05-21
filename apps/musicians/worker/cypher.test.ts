@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
   assertReadOnly,
+  byIdsCypher,
   curatedCypher,
   detailCypher,
   healthCypher,
   peersByEraCypher,
+  reshapeByIds,
   reshapeCount,
   reshapeDetail,
   reshapeMusicianRows,
@@ -205,5 +207,108 @@ describe('detailCypher — collaborator ordering (ranking bug guard)', () => {
     expect(order).toBeGreaterThan(-1)
     expect(collect).toBeGreaterThan(-1)
     expect(order).toBeLessThan(collect)
+  })
+})
+
+describe('byIdsCypher — read-only, parameterized, $ids', () => {
+  it('passes the read-only guard and is parameterized on $ids', () => {
+    expect(() => byIdsCypher()).not.toThrow()
+    const q = byIdsCypher()
+    expect(q).toContain('$ids')
+    expect(q).not.toMatch(/\b(CREATE|MERGE|SET|DELETE|REMOVE)\b/)
+  })
+
+  it('returns the expected projection columns', () => {
+    const q = byIdsCypher()
+    expect(q).toContain('picture_url')
+    expect(q).toContain('picture_license')
+    expect(q).toContain('picture_attribution')
+    expect(q).toContain('primary_instruments')
+  })
+})
+
+describe('reshapeByIds → ByIdsItem[]', () => {
+  it('happy path: maps all fields, derives photo from picture_url', () => {
+    const result: AuraResult = {
+      fields: [
+        'id',
+        'name',
+        'picture_url',
+        'picture_license',
+        'picture_attribution',
+        'primary_instruments',
+      ],
+      values: [
+        [
+          'wikidata:Q93341',
+          'Miles Davis',
+          'https://commons.example/miles.jpg',
+          'CC BY-SA 3.0',
+          'Tom Palumbo',
+          ['trumpet'],
+        ],
+        // No picture_url → photo:false; no instruments → no primaryInstrument.
+        ['wikidata:Q2856321', 'Antoine Hervé', '', '', '', []],
+      ],
+    }
+
+    const items = reshapeByIds(result)
+    expect(items).toHaveLength(2)
+    expect(items[0]).toEqual({
+      id: 'wikidata:Q93341',
+      name: 'Miles Davis',
+      photo: true,
+      portrait: {
+        url: 'https://commons.example/miles.jpg',
+        license: 'CC BY-SA 3.0',
+        attribution: 'Tom Palumbo',
+      },
+      primaryInstrument: 'trumpet',
+    })
+    expect(items[1]).toEqual({
+      id: 'wikidata:Q2856321',
+      name: 'Antoine Hervé',
+      photo: false,
+      portrait: {},
+    })
+  })
+
+  it('drops rows with missing id or name', () => {
+    const result: AuraResult = {
+      fields: [
+        'id',
+        'name',
+        'picture_url',
+        'picture_license',
+        'picture_attribution',
+        'primary_instruments',
+      ],
+      values: [
+        // Missing id → dropped.
+        [null, 'Ghost', '', '', '', []],
+        // Missing name → dropped.
+        ['wikidata:Q1', null, '', '', '', []],
+        // Valid row → kept.
+        ['wikidata:Q2', 'Valid', '', '', '', []],
+      ],
+    }
+    const items = reshapeByIds(result)
+    expect(items).toHaveLength(1)
+    expect(items[0]!.id).toBe('wikidata:Q2')
+  })
+
+  it('returns empty array for an empty result', () => {
+    const result: AuraResult = {
+      fields: [
+        'id',
+        'name',
+        'picture_url',
+        'picture_license',
+        'picture_attribution',
+        'primary_instruments',
+      ],
+      values: [],
+    }
+    expect(reshapeByIds(result)).toEqual([])
   })
 })

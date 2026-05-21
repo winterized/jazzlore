@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
+  handleByIds,
   handleCurated,
   handleDetail,
   handleGraph,
@@ -9,6 +10,7 @@ import {
 import type { Env } from './env'
 import * as auraMod from './aura'
 import {
+  BY_IDS_RESULT,
   CURATED_PARTIAL,
   DETAIL_MILES,
   DETAIL_NOT_FOUND,
@@ -230,5 +232,60 @@ describe('cold-Aura waking path', () => {
     const res = await handleHealth({ ASSETS: ENV.ASSETS } as Env)
     expect(res.status).toBe(503)
     expect(await res.json()).toMatchObject({ error: 'aura-not-configured' })
+  })
+})
+
+describe('handleByIds', () => {
+  it('happy path: returns ByIdsResponse with items for resolved ids', async () => {
+    stubAura(BY_IDS_RESULT)
+    const res = await handleByIds(ENV, 'wikidata:Q93341,wikidata:Q7346')
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as {
+      items: {
+        id: string
+        name: string
+        photo: boolean
+        portrait: { url?: string; license?: string; attribution?: string }
+        primaryInstrument?: string
+      }[]
+    }
+    expect(body.items).toHaveLength(2)
+    const miles = body.items.find((i) => i.id === 'wikidata:Q93341')!
+    expect(miles.name).toBe('Miles Davis')
+    expect(miles.photo).toBe(true)
+    expect(miles.portrait.url).toBe('https://commons.example/miles.jpg')
+    expect(miles.portrait.license).toBe('CC BY-SA 3.0')
+    expect(miles.portrait.attribution).toBe('Tom Palumbo')
+    expect(miles.primaryInstrument).toBe('trumpet')
+    const trane = body.items.find((i) => i.id === 'wikidata:Q7346')!
+    expect(trane.photo).toBe(true)
+    // Empty attribution string → absent from portrait (not present as '').
+    expect(trane.portrait).not.toHaveProperty('attribution')
+  })
+
+  it('caps at 20 ids — returns 400 when more than 20 ids supplied', async () => {
+    const ids = Array.from({ length: 21 }, (_, i) => `wikidata:Q${i}`).join(',')
+    const res = await handleByIds(ENV, ids)
+    expect(res.status).toBe(400)
+    expect(await res.json()).toMatchObject({ error: 'too-many-ids', max: 20 })
+  })
+
+  it('returns 400 when the ids param is missing/empty', async () => {
+    const res1 = await handleByIds(ENV, null)
+    expect(res1.status).toBe(400)
+    expect(await res1.json()).toMatchObject({ error: 'missing-ids' })
+
+    const res2 = await handleByIds(ENV, '   ')
+    expect(res2.status).toBe(400)
+    expect(await res2.json()).toMatchObject({ error: 'missing-ids' })
+  })
+
+  it('cold-Aura 503 → frozen waking shape', async () => {
+    vi.spyOn(auraMod, 'auraQuery').mockRejectedValue(
+      new auraMod.AuraWakingError(),
+    )
+    const res = await handleByIds(ENV, 'wikidata:Q93341')
+    expect(res.status).toBe(503)
+    expect(await res.json()).toEqual({ status: 'waking', retryAfter: 10 })
   })
 })

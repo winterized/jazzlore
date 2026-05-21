@@ -106,4 +106,53 @@ describe('httpSource — fetch-backed BFF seam', () => {
     )
     await expect(httpSource.searchIndex()).rejects.toThrow()
   })
+
+  it('GET /api/musicians/by-ids → ByIdsResponse, ids are percent-encoded', async () => {
+    const items = [
+      {
+        id: 'wikidata:Q93341',
+        name: 'Miles Davis',
+        photo: true,
+        portrait: { url: 'https://commons.example/miles.jpg' },
+        primaryInstrument: 'trumpet',
+      },
+    ]
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(jsonResponse({ items }))
+
+    const r = await httpSource.byIds(['wikidata:Q93341'])
+
+    // The colon in the id must be percent-encoded in the query string.
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/musicians/by-ids?ids=wikidata%3AQ93341',
+      expect.objectContaining({ headers: { Accept: 'application/json' } }),
+    )
+    expect(isWaking(r)).toBe(false)
+    if (isWaking(r)) throw new Error('unreachable')
+    expect(r.items).toEqual(items)
+  })
+
+  it('byIds: fixtureSource happy path returns items from CURATED/SEARCH_CORPUS', async () => {
+    // fixtureSource.byIds must work for ids in CURATED or SEARCH_CORPUS.
+    // We import fixtureSource to exercise the in-memory path (no fetch).
+    const { fixtureSource } = await import('./useMusicianData')
+    const { CURATED } = await import('../test/fixtures')
+    // Pick the first curated id — it must resolve to a MusicianMinimal with photo.
+    const firstId = CURATED[0]!.id
+    const r = await fixtureSource.byIds([firstId])
+    expect(isWaking(r)).toBe(false)
+    if (isWaking(r)) throw new Error('unreachable')
+    expect(r.items).toHaveLength(1)
+    expect(r.items[0]!.id).toBe(firstId)
+    expect(r.items[0]!.photo).toBe(CURATED[0]!.photo)
+  })
+
+  it('byIds: fixtureSource returns empty items for unknown ids', async () => {
+    const { fixtureSource } = await import('./useMusicianData')
+    const r = await fixtureSource.byIds(['unknown:Q99999'])
+    expect(isWaking(r)).toBe(false)
+    if (isWaking(r)) throw new Error('unreachable')
+    expect(r.items).toHaveLength(0)
+  })
 })

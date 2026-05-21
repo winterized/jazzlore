@@ -10,6 +10,7 @@
 
 import type { KeyboardEvent, MouseEvent } from 'react'
 import type { Collaborator } from '../lib/types'
+import type { MusicianMinimal } from '../hooks/useMusicianData'
 import { spotifyMusicianUrl, appleMusicMusicianUrl } from '../lib/links'
 import { Duo3 } from './Duo3'
 import { SpotifyIcon, AppleIcon } from './icons'
@@ -19,6 +20,9 @@ type Props = {
   pulse?: boolean
   /** Full-row activation (navigate to the collaborator's detail page). */
   onActivate?: (id: string) => void
+  /** Optional portrait from the batch byIds fetch. When provided, renders the
+   * real photo via Duo3 instead of the monogram-only fallback. */
+  portrait?: MusicianMinimal
 }
 
 // Verbatim per the design contract (README "Connection card · anatomy"):
@@ -32,7 +36,7 @@ function ariaLabel(c: Collaborator): string {
   return `${head} ${count}, ${top}`.trim()
 }
 
-export function ConnRow({ c, pulse, onActivate }: Props) {
+export function ConnRow({ c, pulse, onActivate, portrait }: Props) {
   const activate = (): void => onActivate?.(c.id)
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -58,7 +62,11 @@ export function ConnRow({ c, pulse, onActivate }: Props) {
       onClick={activate}
       onKeyDown={onKeyDown}
     >
-      <Duo3 name={c.name} photo={c.photo} />
+      <Duo3
+        name={c.name}
+        photo={portrait !== undefined ? portrait.photo : c.photo}
+        portrait={portrait?.portrait}
+      />
       <div>
         <div className="nm">{c.name}</div>
         {role && <div className="role">{role}</div>}

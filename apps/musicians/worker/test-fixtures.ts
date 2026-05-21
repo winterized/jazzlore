@@ -152,6 +152,38 @@ export const SEARCH_INDEX = {
   },
 }
 
+// Batch by-ids: two musicians with portrait data, one without.
+export const BY_IDS_RESULT = {
+  data: {
+    fields: [
+      'id',
+      'name',
+      'picture_url',
+      'picture_license',
+      'picture_attribution',
+      'primary_instruments',
+    ],
+    values: [
+      [
+        'wikidata:Q93341',
+        'Miles Davis',
+        'https://commons.example/miles.jpg',
+        'CC BY-SA 3.0',
+        'Tom Palumbo',
+        ['trumpet'],
+      ],
+      [
+        'wikidata:Q7346',
+        'John Coltrane',
+        'https://commons.example/trane.jpg',
+        'Public domain',
+        '',
+        ['tenor saxophone'],
+      ],
+    ],
+  },
+}
+
 // Curated hydration: only 2 of the picked ids resolve in this stub (the first
 // two curated picks — Miles Davis, John Coltrane). The other 10 picks are
 // unresolved in this stub → faithfully dropped. Ids are the canonical

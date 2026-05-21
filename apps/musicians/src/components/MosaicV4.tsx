@@ -6,6 +6,7 @@
 // parent via `onTap`); the pulse fires on scroll-LAND, not here (landmine 7).
 
 import type { Collaborator } from '../lib/types'
+import type { MusicianMinimal } from '../hooks/useMusicianData'
 import { Duo3 } from './Duo3'
 import { initialsOf } from './duotone'
 
@@ -15,6 +16,9 @@ type Props = {
   hero?: boolean
   sparse?: boolean
   onTap?: (id: string) => void
+  /** Optional portrait map from the batch byIds fetch. When a tile's id has
+   * an entry, the real portrait is rendered instead of the monogram fallback. */
+  portraits?: Record<string, MusicianMinimal>
 }
 
 const TILE_CAP = 14
@@ -41,6 +45,7 @@ export function MosaicV4({
   hero = true,
   sparse = false,
   onTap,
+  portraits,
 }: Props) {
   const tiles = collabs.slice(0, TILE_CAP)
   const max = Math.max(1, ...tiles.map((c) => c.sharedRecordCount || 1))
@@ -53,7 +58,12 @@ export function MosaicV4({
     >
       {tiles.map((c, i) => {
         const count = c.sharedRecordCount || 1
-        const noPhoto = c.photo === false
+        // Portrait from byIds enrichment overrides the collaborator stub's
+        // `photo` flag — the stub may have been fetched before picture_url
+        // was populated, while the byIds result has the current value.
+        const portrait = portraits?.[c.id]
+        const resolvedPhoto = portrait !== undefined ? portrait.photo : c.photo
+        const noPhoto = resolvedPhoto === false
         const size = sizeClass(i, count, max, hero, sparse)
         return (
           <button
@@ -66,7 +76,12 @@ export function MosaicV4({
             aria-label={`${c.name}${c.instrument ? `, ${c.instrument}` : ''}, ${count} record${count === 1 ? '' : 's'} together`}
             onClick={() => onTap?.(c.id)}
           >
-            <Duo3 name={c.name} initials={false} photo={c.photo} />
+            <Duo3
+              name={c.name}
+              initials={false}
+              photo={resolvedPhoto}
+              portrait={portrait?.portrait}
+            />
             <span className="mtile-init" aria-hidden="true">
               {initialsOf(c.name)}
             </span>

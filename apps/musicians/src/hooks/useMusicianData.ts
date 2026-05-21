@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react'
 import type {
   CuratedResponse,
   GraphResponse,
+  ImageAttribution,
   MusicianDetailResponse,
   SearchIndexResponse,
 } from '../lib/types'
@@ -23,6 +24,17 @@ import {
   fixtureGraph,
 } from '../test/fixtures'
 
+/** Minimal musician shape returned by `/api/musicians/by-ids`. Contains only
+ * what the portrait-render consumers need (mosaic, ConnRow, journey grid).
+ * Intentionally NOT in the frozen lib/types.ts — it is the by-ids envelope. */
+export interface MusicianMinimal {
+  id: string
+  name: string
+  photo: boolean
+  portrait: ImageAttribution
+  primaryInstrument?: string
+}
+
 /**
  * `/api/musicians/:id` payload with the era-strip peers attached as a
  * SIBLING. The frozen `MusicianDetailResponse` (= `MusicianDetail` in
@@ -34,6 +46,11 @@ import {
  */
 export type MusicianDetailWithEra = MusicianDetailResponse & {
   sameEra?: EraItem[]
+}
+
+/** Response envelope for `/api/musicians/by-ids`. */
+export interface ByIdsResponse {
+  items: MusicianMinimal[]
 }
 
 /** A BFF source: each method resolves the frozen envelope OR a WakingResponse
@@ -52,6 +69,11 @@ export interface DataSource {
   graph(
     id: string,
   ): Promise<GraphResponse | { status: 'waking'; retryAfter: number }>
+  /** Batch-fetch minimal musician data for up to 20 ids. Returns items only
+   * for ids that resolved; unresolved ids are silently absent. */
+  byIds(
+    ids: string[],
+  ): Promise<ByIdsResponse | { status: 'waking'; retryAfter: number }>
 }
 
 /** Fixture-backed source (kept behind the seam for unit tests + the
@@ -61,6 +83,36 @@ export const fixtureSource: DataSource = {
   detail: async (id) => fixtureDetail(id),
   searchIndex: async () => ({ corpus: SEARCH_CORPUS }),
   graph: async (id) => ({ graph: fixtureGraph(id) }),
+  byIds: async (ids) => {
+    // Build minimal shapes from CURATED (has portrait/photo) + SEARCH_CORPUS
+    // (id/name/instrument). CURATED wins when available (richer portrait data).
+    const byId = new Map<string, MusicianMinimal>()
+    for (const c of CURATED) {
+      byId.set(c.id, {
+        id: c.id,
+        name: c.name,
+        photo: c.photo,
+        portrait: c.portrait,
+        primaryInstrument: undefined,
+      })
+    }
+    for (const e of SEARCH_CORPUS) {
+      if (!byId.has(e.id)) {
+        byId.set(e.id, {
+          id: e.id,
+          name: e.name,
+          photo: false,
+          portrait: {},
+          primaryInstrument: e.primaryInstrument,
+        })
+      }
+    }
+    const items: MusicianMinimal[] = ids.flatMap((id) => {
+      const m = byId.get(id)
+      return m !== undefined ? [m] : []
+    })
+    return { items }
+  },
 }
 
 type Waking = { status: 'waking'; retryAfter: number }
@@ -104,6 +156,10 @@ export const httpSource: DataSource = {
   graph: (id) =>
     bffGet<GraphResponse>(
       `/api/musicians/${encodeURIComponent(id)}/graph`,
+    ),
+  byIds: (ids) =>
+    bffGet<ByIdsResponse>(
+      `/api/musicians/by-ids?ids=${ids.map(encodeURIComponent).join(',')}`,
     ),
 }
 
