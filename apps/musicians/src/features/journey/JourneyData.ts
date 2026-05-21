@@ -6,7 +6,9 @@
 //
 // Both ERA_DATA and LABEL_DATA are `Record<slug, JourneyEntry>`. Object key
 // order is meaningful — `JourneyIndexPage` iterates `Object.values(...)` and
-// expects chronological order for eras, founding-year order for labels.
+// expects chronological order for eras, and a jazz-prominence editorial
+// order for labels (NOT strict founding year — Columbia was founded 1888
+// but only entered the jazz canon mid-1950s; placed accordingly).
 
 export type JourneyVariant = 'era' | 'label'
 

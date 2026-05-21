@@ -1,4 +1,7 @@
-// LABEL_DATA — 6 iconic mid-century jazz labels, ordered by founding year.
+// LABEL_DATA — 6 iconic mid-century jazz labels, ordered by their
+// JAZZ-prominence chronology (NOT strict label-founding year — Columbia
+// was founded 1888 as a phonograph company but only became a major jazz
+// label with Miles Davis' signing in 1955, hence its late position).
 // Per the brainstorm decisions (2026-05-21), hand-curated in-repo data —
 // no populator dependency, no BFF endpoint. Each entry: ~10 musicians
 // whose IDs were resolved against the live /api/musicians/search-index.
@@ -54,7 +57,7 @@ const prestige: JourneyEntry = {
 const verve: JourneyEntry = {
   slug: 'verve',
   name: 'Verve',
-  kicker: '— FOUNDED 1956 · LOS ANGELES · NORMAN GRANZ',
+  kicker: '— FOUNDED 1956 · NEW YORK · NORMAN GRANZ',
   h1: 'Verve.',
   subtitle: 'The Songbooks. JATP. The label that built the jazz LP.',
   icon: '◈',
@@ -109,8 +112,8 @@ const riverside: JourneyEntry = {
     { id: 'wikidata:Q708439', name: 'Johnny Griffin', hook: 'Little Giant — fastest tenor in the room.' },
     { id: 'wikidata:Q709873', name: 'Philly Joe Jones', hook: 'Drum Bombs — Miles’ hi-hat conscience as leader.' },
     { id: 'wikidata:Q885774', name: 'Blue Mitchell', hook: 'Trumpet of Horace Silver’s 60s quintet, in bloom on his own.' },
-    { id: 'wikidata:Q539832', name: 'Yusef Lateef', hook: 'World jazz before the term — flute, oboe, and oud.' },
-    { id: 'wikidata:Q711314', name: 'Jimmy Heath', hook: 'Composer of the Heath Brothers — “Gingerbread Boy.”' },
+    { id: 'wikidata:Q707857', name: 'Scott LaFaro', hook: 'Evans’ trio bassist — interactive counterpoint, gone at 25.' },
+    { id: 'wikidata:Q740581', name: 'Paul Motian', hook: 'Evans’ trio drummer — brushes that breathed with the piano.' },
   ],
 }
 

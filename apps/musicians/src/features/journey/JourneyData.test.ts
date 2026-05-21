@@ -52,7 +52,7 @@ describe('ERA_DATA', () => {
 })
 
 describe('LABEL_DATA', () => {
-  it('has the 6 iconic labels in founding-year order', () => {
+  it('has the 6 iconic labels in jazz-prominence order (NOT strict founding year — see data/labels.ts header)', () => {
     expect(Object.keys(LABEL_DATA)).toEqual([
       'blue-note',
       'prestige',
