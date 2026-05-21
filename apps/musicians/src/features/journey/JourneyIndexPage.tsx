@@ -78,13 +78,12 @@ export function JourneyIndexPage({ variant }: Props) {
           }
         >
           {entries.map((e) => (
-            // Explicit role="listitem" because the chip's <li> uses
-            // `display: contents` to participate directly in the parent
-            // grid. Pre-2023 WebKit/Chromium/Firefox dropped the
-            // listitem role under `display: contents`; current engines
-            // restore it, but the explicit role is a cheap a11y
-            // belt-and-suspenders.
-            <li key={e.slug} role="listitem">
+            // The <li> uses `display: contents` to participate directly
+            // in the parent grid. Pre-2023 WebKit / Chromium / Firefox
+            // engines dropped the listitem role under display:contents;
+            // all current engines restore it (and project eslint
+            // jsx-a11y/no-redundant-roles forbids spelling it out).
+            <li key={e.slug}>
               <Link
                 to={`/musicians/journey/${variant}/${e.slug}`}
                 className="journey-picker-chip"
