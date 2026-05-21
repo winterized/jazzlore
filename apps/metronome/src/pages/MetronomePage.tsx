@@ -16,6 +16,7 @@ import { useLayoutMode } from '../features/ui/useLayoutMode'
 import { useWakeLock } from '../features/wakeLock/useWakeLock'
 import { isWkwebview } from '../features/wakeLock/detectWkwebview'
 import { createMetronomeEngine, type EngineHandle } from '../features/audio/engine'
+import { playTapClick } from '../features/audio/tapClick'
 import { Header } from '../features/ui/Header'
 import { BpmHero } from '../features/ui/BpmHero'
 import { TempoSlider } from '../features/ui/TempoSlider'
@@ -208,6 +209,11 @@ export default function MetronomePage() {
   }, [wakeLock])
 
   const onTap = useCallback(() => {
+    // playTapClick() FIRST — primeAudio() inside it is the required first
+    // sync statement of any play handler per CLAUDE.md item 9. The TAP
+    // button and the T keyboard shortcut are both valid gestures for
+    // iOS audio unlock.
+    playTapClick()
     dispatch({ type: 'TAP', t: performance.now() })
   }, [])
 
