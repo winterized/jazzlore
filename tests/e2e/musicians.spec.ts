@@ -431,3 +431,42 @@ test('no attribution caption for a public-domain image (all fields empty)', asyn
   await expect(page.getByText(/^Photo:\s/)).toHaveCount(0)
   await expect(page.getByText(/^Cover art:\s/)).toHaveCount(0)
 })
+
+// ─── 9. Search input — placeholder legibility ─────────────────────────────
+
+/** Solid-color regex: must match NEITHER the modern CSS Color 4 alpha form
+ *  (`oklab(... / 0.5)`, `color(srgb r g b / 0.5)`) NOR the legacy comma form
+ *  (`rgba(r, g, b, 0.5)`). Browsers still emit the legacy form for the UA
+ *  default `::placeholder` color in Chromium and WebKit. */
+const HAS_FRACTIONAL_ALPHA = /\/\s*0?\.\d|,\s*0?\.\d\s*\)/
+
+test('search input ::placeholder is fully opaque (no UA-default half-alpha)', async ({
+  page,
+}) => {
+  // Bug regression guard. Default browser ::placeholder ships at ~0.5
+  // opacity, which on the musicians home makes the search prompt
+  // "Search a musician…" look ghostly and the entire input visually
+  // transparent against the page. Fix in components.css forces opacity: 1
+  // + a solid muted color. This spec asserts both properties on the
+  // computed style — once unfocused and once focused, because the project
+  // does not currently scope a `:focus::placeholder` rule but a future
+  // addition could quietly regress one of the two states.
+  await page.goto('/musicians')
+  const input = page.getByRole('combobox', { name: 'Search a musician' })
+  await expect(input).toBeVisible()
+
+  const unfocused = await input.evaluate((el) => {
+    const cs = window.getComputedStyle(el as HTMLInputElement, '::placeholder')
+    return { color: cs.color, opacity: cs.opacity }
+  })
+  expect(unfocused.opacity).toBe('1')
+  expect(unfocused.color).not.toMatch(HAS_FRACTIONAL_ALPHA)
+
+  await input.focus()
+  const focused = await input.evaluate((el) => {
+    const cs = window.getComputedStyle(el as HTMLInputElement, '::placeholder')
+    return { color: cs.color, opacity: cs.opacity }
+  })
+  expect(focused.opacity).toBe('1')
+  expect(focused.color).not.toMatch(HAS_FRACTIONAL_ALPHA)
+})
