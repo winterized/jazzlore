@@ -1177,7 +1177,17 @@
   color: var(--muted);
   pointer-events: none;
 }
-.mu3 .suggest-listbox {
+/* Suggest-* rules are UNPREFIXED (no `.mu3` ancestor selector) because the
+   <ul role="listbox"> is portalled to `document.body` via createPortal()
+   (see Autosuggest.tsx). That puts the element OUTSIDE the `.mu3` Shell
+   wrapper, so any `.mu3 .suggest-*` selector silently misses and the
+   listbox falls back to UA defaults — fully transparent background, no
+   border, options bleeding through onto the page below.
+   The `.suggest-*` class names are unique to this feature, so the lack
+   of a parent-scope is safe. Theme tokens (--card, --accent-strong,
+   --line-soft, etc.) are still inherited globally from :root and
+   html[data-theme='light']. Do NOT add `.mu3 ` back in front. */
+.suggest-listbox {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -1188,7 +1198,7 @@
   box-shadow: var(--shadow);
   z-index: 100;
 }
-.mu3 .suggest-row {
+.suggest-row {
   display: grid;
   grid-template-columns: 44px 1fr auto;
   gap: 12px;
@@ -1209,44 +1219,44 @@
     transform: translateY(0);
   }
 }
-.mu3 .suggest-row:last-child {
+.suggest-row:last-child {
   border-bottom: 0;
 }
-.mu3 .suggest-row:hover {
+.suggest-row:hover {
   background: var(--card-hover);
 }
-.mu3 .suggest-row[aria-selected='true'] {
+.suggest-row[aria-selected='true'] {
   background: var(--accent-soft);
 }
-.mu3 .suggest-row .duo3 {
+.suggest-row .duo3 {
   width: 44px;
   height: 44px;
   padding: 4px;
   border-radius: 4px;
 }
-.mu3 .suggest-row .duo3-initials {
+.suggest-row .duo3-initials {
   font-size: 16px;
 }
-.mu3 .suggest-row .nm {
+.suggest-row .nm {
   font-size: 14.5px;
   font-weight: 600;
   letter-spacing: -0.005em;
 }
-.mu3 .suggest-row .nm em {
+.suggest-row .nm em {
   background: color-mix(in srgb, var(--accent) 30%, transparent);
   color: var(--text);
   font-style: normal;
   padding: 0 1px;
   border-radius: 1px;
 }
-.mu3 .suggest-row .meta {
+.suggest-row .meta {
   font-family: var(--font-mono);
   font-size: 10px;
   color: var(--muted);
   margin-top: 3px;
   letter-spacing: 0.04em;
 }
-.mu3 .suggest-empty {
+.suggest-empty {
   padding: 14px 12px;
   font-family: var(--font-serif);
   font-style: italic;
@@ -1561,7 +1571,7 @@
     animation: none;
     background: var(--pulse-bg);
   }
-  .mu3 .suggest-row {
+  .suggest-row {
     animation: none;
     opacity: 1;
   }
