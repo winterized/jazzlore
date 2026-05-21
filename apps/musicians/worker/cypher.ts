@@ -108,7 +108,14 @@ export function peersByEraCypher(): string {
 
 /** One-shot detail aggregation: focus node, the records it played on (+ its
  * own edge), and every collaborator (shared record + that collaborator's
- * edge). One page load = one BFF call (server-side aggregation). */
+ * edge). One page load = one BFF call (server-side aggregation).
+ *
+ * Collaborators are returned **sorted by shared-record count DESC, then
+ * name ASC** for a stable, meaningful "Where to go from here" order — the
+ * frozen mapper (`lib/map.ts`) preserves array order, so the cypher is
+ * the source of truth for ranking. `count(DISTINCT sr)` matches the
+ * mapper's `distinctRecordIds.size` dedup (counts distinct shared records,
+ * not edge-tuples). Ties break alphabetically by name. */
 export function detailCypher(): string {
   return assertReadOnly(
     `MATCH (m:Musician {id: $id})
@@ -117,7 +124,9 @@ export function detailCypher(): string {
      OPTIONAL MATCH (m)-[:PLAYED_ON]->(sr:Record)<-[ce:PLAYED_ON]-(c:Musician)
      WHERE c.id <> m.id
      WITH m, records, c,
-          collect(DISTINCT {record: sr{.*}, edge: properties(ce)}) AS shared
+          collect(DISTINCT {record: sr{.*}, edge: properties(ce)}) AS shared,
+          count(DISTINCT sr) AS sharedCount
+     ORDER BY c IS NULL, sharedCount DESC, c.name ASC
      WITH m, records,
           collect(CASE WHEN c IS NULL THEN NULL
                   ELSE {musician: c{.*}, sharedRecords: shared} END) AS collabs

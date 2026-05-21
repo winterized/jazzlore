@@ -171,3 +171,39 @@ describe('reshapeMusicianRows → faithful RawMusician[] (no dedup)', () => {
     ])
   })
 })
+
+describe('detailCypher — collaborator ordering (ranking bug guard)', () => {
+  // The "Where to go from here" list on /musicians/:id renders
+  // `MusicianDetail.collaborators` directly (DetailView passes it to
+  // MosaicV4 + CollaboratorRail). The frozen `lib/map.ts` preserves
+  // array order, so the cypher is the source of truth for ranking.
+  // Bug observed on prod 2026-05-21 for Curtis Fuller (Q1145565):
+  // Lee Morgan (20 shared records) ended up at #3, behind Art Blakey
+  // (19) and Wayne Shorter (13). Root cause: the WITH clause that
+  // builds the collaborators list had no `ORDER BY`, so Aura returned
+  // them in its natural row order. Fix: count distinct shared records
+  // and `ORDER BY ... DESC` BEFORE the final `collect(...)`. These
+  // assertions guard the cypher string shape against regression.
+  const q = detailCypher()
+
+  it('counts distinct shared records (matches lib/map.ts dedup logic)', () => {
+    expect(q).toMatch(/count\(DISTINCT sr\)\s+AS\s+sharedCount/)
+  })
+
+  it('orders by sharedCount DESC then name ASC before the final collect', () => {
+    expect(q).toMatch(
+      /ORDER BY\s+c IS NULL,\s*sharedCount\s+DESC,\s*c\.name\s+ASC/,
+    )
+  })
+
+  it('the ORDER BY sits BEFORE the collect that builds collabs', () => {
+    // If the ORDER BY landed AFTER the collect, the ranking would be
+    // applied to the already-collected list (which Cypher would reject
+    // anyway, but the intent regression is what we guard).
+    const order = q.indexOf('ORDER BY')
+    const collect = q.indexOf('collect(CASE WHEN c IS NULL')
+    expect(order).toBeGreaterThan(-1)
+    expect(collect).toBeGreaterThan(-1)
+    expect(order).toBeLessThan(collect)
+  })
+})
