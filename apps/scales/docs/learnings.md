@@ -36,3 +36,9 @@ AI tools propose the locally-obvious implementation by default. The senior move 
 The right design decision is often not 'which direction wins' but 'which direction does which job.' Compositions beat monoliths, but require sharper articulation of what each part is for.
 
 Three-pass design iteration: pass 1 explores, pass 2 reweights against a sharper brief, pass 3 converges. The output of each pass is input to the next — never start a pass from scratch. The discipline is in the briefs, not the overrides.
+
+Don't paper over upstream bugs in the downstream layer when you own both layers. The right discipline is: source of truth at the upstream owner, observability across the boundary, faithful reflection at the consumer. Frontend defensive coding hides problems from the people who can fix them.
+
+Cross-AI cross-codebase handoff via structured artifacts. The brief was the API. Each AI had no awareness of the other but produced coherent work because the artifacts were precise enough to act as the contract. This is how multi-team work with AI assistance actually scales.
+
+Dev-environment verification doesn't prove production behavior. As soon as a project has a build pipeline + backend + deploy, the verification target has to move to the deployed artifact, not the local server. The verification gates only protect what they actually test.
