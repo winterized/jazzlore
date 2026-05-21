@@ -32,7 +32,10 @@ export function playTapClick(): void {
     if (!Ctx) return
     ctx = new Ctx()
   }
-  if (ctx.state !== 'running') void ctx.resume()
+  // Only resume from 'suspended' — calling resume() on a 'closed' context
+  // rejects (the singleton context is never closed in normal page lifetime,
+  // but the tighter guard makes that contract explicit).
+  if (ctx.state === 'suspended') void ctx.resume()
 
   // ~5 ms ahead — gives the audio thread headroom without perceptible
   // latency vs. a now-scheduled click.
