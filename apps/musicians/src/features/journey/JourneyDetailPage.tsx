@@ -55,6 +55,16 @@ export function JourneyDetailPage({
 
   useEffect(() => {
     if (!entry) return
+    // Reset before fetching: ERA_DATA and LABEL_DATA legitimately share
+    // musician ids (Miles, Coltrane, Monk appear in both an era and a
+    // label entry). Without this reset, navigating from e.g. era/modal
+    // to label/columbia would flash the modal-fetched portraits under
+    // the columbia card layout for one paint before the new fetches
+    // resolve. Clearing first makes every navigation start from
+    // monogram and resolve up — same idiom + lint exemption as
+    // useBffResource's `setState({kind:'loading'})` reset.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDetails({})
     let live = true
     void Promise.all(
       entry.musicians.map(async (m) => {

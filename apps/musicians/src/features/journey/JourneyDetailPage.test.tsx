@@ -102,7 +102,7 @@ describe('JourneyDetailPage — portrait loading via the data-source seam', () =
       }) as MusicianDetail
 
     const bebop = ERA_DATA['bebop']!
-    const detailsByid = new Map<string, MusicianDetail>(
+    const detailsById = new Map<string, MusicianDetail>(
       bebop.musicians.map((m, i) => [
         m.id,
         stub(m.id, m.name, `https://example.test/portrait-${i}.jpg`),
@@ -112,7 +112,7 @@ describe('JourneyDetailPage — portrait loading via the data-source seam', () =
     const mockedSource: DataSource = {
       ...fixtureSource,
       detail: async (id) => {
-        const d = detailsByid.get(id)
+        const d = detailsById.get(id)
         if (!d) throw new Error(`no stub for ${id}`)
         return d
       },
@@ -142,6 +142,49 @@ describe('JourneyDetailPage — portrait loading via the data-source seam', () =
     expect(
       screen.getAllByText(/Photo:.*Gottlieb.*Public domain/i).length,
     ).toBeGreaterThan(0)
+  })
+
+  it('falls back to monogram for a per-musician cold-Aura waking response', async () => {
+    // A 'waking' response from one musician's detail should be treated
+    // like a rejection for THAT card: monogram fallback, no <img>. The
+    // other 9 musicians still resolve normally.
+    const bebop = ERA_DATA['bebop']!
+    const firstId = bebop.musicians[0]!.id
+    const wakingForFirst: DataSource = {
+      ...fixtureSource,
+      detail: async (id) => {
+        if (id === firstId) {
+          return { status: 'waking' as const, retryAfter: 8 }
+        }
+        return {
+          id,
+          name: bebop.musicians.find((m) => m.id === id)?.name ?? 'x',
+          photo: true,
+          portrait: {
+            url: 'https://example.test/p.jpg',
+            license: 'Public domain',
+            attribution: 'Test',
+          },
+        } as MusicianDetail
+      },
+    }
+
+    render(
+      <MemoryRouter initialEntries={[`/musicians/journey/era/bebop`]}>
+        <Routes>
+          <Route
+            path="/musicians/journey/era/:slug"
+            element={<JourneyDetailPage variant="era" source={wakingForFirst} />}
+          />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    // 9 of 10 resolve → 9 <img> elements (NOT 10).
+    await waitFor(() => {
+      const imgs = screen.getAllByRole('img')
+      expect(imgs).toHaveLength(bebop.musicians.length - 1)
+    })
   })
 
   it('falls back to monogram (no <img>) when a per-musician fetch fails', async () => {
