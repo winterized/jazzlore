@@ -2,6 +2,9 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 import HomePage from './pages/HomePage'
 import MusicianPage from './pages/MusicianPage'
 import { WakingState } from './features/status/WakingState'
+import { RandomJumpPage } from './features/journey/RandomJumpPage'
+import { JourneyIndexPage } from './features/journey/JourneyIndexPage'
+import { JourneyDetailPage } from './features/journey/JourneyDetailPage'
 
 /** Dev/test-only preview of the calm cold-Aura screen. The fixture data
  * source always resolves (it can't surface a real 503), so the waking view
@@ -23,6 +26,23 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/musicians" replace />} />
         <Route path="/musicians" element={<HomePage />} />
+        <Route path="/musicians/journey/random" element={<RandomJumpPage />} />
+        <Route
+          path="/musicians/journey/era"
+          element={<JourneyIndexPage variant="era" />}
+        />
+        <Route
+          path="/musicians/journey/era/:slug"
+          element={<JourneyDetailPage variant="era" />}
+        />
+        <Route
+          path="/musicians/journey/label"
+          element={<JourneyIndexPage variant="label" />}
+        />
+        <Route
+          path="/musicians/journey/label/:slug"
+          element={<JourneyDetailPage variant="label" />}
+        />
         <Route path="/musicians/:id" element={<MusicianPage />} />
         {import.meta.env.DEV && (
           <Route
