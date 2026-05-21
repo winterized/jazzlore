@@ -1154,6 +1154,14 @@
   font-size: 16px;
   color: var(--text);
 }
+/* Browser-default ::placeholder ships with opacity ~0.5 (oklab(... / 0.5)),
+   which makes the prompt look ghostly on both themes and the entire input
+   read as "transparent". Override to an explicitly solid muted token —
+   already AA-compliant on --card surfaces per the index.css color audit. */
+.mu3 .search-input::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
 .mu3 .search-input:focus-visible {
   outline: none;
   border-color: var(--accent-strong);
