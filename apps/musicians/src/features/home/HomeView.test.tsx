@@ -31,12 +31,20 @@ describe('HomeView', () => {
     expect(input).toHaveAttribute('inputmode', 'search')
   })
 
-  it('renders the "Start a journey" row with three journeys', () => {
+  it('renders the "Start a journey" row with three journey links pointing at the journey routes', () => {
     setup()
     expect(screen.getByText(/start a journey/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /random jump/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /era walk/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /label walk/i })).toBeInTheDocument()
+    // The 3 journeys are now <Link> (anchors), not buttons — they navigate
+    // to the per-journey routes added in this PR.
+    expect(
+      screen.getByRole('link', { name: /random jump/i }),
+    ).toHaveAttribute('href', '/musicians/journey/random')
+    expect(
+      screen.getByRole('link', { name: /era walk/i }),
+    ).toHaveAttribute('href', '/musicians/journey/era')
+    expect(
+      screen.getByRole('link', { name: /label walk/i }),
+    ).toHaveAttribute('href', '/musicians/journey/label')
   })
 
   it('renders the curated 12 grid as links to each musician detail', () => {

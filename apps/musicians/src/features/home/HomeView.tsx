@@ -28,9 +28,24 @@ type Props = {
 }
 
 const JOURNEYS = [
-  { icon: '⚄', label: 'Random jump', blurb: 'Drop into any musician in the graph' },
-  { icon: '≡', label: 'Era walk', blurb: 'Step through a decade of jazz' },
-  { icon: '⌘', label: 'Label walk', blurb: 'Follow a label across its golden years' },
+  {
+    icon: '⚄',
+    label: 'Random jump',
+    blurb: 'Drop into any musician in the graph',
+    to: '/musicians/journey/random',
+  },
+  {
+    icon: '≡',
+    label: 'Era walk',
+    blurb: 'Step through a decade of jazz',
+    to: '/musicians/journey/era',
+  },
+  {
+    icon: '⌘',
+    label: 'Label walk',
+    blurb: 'Follow a label across its golden years',
+    to: '/musicians/journey/label',
+  },
 ] as const
 
 export function HomeView({ curated, searchSlot }: Props) {
@@ -63,13 +78,13 @@ export function HomeView({ curated, searchSlot }: Props) {
         <h2 className="home-journeys-h">Start a journey</h2>
         <div className="journeys">
           {JOURNEYS.map((j) => (
-            <button type="button" className="journey" key={j.label}>
+            <Link to={j.to} className="journey" key={j.label}>
               <div className="icn" aria-hidden="true">
                 {j.icon}
               </div>
               <div className="lab">{j.label}</div>
               <div className="blb">{j.blurb}</div>
-            </button>
+            </Link>
           ))}
         </div>
 

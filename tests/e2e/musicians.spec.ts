@@ -499,3 +499,92 @@ test('search results listbox renders with a solid background (not portal-transpa
   expect(styles.bg).not.toBe('transparent')
   expect(parseFloat(styles.borderTop)).toBeGreaterThan(0)
 })
+
+// ─── 10. Journey landing pages (Random / Era / Label) ────────────────────
+
+test('home → "Random jump" redirects to a /musicians/:id detail page', async ({
+  page,
+}) => {
+  await page.goto('/musicians')
+  await page.getByRole('link', { name: /random jump/i }).click()
+  // RandomJumpPage's useEffect should resolve and replace-navigate to a
+  // musician detail page within a couple of seconds.
+  await page.waitForURL(/\/musicians\/[^/]+$/, { timeout: 5000 })
+  const url = page.url()
+  // Must NOT have landed on the journey/random URL (replace navigation).
+  expect(url).not.toContain('/journey/random')
+  // Must be a musician detail URL — an id-shaped path segment.
+  expect(url).toMatch(
+    /\/musicians\/(wikidata%3A|musicbrainz%3A|discogs%3A)[A-Za-z0-9-]+/,
+  )
+})
+
+test('home → "Era walk" → era index → bebop detail → /musicians/:id card', async ({
+  page,
+}) => {
+  await page.goto('/musicians')
+  await page.getByRole('link', { name: /era walk/i }).click()
+  await page.waitForURL(/\/musicians\/journey\/era$/)
+
+  // Index page renders 7 era chips.
+  const list = page.getByRole('list', { name: /jazz eras/i })
+  await expect(list).toBeVisible()
+  const chips = list.getByRole('link')
+  await expect(chips).toHaveCount(7)
+
+  // Drill into Bebop (sub-route).
+  await list.getByRole('link', { name: /^.*Bebop/i }).first().click()
+  await page.waitForURL(/\/musicians\/journey\/era\/bebop$/)
+
+  // Curated grid renders.
+  const grid = page.getByRole('list', { name: /to dig into/i })
+  await expect(grid).toBeVisible()
+  const cards = grid.getByRole('link')
+  await expect(cards).toHaveCount(10)
+
+  // Click first card → lands on /musicians/:id (the BFF detail page).
+  await cards.first().click()
+  await page.waitForURL(/\/musicians\/[^/]+$/)
+})
+
+test('home → "Label walk" → label index → blue-note detail', async ({
+  page,
+}) => {
+  await page.goto('/musicians')
+  await page.getByRole('link', { name: /label walk/i }).click()
+  await page.waitForURL(/\/musicians\/journey\/label$/)
+
+  const list = page.getByRole('list', { name: /jazz labels/i })
+  await expect(list).toBeVisible()
+  await expect(list.getByRole('link')).toHaveCount(6)
+
+  await list.getByRole('link', { name: /^.*Blue Note/i }).first().click()
+  await page.waitForURL(/\/musicians\/journey\/label\/blue-note$/)
+
+  const grid = page.getByRole('list', { name: /to dig into/i })
+  await expect(grid.getByRole('link')).toHaveCount(10)
+})
+
+test('back chevron on a journey detail page returns to the journey index', async ({
+  page,
+}) => {
+  await page.goto('/musicians/journey/era/bebop')
+  await expect(
+    page.getByRole('heading', { level: 1, name: /Bebop/i }),
+  ).toBeVisible()
+  await page.getByRole('link', { name: /back to eras/i }).click()
+  await page.waitForURL(/\/musicians\/journey\/era$/)
+  await expect(page.getByRole('list', { name: /jazz eras/i })).toBeVisible()
+})
+
+test('unknown era/label slug redirects to the variant index', async ({
+  page,
+}) => {
+  await page.goto('/musicians/journey/era/this-does-not-exist')
+  await page.waitForURL(/\/musicians\/journey\/era$/)
+  await expect(page.getByRole('list', { name: /jazz eras/i })).toBeVisible()
+
+  await page.goto('/musicians/journey/label/nope')
+  await page.waitForURL(/\/musicians\/journey\/label$/)
+  await expect(page.getByRole('list', { name: /jazz labels/i })).toBeVisible()
+})

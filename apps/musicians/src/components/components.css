@@ -957,6 +957,8 @@
   cursor: pointer;
   color: inherit;
   font: inherit;
+  /* Now rendered as <Link> (an <a>) — kill the default underline. */
+  text-decoration: none;
   transition: background 0.14s;
 }
 .mu3 .journey:hover {
@@ -982,6 +984,111 @@
   color: var(--text-soft);
   margin-top: 3px;
   line-height: 1.4;
+}
+
+/* ─────────────────── Journey landing pages (era / label) ─────────────────
+ * `/musicians/journey/era`, `/musicians/journey/label`, and the per-slug
+ * detail pages. Hero block (kicker + h1 + subtitle) mirrors the home
+ * layout; the picker is a small selectable grid of eras/labels; the
+ * detail page re-uses `.home-grid` + `.home-card` verbatim. The
+ * `.journey-rolling` rule belongs to the random-jump mid-redirect
+ * screen — readers normally do not see it (redirect lands in <200ms). */
+.mu3 .journey-hero {
+  padding: 18px 14px 20px;
+}
+.mu3 .journey-hero .kicker {
+  color: var(--accent-strong);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+.mu3 .journey-hero h1 {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  line-height: 1.1;
+  margin: 0 0 8px;
+  letter-spacing: -0.01em;
+}
+.mu3 .journey-hero .sub {
+  font-size: 14px;
+  color: var(--text-soft);
+  margin: 0;
+  line-height: 1.5;
+}
+.mu3 .journey-h1-icon {
+  color: var(--accent-strong);
+  font-family: var(--font-mono);
+  font-size: 22px;
+  margin-right: 6px;
+  vertical-align: 1px;
+}
+.mu3 .journey-picker {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding: 0 14px 24px;
+  margin: 0;
+  border-bottom: 1px solid var(--line);
+}
+.mu3 .journey-picker > li {
+  display: contents;
+}
+.mu3 .journey-picker-chip {
+  display: block;
+  border: 1px solid var(--line);
+  background: var(--card);
+  border-radius: 8px;
+  padding: 14px 12px 13px;
+  color: inherit;
+  text-decoration: none;
+  transition: background 0.14s;
+}
+.mu3 .journey-picker-chip:hover {
+  background: var(--card-hover);
+}
+.mu3 .journey-picker-chip .icn {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  color: var(--accent-strong);
+  margin-bottom: 6px;
+}
+.mu3 .journey-picker-chip .lab {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  margin-bottom: 4px;
+}
+.mu3 .journey-picker-chip .blb {
+  font-size: 11.5px;
+  /* Same AA reasoning as `.journey .blb` — composited card surface needs
+     --text-soft, not --muted. */
+  color: var(--text-soft);
+  line-height: 1.4;
+}
+@media (min-width: 640px) {
+  .mu3 .journey-picker {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .mu3 .journey-hero h1 {
+    font-size: 34px;
+  }
+}
+@media (min-width: 1024px) {
+  .mu3 .journey-picker {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .mu3 .journey-hero h1 {
+    font-size: 40px;
+  }
+}
+.mu3 .journey-rolling {
+  padding: 32px 14px;
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: var(--muted);
 }
 .mu3 .home-12-h {
   display: flex;
