@@ -470,3 +470,32 @@ test('search input ::placeholder is fully opaque (no UA-default half-alpha)', as
   expect(focused.opacity).toBe('1')
   expect(focused.color).not.toMatch(HAS_FRACTIONAL_ALPHA)
 })
+
+test('search results listbox renders with a solid background (not portal-transparent)', async ({
+  page,
+}) => {
+  // Bug regression guard. The <ul role="listbox"> is portalled to
+  // document.body via createPortal (Autosuggest.tsx), placing it OUTSIDE
+  // the `.mu3` Shell. Any rule scoped `.mu3 .suggest-*` silently misses,
+  // and the listbox falls back to UA defaults: rgba(0,0,0,0) background,
+  // 0px border — page content bleeds through every row. Fix in
+  // components.css unprefixes the .suggest-* rules. This spec asserts
+  // the listbox computed background is NOT fully transparent and the
+  // border-top width is > 0px.
+  await page.goto('/musicians')
+  const input = page.getByRole('combobox', { name: 'Search a musician' })
+  await input.fill('mil')
+
+  const listbox = page.getByRole('listbox', { name: 'Musician matches' })
+  await expect(listbox).toBeVisible()
+
+  const styles = await listbox.evaluate((el) => {
+    const cs = window.getComputedStyle(el as HTMLElement)
+    return { bg: cs.backgroundColor, borderTop: cs.borderTopWidth }
+  })
+
+  // Catches rgba(_, _, _, 0) — the exact UA-default that the bug surfaced.
+  expect(styles.bg).not.toMatch(/^rgba\([^)]*,\s*0\)$/)
+  expect(styles.bg).not.toBe('transparent')
+  expect(parseFloat(styles.borderTop)).toBeGreaterThan(0)
+})
