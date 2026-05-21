@@ -214,6 +214,58 @@ export async function mockBff(page: Page): Promise<void> {
         },
       })
     }
+    if (url.includes('/api/musicians/by-ids')) {
+      // Parse the ?ids= query param and return a stub MusicianMinimal for each
+      // known id. Unknown ids are silently absent (faithful to the real BFF).
+      // `url` is already a full absolute URL (from route.request().url()).
+      const byIdsUrl = new URL(url)
+      const rawIds = byIdsUrl.searchParams.get('ids') ?? ''
+      const ids = rawIds
+        .split(',')
+        .map((s) => decodeURIComponent(s.trim()))
+        .filter(Boolean)
+      const known: Record<
+        string,
+        {
+          id: string
+          name: string
+          photo: boolean
+          portrait: { url?: string; license?: string; attribution?: string }
+          primaryInstrument?: string
+        }
+      > = {
+        [RICH_DETAIL.id]: {
+          id: RICH_DETAIL.id,
+          name: RICH_DETAIL.name,
+          photo: true,
+          portrait: RICH_DETAIL.portrait,
+          primaryInstrument: RICH_DETAIL.primaryInstruments[0],
+        },
+        [SPARSE_DETAIL.id]: {
+          id: SPARSE_DETAIL.id,
+          name: SPARSE_DETAIL.name,
+          photo: false,
+          portrait: {},
+        },
+        // Coltrane (a collaborator on RICH_DETAIL + journey musician)
+        'wikidata:Q7346': {
+          id: 'wikidata:Q7346',
+          name: 'John Coltrane',
+          photo: true,
+          portrait: {
+            url: 'https://commons.example/trane.jpg',
+            license: 'Public domain',
+            attribution: 'Unknown',
+          },
+          primaryInstrument: 'tenor saxophone',
+        },
+      }
+      const items = ids.flatMap((id) => {
+        const m = known[id]
+        return m !== undefined ? [m] : []
+      })
+      return route.fulfill({ json: { items } })
+    }
     if (url.includes(`/api/musicians/${RICH_DETAIL.id}/graph`)) {
       return route.fulfill({ json: graphFor(RICH_DETAIL) })
     }

@@ -242,3 +242,71 @@ export function reshapeCount(result: AuraResult): number {
   const n = col(result, row, 'n')
   return typeof n === 'number' && Number.isFinite(n) ? n : 0
 }
+
+// ─── Batch by-ids ──────────────────────────────────────────────────────────
+
+/** Minimal musician shape for the `/api/musicians/by-ids` batch endpoint.
+ * Intentionally leaner than MusicianDetail — only what the portrait-render
+ * consumers (JourneyDetailPage, DetailView mosaic/rail) need. */
+export interface ByIdsItem {
+  id: string
+  name: string
+  photo: boolean
+  portrait: { url?: string; license?: string; attribution?: string }
+  primaryInstrument?: string
+}
+
+/** Batch-fetch minimal musician data for up to N (N ≤ 20) ids.
+ * Returns one row per MATCHED id (unresolved ids are silently absent). */
+export function byIdsCypher(): string {
+  return assertReadOnly(
+    `MATCH (m:Musician) WHERE m.id IN $ids
+     RETURN m.id                  AS id,
+            m.name                AS name,
+            m.picture_url         AS picture_url,
+            m.picture_license     AS picture_license,
+            m.picture_attribution AS picture_attribution,
+            m.primary_instruments AS primary_instruments`,
+  )
+}
+
+/** Reshape a `byIdsCypher` result into `ByIdsItem[]`. Rows missing id or
+ * name are dropped defensively. */
+export function reshapeByIds(result: AuraResult): ByIdsItem[] {
+  return result.values.flatMap((row) => {
+    const id = col(result, row, 'id')
+    const name = col(result, row, 'name')
+    if (typeof id !== 'string' || typeof name !== 'string') return []
+    const pictureUrl = col(result, row, 'picture_url')
+    const pictureLicense = col(result, row, 'picture_license')
+    const pictureAttribution = col(result, row, 'picture_attribution')
+    const primaryInstruments = col(result, row, 'primary_instruments')
+
+    const url =
+      typeof pictureUrl === 'string' && pictureUrl.length > 0
+        ? pictureUrl
+        : undefined
+    const photo = url !== undefined
+
+    const portrait: ByIdsItem['portrait'] = {}
+    if (url !== undefined) portrait.url = url
+    if (typeof pictureLicense === 'string' && pictureLicense.length > 0)
+      portrait.license = pictureLicense
+    if (
+      typeof pictureAttribution === 'string' &&
+      pictureAttribution.length > 0
+    )
+      portrait.attribution = pictureAttribution
+
+    const primaryInstrument =
+      Array.isArray(primaryInstruments) &&
+      typeof primaryInstruments[0] === 'string' &&
+      primaryInstruments[0].length > 0
+        ? primaryInstruments[0]
+        : undefined
+
+    const item: ByIdsItem = { id, name, photo, portrait }
+    if (primaryInstrument !== undefined) item.primaryInstrument = primaryInstrument
+    return [item]
+  })
+}

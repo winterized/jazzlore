@@ -10,10 +10,15 @@
 // DetailIdentity. D4 wires the mosaic→rail scroll+pulse; D5 the #about
 // sheet — both plug into the slots/props here without restructuring.
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import type { MusicianDetail } from '../../lib/types'
-import { defaultSource, type DataSource } from '../../hooks/useMusicianData'
+import { isWaking } from '../../lib/types'
+import {
+  defaultSource,
+  type DataSource,
+  type MusicianMinimal,
+} from '../../hooks/useMusicianData'
 import { Shell } from '../../components/Shell'
 import { MosaicV4 } from '../../components/MosaicV4'
 import { EraStrip, type EraItem } from '../../components/EraStrip'
@@ -72,6 +77,35 @@ export function DetailView({
   // is never even requested on phones — the mobile detail screen IS the
   // product (CLAUDE.md "desktop adds the graph panel").
   const isDesktop = useIsDesktop()
+
+  /** Portraits keyed by collaborator id, fetched via the batch byIds endpoint.
+   * Populated asynchronously after the detail renders; collaborators without a
+   * resolved portrait keep their monogram fallback. */
+  const [collabPortraits, setCollabPortraits] = useState<
+    Record<string, MusicianMinimal>
+  >({})
+
+  useEffect(() => {
+    // Take up to 24 collaborator ids (covers the mosaic tile cap + first page
+    // of the rail) and batch-fetch their minimal portrait data.
+    const ids = detail.collaborators.slice(0, 24).map((c) => c.id)
+    if (ids.length === 0) return
+    let live = true
+    void source.byIds(ids).then((r) => {
+      if (!live) return
+      if (isWaking(r)) return
+      const map: Record<string, MusicianMinimal> = {}
+      for (const item of r.items) map[item.id] = item
+      setCollabPortraits(map)
+    }).catch(() => {
+      // Best-effort: a failed byIds quietly keeps monogram fallbacks.
+    })
+    return () => {
+      live = false
+    }
+    // Re-run when the focus musician changes (navigating between detail pages).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detail.id, source])
 
   const goToMusician = (id: string): void => {
     void navigate(`/musicians/${encodeURIComponent(id)}`)
@@ -142,6 +176,7 @@ export function DetailView({
           hero={detail.collaborators.length > 1}
           sparse={detail.collaborators.length <= 2}
           onTap={onMosaicTap}
+          portraits={collabPortraits}
         />
 
         <CollaboratorRail
@@ -150,6 +185,7 @@ export function DetailView({
           pulseId={pulseId}
           onActivate={goToMusician}
           railRef={railRef}
+          portraits={collabPortraits}
         />
 
         <EraStrip items={sameEra} onActivate={goToMusician} />

@@ -588,3 +588,30 @@ test('unknown era/label slug redirects to the variant index', async ({
   await page.waitForURL(/\/musicians\/journey\/label$/)
   await expect(page.getByRole('list', { name: /jazz labels/i })).toBeVisible()
 })
+
+// ─── 11. Journey detail portraits via byIds batch endpoint ────────────────
+
+test('journey modal detail renders portraits for Miles and Coltrane after byIds resolves', async ({
+  page,
+}) => {
+  // The modal era entry includes Miles Davis (wikidata:Q93341) and John Coltrane
+  // (wikidata:Q7346), both of which are served with portrait data by the mock
+  // BFF byIds handler. After byIds resolves, both cards should render an <img>.
+  await page.goto('/musicians/journey/era/modal')
+  await expect(
+    page.getByRole('heading', { level: 1, name: /Modal/i }),
+  ).toBeVisible()
+
+  const grid = page.getByRole('list', { name: /to dig into/i })
+  await expect(grid).toBeVisible()
+
+  // Wait for at least one portrait <img> to appear (byIds resolved).
+  await expect(async () => {
+    const imgs = await grid.getByRole('img').all()
+    expect(imgs.length).toBeGreaterThan(0)
+  }).toPass({ timeout: 5000 })
+
+  // Both known ids (Miles + Coltrane) get real portraits from the mock.
+  const imgs = await grid.getByRole('img').all()
+  expect(imgs.length).toBeGreaterThanOrEqual(2)
+})

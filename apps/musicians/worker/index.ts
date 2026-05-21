@@ -9,6 +9,7 @@
  */
 
 import {
+  handleByIds,
   handleCurated,
   handleDetail,
   handleGraph,
@@ -51,10 +52,13 @@ function isDocumentNavigation(request: Request): boolean {
   return (request.headers.get('Accept') ?? '').includes('text/html')
 }
 
-async function handleApi(env: Env, pathname: string): Promise<Response> {
+async function handleApi(env: Env, pathname: string, url: URL): Promise<Response> {
   if (pathname === '/api/health') return handleHealth(env)
   if (pathname === '/api/musicians/curated') return handleCurated(env)
   if (pathname === '/api/musicians/search-index') return handleSearchIndex(env)
+  if (pathname === '/api/musicians/by-ids') {
+    return handleByIds(env, url.searchParams.get('ids'))
+  }
   const graph = pathname.match(/^\/api\/musicians\/([^/]+)\/graph$/)
   if (graph && graph[1]) return handleGraph(env, decodeURIComponent(graph[1]))
   const detail = pathname.match(/^\/api\/musicians\/([^/]+)$/)
@@ -126,7 +130,7 @@ export default {
     const { pathname } = url
 
     if (pathname.startsWith('/api/')) {
-      return handleApi(env, pathname)
+      return handleApi(env, pathname, url)
     }
 
     if (pathname === '/sitemap.xml') {

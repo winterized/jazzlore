@@ -22,15 +22,18 @@ import type {
 import { CURATED } from '../src/data/curated'
 import { auraQuery, AuraWakingError, type AuraCreds } from './aura'
 import {
+  byIdsCypher,
   curatedCypher,
   detailCypher,
   healthCypher,
   peersByEraCypher,
+  reshapeByIds,
   reshapeCount,
   reshapeDetail,
   reshapeMusicianRows,
   reshapePeerEra,
   searchIndexCypher,
+  type ByIdsItem,
   type PeerEraItem,
 } from './cypher'
 import { warnOnDuplicates } from './duplicates'
@@ -193,6 +196,51 @@ export function handleGraph(env: Env, id: string): Promise<Response> {
       return json({ status: 'error', error: 'not-found' }, 'no-store', 404)
     }
     const body: GraphResponse = { graph: mapGraphData(raw) }
+    return json(body, CACHE.detail)
+  })
+}
+
+/** Maximum number of ids accepted by `/api/musicians/by-ids`. */
+const BY_IDS_CAP = 20
+
+/** Response envelope for the batch by-ids endpoint. */
+export interface ByIdsResponse {
+  items: ByIdsItem[]
+}
+
+/** `GET /api/musicians/by-ids?ids=id1,id2,…`
+ * Returns minimal musician data (id, name, photo, portrait, primaryInstrument)
+ * for each resolvable id. Unresolved ids are silently absent. Caps at 20 ids
+ * (returns 400 when the parsed list exceeds that). Malformed/missing `ids`
+ * query param returns 400. */
+export function handleByIds(env: Env, idsParam: string | null): Promise<Response> {
+  if (!idsParam || idsParam.trim() === '') {
+    return Promise.resolve(
+      json({ status: 'error', error: 'missing-ids' }, 'no-store', 400),
+    )
+  }
+  const ids = idsParam
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0)
+  if (ids.length === 0) {
+    return Promise.resolve(
+      json({ status: 'error', error: 'missing-ids' }, 'no-store', 400),
+    )
+  }
+  if (ids.length > BY_IDS_CAP) {
+    return Promise.resolve(
+      json(
+        { status: 'error', error: 'too-many-ids', max: BY_IDS_CAP },
+        'no-store',
+        400,
+      ),
+    )
+  }
+  return guard(env, async (c) => {
+    const result = await auraQuery(c, byIdsCypher(), { ids })
+    const items = reshapeByIds(result)
+    const body: ByIdsResponse = { items }
     return json(body, CACHE.detail)
   })
 }

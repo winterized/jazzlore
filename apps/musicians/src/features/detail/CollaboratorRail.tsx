@@ -12,6 +12,7 @@
 
 import { useState, type Ref } from 'react'
 import type { Collaborator } from '../../lib/types'
+import type { MusicianMinimal } from '../../hooks/useMusicianData'
 import { ConnRow } from '../../components/ConnRow'
 
 const HEADLINER_CAP = 16
@@ -22,6 +23,8 @@ type Props = {
   pulseId?: string | null
   onActivate?: (id: string) => void
   railRef?: Ref<HTMLDivElement>
+  /** Optional portrait map from the batch byIds fetch, keyed by collaborator id. */
+  portraits?: Record<string, MusicianMinimal>
 }
 
 function previewLine(tail: Collaborator[]): string {
@@ -39,6 +42,7 @@ export function CollaboratorRail({
   pulseId,
   onActivate,
   railRef,
+  portraits,
 }: Props) {
   const [expanded, setExpanded] = useState(false)
   const headliners = collaborators.slice(0, HEADLINER_CAP)
@@ -72,6 +76,7 @@ export function CollaboratorRail({
                   c={c}
                   pulse={pulseId === c.id}
                   onActivate={onActivate}
+                  portrait={portraits?.[c.id]}
                 />
               </li>
             ))}
@@ -92,6 +97,7 @@ export function CollaboratorRail({
                       c={c}
                       pulse={pulseId === c.id}
                       onActivate={onActivate}
+                      portrait={portraits?.[c.id]}
                     />
                   </li>
                 ))}

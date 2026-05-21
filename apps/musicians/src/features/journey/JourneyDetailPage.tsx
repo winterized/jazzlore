@@ -20,7 +20,7 @@ import { LABEL_DATA } from './data/labels'
 import {
   defaultSource,
   type DataSource,
-  type MusicianDetailWithEra,
+  type MusicianMinimal,
 } from '../../hooks/useMusicianData'
 import { isWaking } from '../../lib/types'
 import { attributionCaption } from '../../lib/attribution'
@@ -49,9 +49,9 @@ export function JourneyDetailPage({
   const dataMap = variant === 'era' ? ERA_DATA : LABEL_DATA
   const entry = slug ? dataMap[slug] : undefined
 
-  const [details, setDetails] = useState<
-    Record<string, MusicianDetailWithEra>
-  >({})
+  const [portraits, setPortraits] = useState<Record<string, MusicianMinimal>>(
+    {},
+  )
 
   useEffect(() => {
     if (!entry) return
@@ -64,23 +64,17 @@ export function JourneyDetailPage({
     // monogram and resolve up — same idiom + lint exemption as
     // useBffResource's `setState({kind:'loading'})` reset.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setDetails({})
+    setPortraits({})
     let live = true
-    void Promise.all(
-      entry.musicians.map(async (m) => {
-        try {
-          const r = await source.detail(m.id)
-          if (isWaking(r)) return null
-          return [m.id, r] as const
-        } catch {
-          return null
-        }
-      }),
-    ).then((results) => {
+    const ids = entry.musicians.map((m) => m.id)
+    void source.byIds(ids).then((r) => {
       if (!live) return
-      const map: Record<string, MusicianDetailWithEra> = {}
-      for (const r of results) if (r) map[r[0]] = r[1]
-      setDetails(map)
+      if (isWaking(r)) return
+      const map: Record<string, MusicianMinimal> = {}
+      for (const item of r.items) map[item.id] = item
+      setPortraits(map)
+    }).catch(() => {
+      // Best-effort: a failed byIds call quietly keeps monogram fallbacks.
     })
     return () => {
       live = false
@@ -140,9 +134,9 @@ export function JourneyDetailPage({
           aria-labelledby={`journey-detail-${entry.slug}-h2`}
         >
           {entry.musicians.map((m, i) => {
-            const d = details[m.id]
-            const caption = d?.portrait
-              ? attributionCaption(d.portrait, 'Photo')
+            const p = portraits[m.id]
+            const caption = p?.portrait
+              ? attributionCaption(p.portrait, 'Photo')
               : null
             return (
               <li key={m.id} className="home-card-li">
@@ -153,8 +147,8 @@ export function JourneyDetailPage({
                   <figure className="home-card-fig">
                     <Duo3
                       name={m.name}
-                      photo={d?.photo}
-                      portrait={d?.portrait}
+                      photo={p?.photo}
+                      portrait={p?.portrait}
                       eager={i < EAGER_FIRST_ROW}
                     />
                     {/* Always rendered so credited + uncredited cards

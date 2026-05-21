@@ -9,8 +9,11 @@ import { MemoryRouter, Routes, Route } from 'react-router'
 import { JourneyDetailPage } from './JourneyDetailPage'
 import { ERA_DATA } from './data/eras'
 import { LABEL_DATA } from './data/labels'
-import { fixtureSource, type DataSource } from '../../hooks/useMusicianData'
-import type { MusicianDetail } from '../../lib/types'
+import {
+  fixtureSource,
+  type DataSource,
+  type MusicianMinimal,
+} from '../../hooks/useMusicianData'
 
 function setup(variant: 'era' | 'label', slug: string) {
   return render(
@@ -83,39 +86,34 @@ describe('JourneyDetailPage — known label slug', () => {
 })
 
 describe('JourneyDetailPage — portrait loading via the data-source seam', () => {
-  it('renders a portrait <img> for each musician once the source resolves', async () => {
-    // A minimal MusicianDetail stub for a given id+name+portrait URL — the
-    // frozen MusicianDetail has many other fields, but Duo3 only reads
-    // `photo` (bool) + `portrait.url` and the caption only reads
-    // `portrait.license/attribution`. Mark the rest with `as MusicianDetail`
-    // to keep the stub focused.
-    const stub = (id: string, name: string, url: string): MusicianDetail =>
-      ({
-        id,
-        name,
-        photo: true,
-        portrait: {
-          url,
-          license: 'Public domain',
-          attribution: 'William P. Gottlieb',
-        },
-      }) as MusicianDetail
-
+  it('renders a portrait <img> for each musician once byIds resolves', async () => {
     const bebop = ERA_DATA['bebop']!
-    const detailsById = new Map<string, MusicianDetail>(
+
+    // Build a MusicianMinimal stub for each musician in the bebop entry.
+    const itemsById = new Map<string, MusicianMinimal>(
       bebop.musicians.map((m, i) => [
         m.id,
-        stub(m.id, m.name, `https://example.test/portrait-${i}.jpg`),
+        {
+          id: m.id,
+          name: m.name,
+          photo: true,
+          portrait: {
+            url: `https://example.test/portrait-${i}.jpg`,
+            license: 'Public domain',
+            attribution: 'William P. Gottlieb',
+          },
+        },
       ]),
     )
 
     const mockedSource: DataSource = {
       ...fixtureSource,
-      detail: async (id) => {
-        const d = detailsById.get(id)
-        if (!d) throw new Error(`no stub for ${id}`)
-        return d
-      },
+      byIds: async (ids) => ({
+        items: ids.flatMap((id) => {
+          const m = itemsById.get(id)
+          return m !== undefined ? [m] : []
+        }),
+      }),
     }
 
     render(
@@ -129,9 +127,7 @@ describe('JourneyDetailPage — portrait loading via the data-source seam', () =
       </MemoryRouter>,
     )
 
-    // After the parallel fetch resolves, each card has an <img> with the
-    // expected stub URL and a "Photo: William P. Gottlieb · Public domain"
-    // figcaption.
+    // After byIds resolves, each card has an <img> and a figcaption.
     await waitFor(() => {
       const imgs = screen.getAllByRole('img')
       expect(imgs.length).toBeGreaterThan(0)
@@ -144,29 +140,11 @@ describe('JourneyDetailPage — portrait loading via the data-source seam', () =
     ).toBeGreaterThan(0)
   })
 
-  it('falls back to monogram for a per-musician cold-Aura waking response', async () => {
-    // A 'waking' response from one musician's detail should be treated
-    // like a rejection for THAT card: monogram fallback, no <img>. The
-    // other 9 musicians still resolve normally.
-    const bebop = ERA_DATA['bebop']!
-    const firstId = bebop.musicians[0]!.id
-    const wakingForFirst: DataSource = {
+  it('falls back to monogram (no <img>) when byIds returns a waking response', async () => {
+    // The whole byIds response is waking → all cards stay on the monogram.
+    const wakingSource: DataSource = {
       ...fixtureSource,
-      detail: async (id) => {
-        if (id === firstId) {
-          return { status: 'waking' as const, retryAfter: 8 }
-        }
-        return {
-          id,
-          name: bebop.musicians.find((m) => m.id === id)?.name ?? 'x',
-          photo: true,
-          portrait: {
-            url: 'https://example.test/p.jpg',
-            license: 'Public domain',
-            attribution: 'Test',
-          },
-        } as MusicianDetail
-      },
+      byIds: async () => ({ status: 'waking' as const, retryAfter: 8 }),
     }
 
     render(
@@ -174,23 +152,26 @@ describe('JourneyDetailPage — portrait loading via the data-source seam', () =
         <Routes>
           <Route
             path="/musicians/journey/era/:slug"
-            element={<JourneyDetailPage variant="era" source={wakingForFirst} />}
+            element={<JourneyDetailPage variant="era" source={wakingSource} />}
           />
         </Routes>
       </MemoryRouter>,
     )
 
-    // 9 of 10 resolve → 9 <img> elements (NOT 10).
     await waitFor(() => {
-      const imgs = screen.getAllByRole('img')
-      expect(imgs).toHaveLength(bebop.musicians.length - 1)
+      expect(
+        screen.getByRole('heading', { level: 1, name: /Bebop/i }),
+      ).toBeInTheDocument()
     })
+
+    // Waking response → no portraits at all.
+    expect(screen.queryAllByRole('img')).toHaveLength(0)
   })
 
-  it('falls back to monogram (no <img>) when a per-musician fetch fails', async () => {
+  it('falls back to monogram (no <img>) when byIds rejects', async () => {
     const failingSource: DataSource = {
       ...fixtureSource,
-      detail: async () => {
+      byIds: async () => {
         throw new Error('simulated BFF failure')
       },
     }
@@ -208,14 +189,12 @@ describe('JourneyDetailPage — portrait loading via the data-source seam', () =
 
     // Give the failing promise a tick to settle.
     await waitFor(() => {
-      // The hero h1 is the synchronous proof that the page mounted.
       expect(
         screen.getByRole('heading', { level: 1, name: /Bebop/i }),
       ).toBeInTheDocument()
     })
 
-    // No portraits — every card stayed on the monogram. The home-card-credit
-    // figcaption is rendered but empty (no caption when no attribution).
+    // No portraits — every card stayed on the monogram.
     expect(screen.queryAllByRole('img')).toHaveLength(0)
   })
 })
