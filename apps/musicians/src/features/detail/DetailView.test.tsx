@@ -294,6 +294,37 @@ describe('DetailView — collaborator portraits via byIds', () => {
     })
   })
 
+  it('caps the byIds request at 16 ids (must stay ≤ BY_IDS_CAP=20 in the worker)', async () => {
+    // Regression guard for PR #54: the initial implementation sliced 24
+    // collaborator ids and sent them to /api/musicians/by-ids, which the
+    // worker rejects with HTTP 400 'too-many-ids' (BY_IDS_CAP=20). The
+    // detail page rendered ZERO portraits on prod for any musician with
+    // >20 collaborators. Fix: cap at 16 (max of MosaicV4 TILE_CAP=14 +
+    // CollaboratorRail HEADLINER_CAP=16). RICH fixture has 21 collabs.
+    let captured: string[] | null = null
+    const recordingSource: DataSource = {
+      ...fixtureSource,
+      byIds: async (ids) => {
+        captured = ids
+        return { items: [] }
+      },
+    }
+
+    render(
+      <MemoryRouter>
+        <DetailView detail={RICH} source={recordingSource} />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(captured).not.toBeNull()
+    })
+    expect(captured!.length).toBeLessThanOrEqual(16)
+    expect(captured!.length).toBe(Math.min(RICH.collaborators.length, 16))
+    // No duplicates either.
+    expect(new Set(captured!).size).toBe(captured!.length)
+  })
+
   it('keeps monogram fallback (no collab portrait imgs) when byIds rejects', async () => {
     // Use SPARSE (Antoine — photo:false, no portrait) so the identity hero
     // emits zero <img> elements. If byIds fails, collaborator tiles also

@@ -86,9 +86,12 @@ export function DetailView({
   >({})
 
   useEffect(() => {
-    // Take up to 24 collaborator ids (covers the mosaic tile cap + first page
-    // of the rail) and batch-fetch their minimal portrait data.
-    const ids = detail.collaborators.slice(0, 24).map((c) => c.id)
+    // Cover the UNION of the two consumers: MosaicV4 (TILE_CAP=14) and
+    // CollaboratorRail headliners (HEADLINER_CAP=16). max(14, 16) = 16.
+    // Tail rows beyond the headliner section are text-only and don't
+    // need portraits. Must stay ≤ BY_IDS_CAP (20) in the worker — sending
+    // 24 returned HTTP 400 'too-many-ids' (observed on prod Curtis Fuller).
+    const ids = detail.collaborators.slice(0, 16).map((c) => c.id)
     if (ids.length === 0) return
     let live = true
     void source.byIds(ids).then((r) => {
