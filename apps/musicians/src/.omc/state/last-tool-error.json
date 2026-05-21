@@ -1,0 +1,7 @@
+{
+  "tool_name": "mcp__neo4j__read_neo4j_cypher",
+  "tool_input_preview": "{\"query\":\"MATCH (m:Musician) WHERE toLower(m.name) CONTAINS 'hervé' OR toLower(m.name) CONTAINS 'herve' RETURN m.id AS id, m.name AS name, m.primary_instruments AS instruments, m.years_active_start AS...",
+  "error": "Error calling tool 'read_neo4j_cypher': {neo4j_code: Neo.ClientError.Database.DatabaseNotFound} {message: Unable to get a routing table for database 'neo4j' because this database does not exist} {gql_status: 22000} {gql_status_description: error: data exception}",
+  "timestamp": "2026-05-19T21:29:30.764Z",
+  "retry_count": 1
+}

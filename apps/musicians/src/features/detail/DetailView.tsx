@@ -19,7 +19,7 @@ import { MosaicV4 } from '../../components/MosaicV4'
 import { EraStrip, type EraItem } from '../../components/EraStrip'
 import { RecordsStrip } from '../../components/RecordsStrip'
 import { ChevronIcon, SearchIcon } from '../../components/icons'
-import { OverflowMenu } from '../../components/OverflowMenu'
+import { ThemeToggleButton } from '../../components/ThemeToggleButton'
 import { DetailIdentity } from './DetailIdentity'
 import { CollaboratorRail } from './CollaboratorRail'
 import { MoreAboutSheet } from './MoreAboutSheet'
@@ -122,7 +122,7 @@ export function DetailView({
           >
             <SearchIcon />
           </button>
-          <OverflowMenu />
+          <ThemeToggleButton />
         </div>
       </header>
 
