@@ -75,4 +75,27 @@ describe('initialsOf', () => {
     expect(initialsOf('+ 19 ( )')).toBe('')
     expect(initialsOf('123 456')).toBe('')
   })
+
+  it('keeps embedded punctuation inside a single token (single-word doubling path)', () => {
+    // "O'Brien" is one token whose FIRST code point ("O") is a letter, so
+    // the filter passes it; it then falls through to single-word doubling.
+    expect(initialsOf("O'Brien")).toBe('OO')
+  })
+
+  it('handles CJK and other non-Latin scripts', () => {
+    // Non-Latin letters (Lo class) pass the \p{L} filter; the code-point
+    // extractor returns a single scalar for each.
+    expect(initialsOf('宮本 武蔵')).toBe('宮武')
+  })
+
+  it('handles astral-plane letters without producing lone UTF-16 surrogates', () => {
+    // Mathematical alphanumerics are \p{L} but live outside the BMP, so the
+    // first code unit is a high surrogate. The code-point extractor returns
+    // the full scalar pair rather than the lone surrogate.
+    // (Audit-noted regression-guard for stylized stage names.)
+    const result = initialsOf('𝒜lice 𝐁ob')
+    // Must NOT be the lone-surrogate "\uD835\uD835"; toUpperCase on these
+    // astral letters is identity, so the result is the two astral letters.
+    expect(result).toBe('𝒜𝐁')
+  })
 })

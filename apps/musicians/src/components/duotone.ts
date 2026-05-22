@@ -46,13 +46,17 @@ export function duotoneFor(key: string): readonly [string, string] {
  * point is not a Unicode letter are skipped — without that filter, raw upstream
  * names like "Miles Davis + 19" produce "M1" and "Bobby Thompson (19" produces
  * "B(" (audit HIGH-2). The Unicode-letter class keeps "Nguyên Lê" → "NL" and
- * other non-ASCII names working. */
+ * other non-ASCII names working. The first-character extraction uses
+ * code-point iteration (`[...token][0]`) so astral-plane letters (e.g. a
+ * stylized stage name with mathematical alphanumerics) yield a single
+ * scalar, not a lone UTF-16 surrogate. */
 export function initialsOf(name: string): string {
   const parts = String(name ?? '')
     .split(/\s+/)
     .filter((p) => /^\p{L}/u.test(p))
   if (parts.length === 0) return ''
-  const first = parts[0]?.[0] ?? ''
-  const last = parts[parts.length - 1]?.[0] ?? ''
+  const firstCp = (s: string | undefined): string => [...(s ?? '')][0] ?? ''
+  const first = firstCp(parts[0])
+  const last = firstCp(parts[parts.length - 1])
   return (first + last).toUpperCase()
 }
