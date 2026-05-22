@@ -1,9 +1,12 @@
-/* Font imports must precede all rules (CSS @import constraint). Geist +
- * Geist Mono + Newsreader from Google Fonts — the same family Jazzlore
- * uses across all apps. */
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500&family=Newsreader:ital,wght@1,400;1,500&display=swap');
-
 /* Jazzlore Metronome — design tokens + component CSS.
+ *
+ * ⚠ DO NOT add any `@import` here. This file is inlined AFTER Tailwind
+ * expansion in the final bundle, so an @import in theme.css lands hundreds
+ * of declarations deep — violates the CSS "@import must precede all other
+ * statements" rule and breaks `pnpm test:e2e`. Font / external @imports
+ * live in `apps/metronome/src/index.css` ABOVE `@import 'tailwindcss'`; see
+ * that file's header for the long-term plan (self-host woff2 like
+ * apps/musicians).
  *
  * Lifted from apps/metronome/docs/design_handoff_metronome/app/metronome-styles.css.
  * The handoff CSS is the canonical source of every pixel value; this file is
