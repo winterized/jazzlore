@@ -100,6 +100,8 @@ export function peersByEraCypher(): string {
             p.name                AS name,
             p.primary_instruments AS primary_instruments,
             p.picture_url         AS picture_url,
+            p.picture_license     AS picture_license,
+            p.picture_attribution AS picture_attribution,
             size([g IN coalesce(p.genres, []) WHERE g IN genres]) AS overlap
      ORDER BY overlap DESC, coalesce(p.years_active_start, 9999) ASC
      LIMIT $limit`,
@@ -203,7 +205,9 @@ export function reshapeMusicianRows(result: AuraResult): RawMusician[] {
 
 /** A peer row from `peersByEraCypher` shaped into the EraStrip `EraItem`
  * contract (see src/components/EraStrip.tsx). `photo` is a presence boolean
- * derived from `picture_url`. `instrument` falls back to `undefined` when no
+ * derived from `picture_url`; `portrait` carries the real `{url, license,
+ * attribution}` sibling so EraStrip can render the duotone portrait (audit
+ * HIGH-5 / Wave 1 PR4c). `instrument` falls back to `undefined` when no
  * primary instrument is recorded. `hint` is intentionally omitted here —
  * EraStrip tolerates it; an editorial hint may be derived later by the BFF. */
 export interface PeerEraItem {
@@ -212,6 +216,9 @@ export interface PeerEraItem {
   instrument?: string
   hint?: string
   photo: boolean
+  /** Real portrait + legal attribution (CLAUDE.md image-attribution rule).
+   * Omitted when the peer has no `picture_url`. */
+  portrait?: { url?: string; license?: string; attribution?: string }
 }
 
 /** Reshape a `peersByEraCypher` result into `PeerEraItem[]`. Rows with a
@@ -231,6 +238,20 @@ export function reshapePeerEra(result: AuraResult): PeerEraItem[] {
     const photo = typeof picture === 'string' && picture.length > 0
     const item: PeerEraItem = { id, name, photo }
     if (instrument !== undefined) item.instrument = instrument
+
+    // Portrait sibling: carry url + license + attribution when present, so
+    // EraStrip can render the duotone photo with its legal caption (audit
+    // HIGH-5; same shape as ByIdsItem.portrait + the frozen ImageAttribution).
+    if (photo) {
+      const license = col(result, row, 'picture_license')
+      const attribution = col(result, row, 'picture_attribution')
+      const portrait: PeerEraItem['portrait'] = { url: picture as string }
+      if (typeof license === 'string' && license.length > 0)
+        portrait.license = license
+      if (typeof attribution === 'string' && attribution.length > 0)
+        portrait.attribution = attribution
+      item.portrait = portrait
+    }
     return [item]
   })
 }

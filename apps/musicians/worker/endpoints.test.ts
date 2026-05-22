@@ -110,13 +110,25 @@ describe('handleDetail', () => {
     const spy = vi.spyOn(auraMod, 'auraQuery')
     spy.mockResolvedValueOnce(DETAIL_MILES.data as auraMod.AuraResult)
     spy.mockResolvedValueOnce({
-      fields: ['id', 'name', 'primary_instruments', 'picture_url', 'overlap'],
+      // PR4c: peersByEra RETURN now includes picture_license + picture_attribution
+      // so the era-tile portrait can be rendered with its legal caption.
+      fields: [
+        'id',
+        'name',
+        'primary_instruments',
+        'picture_url',
+        'picture_license',
+        'picture_attribution',
+        'overlap',
+      ],
       values: [
         [
           'wikidata:Q310746',
           'Sonny Rollins',
           ['tenor saxophone'],
           'https://commons.example/sonny.jpg',
+          'CC-BY-SA-4.0',
+          'F. Wolff',
           2,
         ],
       ],
@@ -129,7 +141,13 @@ describe('handleDetail', () => {
       era?: string
       collaborators: { name: string; sharedRecordCount: number }[]
       records: { title: string }[]
-      sameEra: { id: string; name: string; photo: boolean; instrument?: string }[]
+      sameEra: {
+        id: string
+        name: string
+        photo: boolean
+        instrument?: string
+        portrait?: { url?: string; license?: string; attribution?: string }
+      }[]
     }
     expect(body.name).toBe('Miles Davis')
     expect(body.era).toBe('Cool') // genres:['cool jazz','modal jazz'] → Cool
@@ -146,6 +164,12 @@ describe('handleDetail', () => {
         name: 'Sonny Rollins',
         instrument: 'tenor saxophone',
         photo: true,
+        // PR4c: portrait sibling carrying url + license + attribution.
+        portrait: {
+          url: 'https://commons.example/sonny.jpg',
+          license: 'CC-BY-SA-4.0',
+          attribution: 'F. Wolff',
+        },
       },
     ])
   })
