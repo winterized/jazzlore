@@ -358,11 +358,13 @@ describe('polishedIdsCypher — read-only, no params, bio + portrait WHERE', () 
     expect(q).not.toContain('$') // no params
   })
 
-  it('filters on bio_summary AND picture_url being non-null AND non-empty', () => {
+  it('filters on bio_summary + picture_url + years_active_* being NOT NULL', () => {
     const q = polishedIdsCypher()
-    // Both required fields must be in the WHERE clause.
+    // All four required fields must be in the WHERE clause.
     expect(q).toContain('bio_summary')
     expect(q).toContain('picture_url')
+    expect(q).toContain('years_active_start')
+    expect(q).toContain('years_active_end')
     // Empty-string exclusion (a NULL gate alone wouldn't filter "" values).
     expect(q).toContain("''")
     // Stable order so the random pick is deterministic across cache hits.

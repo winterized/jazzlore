@@ -128,10 +128,13 @@ export const fixtureSource: DataSource = {
     return { items }
   },
   polishedIds: async () => {
-    // Fixture pool: every CURATED entry has bio + portrait; non-curated
-    // SEARCH_CORPUS rows are absent of those fields by design (Phase-D
-    // sparse fixtures). So the fixture polished set is the curated 12.
-    return { ids: CURATED.map((c) => c.id) }
+    // Fixture pool MUST mirror the production cypher contract — only
+    // entries that satisfy the WHERE clause are returned. The fixture
+    // CuratedCard models `photo` (= picture_url presence) but has no
+    // bio_summary shape, so we filter on what the fixture CAN model.
+    // Without this filter, ~10/12 CURATED entries are photo:false in
+    // Phase-D fixtures and would silently violate the BFF contract.
+    return { ids: CURATED.filter((c) => c.photo).map((c) => c.id) }
   },
 }
 

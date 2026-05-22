@@ -83,7 +83,13 @@ export function RandomJumpPage({ source = defaultSource }: Props = {}) {
     return () => {
       live = false
     }
-  }, [navigate, source])
+    // `source` is intentionally NOT in the dep array — it's a stable seam
+    // (defaultSource is a module const; tests pass a single mock per render
+    // tree). Including it would re-roll on every parent re-render that
+    // passed an inline object, surprising the user with a new musician
+    // landing despite `replace: true` masking it in the URL bar.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate])
 
   return (
     <Shell>
