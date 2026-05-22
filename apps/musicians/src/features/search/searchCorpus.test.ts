@@ -83,11 +83,11 @@ describe('searchCorpus', () => {
   // boost the curated-12 above non-curated entries so e.g. "tim" surfaces
   // Bobby Timmons (curated) before unrelated "Tim McDonald" pages.
 
-  it('boosts curated-12 members above non-curated of the same tier', () => {
+  it('ranks curated-12 members above non-curated when both match', () => {
     // Bobby Timmons (wikidata:Q132341) is in CURATED. "tim" is a substring
     // for both; without the boost, "Tim McDonald" (tier 0 prefix) outranks
-    // "Bobby Timmons" (tier 1 substring). With the boost, the curated entry
-    // shifts up one tier and lands first.
+    // "Bobby Timmons" (tier 1 substring). Curated boost is unbounded — a
+    // curated tier-1 entry beats any non-curated entry that also matches.
     const c: SearchCorpusEntry[] = [
       { id: 'wikidata:OBSCURE', name: 'Tim McDonald', aka: [] },
       { id: 'wikidata:Q132341', name: 'Bobby Timmons', aka: [] }, // curated
@@ -96,18 +96,32 @@ describe('searchCorpus', () => {
     expect(hits[0]?.entry.id).toBe('wikidata:Q132341')
   })
 
-  it('prefers wikidata canonical over discogs stub on same folded name', () => {
+  it('ranks curated entries above non-curated even when curated matches only via aka', () => {
+    // The curated boost is unbounded: a curated tier-2 (aka-only) match
+    // beats a non-curated tier-0 (prefix) match. This is intentional — the
+    // home-screen 12 are a small, deliberately-chosen first-class list.
     const c: SearchCorpusEntry[] = [
-      { id: 'discogs:1566346', name: 'Miles Davis + 19', aka: [] },
-      { id: 'wikidata:Q93341', name: 'Miles Davis', aka: [] },
+      { id: 'wikidata:OBSCURE', name: 'Trane Smith', aka: [] }, // prefix
+      { id: 'wikidata:Q7346', name: 'John Coltrane', aka: ['Trane'] }, // curated, aka-only
     ]
-    const hits = searchCorpus(c, 'mile')
-    expect(hits[0]?.entry.id).toBe('wikidata:Q93341')
-    // The stub ("Miles Davis + 19") shares a NAME COLLISION class with
-    // canonical Miles only if we collapse by exact-folded-name. Because the
-    // names DIFFER ("miles davis + 19" vs "miles davis"), both stay, but
-    // canonical ranks first via wikidata > discogs prefix priority.
-    expect(hits.map((h) => h.entry.id)).toContain('discogs:1566346')
+    const hits = searchCorpus(c, 'trane')
+    expect(hits[0]?.entry.id).toBe('wikidata:Q7346')
+  })
+
+  it('ranks wikidata canonical above discogs stub on prefix-priority tiebreak (non-curated)', () => {
+    // Names DIFFER ("lee morgan + her" vs "lee morgan") → no same-folded-name
+    // collapse. Both stay; canonical leads via prefix-priority tiebreak
+    // inside the same (non-curated, tier-0) bucket. Uses NON-curated ids
+    // to isolate the prefix-priority mechanism from the curated boost
+    // (the audit-symptomatic Miles Davis case has the canonical id IN the
+    // curated 12 — that case is covered by the curated-boost test above).
+    const c: SearchCorpusEntry[] = [
+      { id: 'discogs:8888', name: 'Lee Morgan + Her Trio', aka: [] },
+      { id: 'wikidata:Q380929', name: 'Lee Morgan', aka: [] },
+    ]
+    const hits = searchCorpus(c, 'lee')
+    expect(hits[0]?.entry.id).toBe('wikidata:Q380929')
+    expect(hits.map((h) => h.entry.id)).toContain('discogs:8888')
   })
 
   it('collapses exact same-folded-name pairs to the canonical prefix', () => {
