@@ -8,7 +8,7 @@ Sub-sites under `jazzlore.com`:
 
 - `scales.jazzlore.com` — jazz scales reference (this monorepo's first app, live)
 - `chords.jazzlore.com` — planned
-- `musicians.jazzlore.com` — live (Cloudflare Worker BFF over Neo4j AuraDB HTTP Query API; v1 design-fidelity overhaul 2026-05-20; search polish + journey landing pages (Random/Era/Label) + `/api/musicians/by-ids` batch endpoint + detail-page collaborator portraits + ranking fix shipped 2026-05-21)
+- `musicians.jazzlore.com` — live (Cloudflare Worker BFF over Neo4j AuraDB HTTP Query API; v1 design-fidelity overhaul 2026-05-20; search polish + journey landing pages + `/api/musicians/by-ids` batch endpoint + detail-page collaborator portraits + ranking fix shipped 2026-05-21; Wave 1 polish from audit + quality critique shipped 2026-05-22: search ranker (canonical preference + curated boost + dedup), Unicode-letter monogram filter, home-grid 4-col + equal-width tracks via `minmax(0, 1fr)`, real `<a href>` on orbit/connrow/era tiles, era-peer portraits, desktop force-graph capped at top-30, `/api/musicians/polished-ids` for Random Jump)
 - `metronome.jazzlore.com` — live (raw Web Audio engine, PWA, no backend; v1 shipped 2026-05-21, on-device iOS-into-piano test pending)
 
 Every public-facing app must feel public-ready from v1: clean, fast, accessible, mobile-friendly, no rough edges.
