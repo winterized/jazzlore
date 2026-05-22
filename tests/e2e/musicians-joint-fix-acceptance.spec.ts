@@ -688,11 +688,14 @@ test.describe('Wave 1 / PR3b — font preload regression guard (HIGH-7)', () => 
 
   test('cold load + SPA nav fires zero preload-not-used warnings', async ({ page }) => {
     const warnings: string[] = []
+    // Anchor on the exact stable Chrome phrasing — `/preload/i` would catch
+    // unrelated warnings ("modulepreload", future React warnings, third-party
+    // chatter) and fail the test for the wrong reason.
+    const HIGH_7_PATTERN =
+      /was preloaded using link preload but not used/i
     page.on('console', (msg) => {
       const text = msg.text()
-      // Chrome's exact phrasing: "The resource <url> was preloaded using link
-      // preload but not used within a few seconds from the window's load event."
-      if (msg.type() === 'warning' && /preload/i.test(text)) {
+      if (msg.type() === 'warning' && HIGH_7_PATTERN.test(text)) {
         warnings.push(text)
       }
     })
@@ -703,18 +706,16 @@ test.describe('Wave 1 / PR3b — font preload regression guard (HIGH-7)', () => 
 
     // SPA nav — a real in-app click, not page.goto (which would re-fire the
     // preload tags). Detail page loads additional weights; the home preloads
-    // should still have been consumed without warning.
+    // should still have been consumed without warning. The URL pattern
+    // matches a single-segment musician id (`/musicians/<id>`) and excludes
+    // the journey landing routes (`/musicians/journey/…`).
     await page.locator('.home-card').first().click()
-    await page.waitForURL(/\/musicians\/(?!journey\/).+/)
+    await page.waitForURL(/\/musicians\/(?!journey\/)[^/]+$/)
     await page.waitForTimeout(2500)
 
-    if (warnings.length > 0) {
-      // Surface every warning so the failure is actionable.
-      throw new Error(
-        `Preload-not-used warnings fired (HIGH-7 regression):\n  ` +
-          warnings.join('\n  '),
-      )
-    }
-    expect(warnings).toHaveLength(0)
+    // Single assertion, error message surfaces every warning verbatim so the
+    // failure is actionable. (Custom `expect` message is shown on failure;
+    // on pass the captured `warnings` is empty.)
+    expect(warnings, warnings.join('\n')).toEqual([])
   })
 })
