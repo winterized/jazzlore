@@ -1577,6 +1577,18 @@
   align-items: center;
   justify-content: center;
 }
+/* Responsive breakpoints — DECLARED BOTTOM-UP so source order matches
+   media-width order. Both queries match at ≥1024px, but the 1024 rule must
+   come LAST so it wins the cascade (equal specificity → source order). The
+   prior order (1024 block BEFORE 640 block) made the 2-col rule the
+   effective winner at desktop — audit HIGH-1 (the 2-fat-cards bug). */
+
+@media (min-width: 640px) {
+  .mu3 .home-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (min-width: 1024px) {
   .mu3 .desk-detail {
     grid-template-columns: 480px 1fr;
@@ -1610,11 +1622,6 @@
   }
   .mu3 .home-hero h1 {
     font-size: 48px;
-  }
-}
-@media (min-width: 640px) {
-  .mu3 .home-grid {
-    grid-template-columns: repeat(2, 1fr);
   }
 }
 
