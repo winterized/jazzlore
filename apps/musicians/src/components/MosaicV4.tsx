@@ -81,9 +81,20 @@ export function MosaicV4({
             href={`/musicians/${encodeURIComponent(c.id)}`}
             aria-label={`${c.name}${c.instrument ? `, ${c.instrument}` : ''}, ${count} record${count === 1 ? '' : 's'} together`}
             onClick={(e) => {
-              // Preserve cmd/ctrl/shift-click (new tab / new window) and
+              // Preserve native browser gestures — cmd/ctrl/shift-click (new
+              // tab / window), Firefox alt-click ("Save link as…"), and
               // middle-click. Only intercept the plain left-click for SPA nav.
-              if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
+              // Keyboard activation is Enter-only (real anchor convention;
+              // Space scrolls the page per the platform contract — was
+              // Enter+Space on the prior <button>/<div role=link> shape).
+              if (
+                e.metaKey ||
+                e.ctrlKey ||
+                e.shiftKey ||
+                e.altKey ||
+                e.button !== 0
+              )
+                return
               e.preventDefault()
               onTap?.(c.id)
             }}

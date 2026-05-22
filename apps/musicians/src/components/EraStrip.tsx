@@ -53,7 +53,17 @@ export function EraStrip({ items, onActivate }: Props) {
             href={`/musicians/${encodeURIComponent(c.id)}`}
             aria-label={`${c.name}${c.instrument ? `, ${c.instrument}` : ''}`}
             onClick={(e) => {
-              if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
+              // Same modifier-key gating as MosaicV4 / ConnRow — preserves
+              // cmd/ctrl/shift/alt-click + middle-click for native browser
+              // gestures; only the plain left-click runs SPA nav.
+              if (
+                e.metaKey ||
+                e.ctrlKey ||
+                e.shiftKey ||
+                e.altKey ||
+                e.button !== 0
+              )
+                return
               e.preventDefault()
               onActivate?.(c.id)
             }}

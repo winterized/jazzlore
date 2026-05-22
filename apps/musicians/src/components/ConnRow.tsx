@@ -65,9 +65,20 @@ export function ConnRow({ c, pulse, onActivate, portrait }: Props) {
         href={`/musicians/${encodeURIComponent(c.id)}`}
         aria-label={ariaLabel(c)}
         onClick={(e) => {
-          // Preserve cmd/ctrl/shift-click (new tab/window) + middle-click.
-          // Only intercept the plain left-click for SPA nav.
-          if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
+          // Preserve native browser gestures — cmd/ctrl/shift-click (new
+          // tab/window), Firefox alt-click ("Save link as…"), and
+          // middle-click. Only intercept the plain left-click for SPA nav.
+          // Keyboard activation is Enter-only (real anchor convention;
+          // Space scrolls the page per the platform contract — was
+          // Enter+Space on the prior <div role=link> shape).
+          if (
+            e.metaKey ||
+            e.ctrlKey ||
+            e.shiftKey ||
+            e.altKey ||
+            e.button !== 0
+          )
+            return
           e.preventDefault()
           onActivate?.(c.id)
         }}

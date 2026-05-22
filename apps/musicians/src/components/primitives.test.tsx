@@ -208,6 +208,23 @@ describe('ConnRow', () => {
       .closest('.conn')
     expect(row).toHaveAttribute('data-collab-id', 'wikidata:Q7346')
   })
+
+  // PR4a: modifier-key clicks must NOT call onActivate / preventDefault — the
+  // browser's native gesture (open in new tab/window, save link, etc.) wins.
+  it.each([
+    ['metaKey', { metaKey: true }],
+    ['ctrlKey', { ctrlKey: true }],
+    ['shiftKey', { shiftKey: true }],
+    ['altKey', { altKey: true }],
+  ])('does NOT intercept %s+click — native browser gesture wins', (_, init) => {
+    let rowClicks = 0
+    render(<ConnRow c={collab()} onActivate={() => (rowClicks += 1)} />)
+    const link = screen.getByRole('link', {
+      name: /John Coltrane tenor saxophone 3 records, most Kind of Blue 1959/i,
+    })
+    fireEvent.click(link, init)
+    expect(rowClicks).toBe(0)
+  })
 })
 
 describe('MosaicV4', () => {
@@ -242,6 +259,26 @@ describe('MosaicV4', () => {
     expect(
       screen.getByRole('group', { name: /orbit/i }),
     ).toHaveClass('mosaic-sparse')
+  })
+
+  it('tiles are real anchors with /musicians/<encoded-id> href', () => {
+    render(<MosaicV4 collabs={[collab()]} />)
+    const tile = screen.getByRole('link', { name: /John Coltrane/i })
+    expect(tile).toHaveAttribute('href', '/musicians/wikidata%3AQ7346')
+  })
+
+  // PR4a: modifier-click bypass test — same shape as ConnRow.
+  it.each([
+    ['metaKey', { metaKey: true }],
+    ['ctrlKey', { ctrlKey: true }],
+    ['shiftKey', { shiftKey: true }],
+    ['altKey', { altKey: true }],
+  ])('does NOT intercept %s+click on tiles', (_, init) => {
+    let taps = 0
+    render(<MosaicV4 collabs={[collab()]} onTap={() => (taps += 1)} />)
+    const tile = screen.getByRole('link', { name: /John Coltrane/i })
+    fireEvent.click(tile, init)
+    expect(taps).toBe(0)
   })
 })
 
@@ -285,6 +322,20 @@ describe('EraStrip', () => {
     const img = screen.getByAltText('Sonny Rollins') as HTMLImageElement
     expect(img.tagName).toBe('IMG')
     expect(img).toHaveAttribute('src', 'https://commons.example/sonny.jpg')
+  })
+
+  // PR4a: modifier-click bypass test — same shape as ConnRow / MosaicV4.
+  it.each([
+    ['metaKey', { metaKey: true }],
+    ['ctrlKey', { ctrlKey: true }],
+    ['shiftKey', { shiftKey: true }],
+    ['altKey', { altKey: true }],
+  ])('does NOT intercept %s+click on era tiles', (_, init) => {
+    let activations = 0
+    render(<EraStrip items={items} onActivate={() => (activations += 1)} />)
+    const tile = screen.getByRole('link', { name: /Bill Evans, piano/i })
+    fireEvent.click(tile, init)
+    expect(activations).toBe(0)
   })
 })
 
