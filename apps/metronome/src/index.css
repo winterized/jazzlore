@@ -1,3 +1,11 @@
+/* CSS @import constraint — every @import statement MUST precede every other
+   statement. The Google Fonts @import has to live here (NOT in theme.css)
+   because PostCSS inlines theme.css after Tailwind's expansion, which lands
+   the @import roughly 300 lines deep in the final stylesheet — triggering
+   "@import must precede all other statements". Self-hosting these fonts the
+   way apps/musicians does (woff2 + @font-face under /fonts) is the proper
+   long-term fix; folded into the PWA work, not this CSS-order patch. */
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500&family=Newsreader:ital,wght@1,400;1,500&display=swap');
 @import 'tailwindcss';
 
 /* Drive Tailwind v4 dark: variant from data-theme="dark", not prefers-color-scheme.
