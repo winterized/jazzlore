@@ -8,7 +8,13 @@
     <!-- Preload only the above-the-fold woff2 (Phase-G perf pass): Geist 400
          (body/UI base), Geist 600 (headings/labels), Newsreader 500 (the
          serif hero h1 — LCP text). The remaining 8 weights stay lazy under
-         font-display:swap with their metrics-matched fallbacks (CLS≈0). -->
+         font-display:swap with their metrics-matched fallbacks (CLS≈0).
+
+         Wave-1 PR3b (2026-05-22) re-verified against audit HIGH-7: 0
+         preload-not-used warnings on cold load AND on SPA nav today; all 3
+         preloads are consumed by the rendered home + detail pages. The
+         regression guard lives in tests/e2e/musicians-joint-fix-acceptance
+         under "Wave 1 / PR3b — font preload regression guard (HIGH-7)". -->
     <link rel="preload" href="/fonts/geist-400.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/geist-600.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/newsreader-500.woff2" as="font" type="font/woff2" crossorigin />
