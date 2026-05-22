@@ -291,6 +291,42 @@ export function byIdsCypher(): string {
   )
 }
 
+// ─── Polished-pool ids ────────────────────────────────────────────────────
+
+/** All musician ids that are "polished" — the subset (~200, per audit) with
+ * BOTH a bio summary AND a portrait AND a coherent active-years window.
+ * Used by Random Jump (Wave 1 / PR6 / audit Quality #1, #17) to avoid
+ * dropping first-time users on sparse musicians.
+ *
+ * The `years_active_*` clauses address the audit's CANONICAL symptom: Big
+ * Joe Turner had a `picture_url` and a `bio_summary` (sparse but present)
+ * but `years_active_end IS NULL`, so the page rendered "1911-present"
+ * though he died in 1985. A bio + portrait alone are NOT enough — without
+ * coherent years the page still teaches "this site is half-built".
+ *
+ * Read-only, no params; returns ids in stable name-ASC order so the random
+ * pick is deterministic across page-cache hits. */
+export function polishedIdsCypher(): string {
+  return assertReadOnly(
+    `MATCH (m:Musician)
+     WHERE m.bio_summary         IS NOT NULL AND m.bio_summary <> ''
+       AND m.picture_url         IS NOT NULL AND m.picture_url <> ''
+       AND m.years_active_start  IS NOT NULL
+       AND m.years_active_end    IS NOT NULL
+     RETURN m.id AS id
+     ORDER BY m.name ASC`,
+  )
+}
+
+/** Reshape a `polishedIdsCypher` result into `string[]`. Rows with a
+ * missing/non-string `id` are dropped defensively. */
+export function reshapePolishedIds(result: AuraResult): string[] {
+  return result.values.flatMap((row) => {
+    const id = col(result, row, 'id')
+    return typeof id === 'string' ? [id] : []
+  })
+}
+
 /** Reshape a `byIdsCypher` result into `ByIdsItem[]`. Rows missing id or
  * name are dropped defensively. */
 export function reshapeByIds(result: AuraResult): ByIdsItem[] {

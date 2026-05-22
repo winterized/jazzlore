@@ -27,11 +27,13 @@ import {
   detailCypher,
   healthCypher,
   peersByEraCypher,
+  polishedIdsCypher,
   reshapeByIds,
   reshapeCount,
   reshapeDetail,
   reshapeMusicianRows,
   reshapePeerEra,
+  reshapePolishedIds,
   searchIndexCypher,
   type ByIdsItem,
   type PeerEraItem,
@@ -242,6 +244,26 @@ export function handleByIds(env: Env, idsParam: string | null): Promise<Response
     const items = reshapeByIds(result)
     const body: ByIdsResponse = { items }
     return json(body, CACHE.detail)
+  })
+}
+
+/** Response envelope for the polished-ids endpoint. */
+export interface PolishedIdsResponse {
+  ids: string[]
+}
+
+/** `GET /api/musicians/polished-ids`
+ * Returns the canonical-id list of musicians with BOTH a bio summary AND a
+ * portrait — the "polished" subset (~200, per audit data). Used by Random
+ * Jump to avoid dropping first-time users on sparse musicians (Wave 1 /
+ * PR6 / audit Quality #1 + #17). Same edge-cache TTL as search-index
+ * (6h) since this is also a slow-moving denormalized view. */
+export function handlePolishedIds(env: Env): Promise<Response> {
+  return guard(env, async (c) => {
+    const result = await auraQuery(c, polishedIdsCypher())
+    const ids = reshapePolishedIds(result)
+    const body: PolishedIdsResponse = { ids }
+    return json(body, CACHE.searchIndex)
   })
 }
 

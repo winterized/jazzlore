@@ -14,6 +14,7 @@ import {
   handleDetail,
   handleGraph,
   handleHealth,
+  handlePolishedIds,
   handleSearchIndex,
 } from './endpoints'
 import { auraQuery, type AuraCreds } from './aura'
@@ -56,6 +57,7 @@ async function handleApi(env: Env, pathname: string, url: URL): Promise<Response
   if (pathname === '/api/health') return handleHealth(env)
   if (pathname === '/api/musicians/curated') return handleCurated(env)
   if (pathname === '/api/musicians/search-index') return handleSearchIndex(env)
+  if (pathname === '/api/musicians/polished-ids') return handlePolishedIds(env)
   if (pathname === '/api/musicians/by-ids') {
     return handleByIds(env, url.searchParams.get('ids'))
   }
