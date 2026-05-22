@@ -737,6 +737,12 @@ test.describe('Wave 1 / PR3a — home-grid columns equal at each breakpoint', ()
 
   for (const { w, h, cols } of [
     { w: 800, h: 800, cols: 2 },
+    // Boundary-overlap regression guard: 1023 must still be 2-col. The
+    // original PR3a bug was both @media rules matching at ≥1024 (source-
+    // order cascade winner). A future revert to `min-width: 1023px` on the
+    // tablet rule would silently re-introduce the dual-match — this probe
+    // would surface it as the 1023 case returning 4 cols instead of 2.
+    { w: 1023, h: 800, cols: 2 },
     { w: 1024, h: 800, cols: 4 },
     { w: 1280, h: 800, cols: 4 },
     { w: 1536, h: 960, cols: 4 },
@@ -745,14 +751,23 @@ test.describe('Wave 1 / PR3a — home-grid columns equal at each breakpoint', ()
       await page.setViewportSize({ width: w, height: h })
       await page.goto('/musicians', { waitUntil: 'load' })
       await page.waitForSelector('.home-card')
-      const widths = await page.evaluate(() => {
-        return Array.from(document.querySelectorAll('.home-card')).map((el) =>
-          el.getBoundingClientRect().width,
-        )
-      })
-      // The grid is a single uniform-row spec — the first `cols` widths
-      // represent every unique track width on the first row.
-      const rowWidths = widths.slice(0, cols)
+      const rects = await page.evaluate(() =>
+        Array.from(document.querySelectorAll('.home-card')).map((el) => {
+          const r = el.getBoundingClientRect()
+          return { top: r.top, width: r.width }
+        }),
+      )
+      // Column count is verified geometrically: cards on row 1 share the
+      // same `top`. This catches the boundary-overlap class of bugs (e.g.
+      // 1023 silently rendering 4 cols) that a width-only assertion would
+      // miss.
+      const firstRowTop = rects[0]?.top ?? 0
+      const firstRow = rects.filter((r) => Math.abs(r.top - firstRowTop) <= 1)
+      expect(
+        firstRow.length,
+        `expected ${cols} cards on the first row at ${w}×${h}; got ${firstRow.length} (full top list: ${rects.map((r) => r.top.toFixed(0)).join(', ')})`,
+      ).toBe(cols)
+      const rowWidths = firstRow.map((r) => r.width)
       const min = Math.min(...rowWidths)
       const max = Math.max(...rowWidths)
       expect(
