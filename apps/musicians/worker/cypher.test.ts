@@ -6,11 +6,13 @@ import {
   detailCypher,
   healthCypher,
   peersByEraCypher,
+  polishedIdsCypher,
   reshapeByIds,
   reshapeCount,
   reshapeDetail,
   reshapeMusicianRows,
   reshapePeerEra,
+  reshapePolishedIds,
   searchIndexCypher,
 } from './cypher'
 import {
@@ -343,5 +345,68 @@ describe('reshapeByIds → ByIdsItem[]', () => {
       values: [],
     }
     expect(reshapeByIds(result)).toEqual([])
+  })
+})
+
+// PR6 — polished pool cypher (`/api/musicians/polished-ids`).
+
+describe('polishedIdsCypher — read-only, no params, bio + portrait WHERE', () => {
+  it('passes the read-only guard and takes no parameters', () => {
+    expect(() => polishedIdsCypher()).not.toThrow()
+    const q = polishedIdsCypher()
+    expect(q).not.toMatch(/\b(CREATE|MERGE|SET|DELETE|REMOVE)\b/)
+    expect(q).not.toContain('$') // no params
+  })
+
+  it('filters on bio_summary AND picture_url being non-null AND non-empty', () => {
+    const q = polishedIdsCypher()
+    // Both required fields must be in the WHERE clause.
+    expect(q).toContain('bio_summary')
+    expect(q).toContain('picture_url')
+    // Empty-string exclusion (a NULL gate alone wouldn't filter "" values).
+    expect(q).toContain("''")
+    // Stable order so the random pick is deterministic across cache hits.
+    expect(q).toContain('ORDER BY m.name ASC')
+  })
+
+  it('returns only the canonical id column', () => {
+    const q = polishedIdsCypher()
+    expect(q).toMatch(/RETURN m\.id AS id/)
+    // Should NOT leak other personal fields into the cached payload.
+    expect(q).not.toContain('bio_summary AS')
+    expect(q).not.toContain('picture_url AS')
+  })
+})
+
+describe('reshapePolishedIds → string[]', () => {
+  it('maps the id column out of each row', () => {
+    const result: AuraResult = {
+      fields: ['id'],
+      values: [
+        ['wikidata:Q93341'],
+        ['wikidata:Q7346'],
+        ['wikidata:Q132341'],
+      ],
+    }
+    expect(reshapePolishedIds(result)).toEqual([
+      'wikidata:Q93341',
+      'wikidata:Q7346',
+      'wikidata:Q132341',
+    ])
+  })
+
+  it('drops rows with missing/non-string id (defensive)', () => {
+    const result: AuraResult = {
+      fields: ['id'],
+      values: [['wikidata:Q1'], [null], [42], ['wikidata:Q2']],
+    }
+    expect(reshapePolishedIds(result)).toEqual([
+      'wikidata:Q1',
+      'wikidata:Q2',
+    ])
+  })
+
+  it('returns [] for an empty result set', () => {
+    expect(reshapePolishedIds({ fields: ['id'], values: [] })).toEqual([])
   })
 })

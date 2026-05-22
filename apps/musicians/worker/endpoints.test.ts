@@ -5,6 +5,7 @@ import {
   handleDetail,
   handleGraph,
   handleHealth,
+  handlePolishedIds,
   handleSearchIndex,
 } from './endpoints'
 import type { Env } from './env'
@@ -309,6 +310,51 @@ describe('handleByIds', () => {
       new auraMod.AuraWakingError(),
     )
     const res = await handleByIds(ENV, 'wikidata:Q93341')
+    expect(res.status).toBe(503)
+    expect(await res.json()).toEqual({ status: 'waking', retryAfter: 10 })
+  })
+})
+
+// PR6 — `/api/musicians/polished-ids` (Random Jump polished pool).
+
+describe('handlePolishedIds', () => {
+  it('returns { ids: string[] } + the searchIndex edge TTL', async () => {
+    stubAura({
+      data: {
+        fields: ['id'],
+        values: [
+          ['wikidata:Q93341'],
+          ['wikidata:Q7346'],
+          ['wikidata:Q132341'],
+        ],
+      },
+    })
+    const res = await handlePolishedIds(ENV)
+    expect(res.status).toBe(200)
+    // Same edge TTL as search-index (6h) per the plan: this is a slow-moving
+    // denormalized view derived from the same musician corpus.
+    expect(res.headers.get('Cache-Control')).toContain('s-maxage=21600')
+    const body = (await res.json()) as { ids: string[] }
+    expect(body.ids).toEqual([
+      'wikidata:Q93341',
+      'wikidata:Q7346',
+      'wikidata:Q132341',
+    ])
+  })
+
+  it('returns an empty list when no rows match', async () => {
+    stubAura({ data: { fields: ['id'], values: [] } })
+    const res = await handlePolishedIds(ENV)
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as { ids: string[] }
+    expect(body.ids).toEqual([])
+  })
+
+  it('cold-Aura 503 → frozen waking shape', async () => {
+    vi.spyOn(auraMod, 'auraQuery').mockRejectedValue(
+      new auraMod.AuraWakingError(),
+    )
+    const res = await handlePolishedIds(ENV)
     expect(res.status).toBe(503)
     expect(await res.json()).toEqual({ status: 'waking', retryAfter: 10 })
   })

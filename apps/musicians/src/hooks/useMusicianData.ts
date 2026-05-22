@@ -53,6 +53,14 @@ export interface ByIdsResponse {
   items: MusicianMinimal[]
 }
 
+/** Response envelope for `/api/musicians/polished-ids` — the canonical id
+ * list of musicians with BOTH a bio summary AND a portrait (the "polished"
+ * subset, ~200). Used by Random Jump to avoid dropping first-time users on
+ * sparse musicians (audit Quality #1 + #17). */
+export interface PolishedIdsResponse {
+  ids: string[]
+}
+
 /** A BFF source: each method resolves the frozen envelope OR a WakingResponse
  * (the 503 cold-Aura shape). Errors reject so the hook can surface the calm
  * error state (D7). */
@@ -74,6 +82,12 @@ export interface DataSource {
   byIds(
     ids: string[],
   ): Promise<ByIdsResponse | { status: 'waking'; retryAfter: number }>
+  /** The canonical-id list of "polished" musicians (bio + portrait). Used by
+   * Random Jump (Wave 1 PR6) so the primary CTA never drops a first-time
+   * user on a sparse musician. */
+  polishedIds(): Promise<
+    PolishedIdsResponse | { status: 'waking'; retryAfter: number }
+  >
 }
 
 /** Fixture-backed source (kept behind the seam for unit tests + the
@@ -112,6 +126,12 @@ export const fixtureSource: DataSource = {
       return m !== undefined ? [m] : []
     })
     return { items }
+  },
+  polishedIds: async () => {
+    // Fixture pool: every CURATED entry has bio + portrait; non-curated
+    // SEARCH_CORPUS rows are absent of those fields by design (Phase-D
+    // sparse fixtures). So the fixture polished set is the curated 12.
+    return { ids: CURATED.map((c) => c.id) }
   },
 }
 
@@ -161,6 +181,7 @@ export const httpSource: DataSource = {
     bffGet<ByIdsResponse>(
       `/api/musicians/by-ids?ids=${ids.map(encodeURIComponent).join(',')}`,
     ),
+  polishedIds: () => bffGet<PolishedIdsResponse>('/api/musicians/polished-ids'),
 }
 
 /** The source the app uses by default (the H1 seam swap: real `fetch`,

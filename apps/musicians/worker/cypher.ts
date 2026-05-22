@@ -291,6 +291,33 @@ export function byIdsCypher(): string {
   )
 }
 
+// ─── Polished-pool ids ────────────────────────────────────────────────────
+
+/** All musician ids with BOTH a bio summary AND a portrait — the "polished"
+ * subset (~200, per audit data). Used by Random Jump (Wave 1 / PR6 / audit
+ * Quality #1, #17) to avoid dropping first-time users on sparse musicians
+ * (no portrait, no bio, often broken lifespan strings). Read-only, no
+ * params; returns ids in stable name-ASC order so the random pick is
+ * deterministic across page-cache hits. */
+export function polishedIdsCypher(): string {
+  return assertReadOnly(
+    `MATCH (m:Musician)
+     WHERE m.bio_summary  IS NOT NULL AND m.bio_summary  <> ''
+       AND m.picture_url  IS NOT NULL AND m.picture_url  <> ''
+     RETURN m.id AS id
+     ORDER BY m.name ASC`,
+  )
+}
+
+/** Reshape a `polishedIdsCypher` result into `string[]`. Rows with a
+ * missing/non-string `id` are dropped defensively. */
+export function reshapePolishedIds(result: AuraResult): string[] {
+  return result.values.flatMap((row) => {
+    const id = col(result, row, 'id')
+    return typeof id === 'string' ? [id] : []
+  })
+}
+
 /** Reshape a `byIdsCypher` result into `ByIdsItem[]`. Rows missing id or
  * name are dropped defensively. */
 export function reshapeByIds(result: AuraResult): ByIdsItem[] {
