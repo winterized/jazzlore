@@ -9,13 +9,14 @@
 // `/api/musicians/:id/graph` envelope), so the panel and the rail always
 // describe one consistent collaboration neighbourhood.
 
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
 import { useNavigate } from 'react-router'
 import {
   defaultSource,
   useBffResource,
   type DataSource,
 } from '../../hooks/useMusicianData'
+import { capGraphNodes } from './capGraph'
 
 // Resolves the default export (GraphView) — d3-force lands in this async
 // chunk, never the initial bundle. PUBLIC API only (features/graph/index.ts).
@@ -54,7 +55,17 @@ export function GraphPanelSlot({
     [source, focusId],
   )
 
-  if (state.kind !== 'ready') {
+  // Always call useMemo (Rules of Hooks). Pre-cap the graph BEFORE the
+  // ready-gate guard returns; on non-ready states the result is unused.
+  // Cap is a no-op (returns same reference) when collaborators ≤ cap.
+  // Audit CRIT-C: Miles had 1,304 SVG circles in a 600×500 viewBox without
+  // this cap; see ./capGraph.ts for rationale + GRAPH_NODE_CAP.
+  const cappedGraph = useMemo(
+    () => (state.kind === 'ready' ? capGraphNodes(state.data.graph) : null),
+    [state],
+  )
+
+  if (state.kind !== 'ready' || cappedGraph === null) {
     // Cold-Aura / error here is non-fatal: the detail screen is the product,
     // the graph is desktop enrichment. Keep the calm loading affordance
     // rather than escalating the whole page to the waking screen.
@@ -71,7 +82,7 @@ export function GraphPanelSlot({
     <Suspense fallback={<GraphLoading name={name} />}>
       <GraphView
         key={focusId}
-        data={state.data.graph}
+        data={cappedGraph}
         focusId={focusId}
         onSelectNode={select}
       />
