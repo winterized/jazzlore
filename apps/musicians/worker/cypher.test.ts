@@ -118,23 +118,37 @@ describe('reshapeDetail → frozen RawDetailResult', () => {
 })
 
 describe('reshapePeerEra → EraStrip-shaped items', () => {
+  // PR4c — peersByEra RETURN now also carries picture_license + picture_attribution
+  // so the era-tile portrait can be rendered with its legal caption.
+  const FIELDS = [
+    'id',
+    'name',
+    'primary_instruments',
+    'picture_url',
+    'picture_license',
+    'picture_attribution',
+    'overlap',
+  ]
+
   it('maps fields, derives photo from picture_url, drops malformed rows', () => {
     const result: AuraResult = {
-      fields: ['id', 'name', 'primary_instruments', 'picture_url', 'overlap'],
+      fields: FIELDS,
       values: [
         [
           'wikidata:Q1',
           'Sonny Rollins',
           ['tenor saxophone'],
           'https://commons.example/sonny.jpg',
+          'CC-BY-SA-4.0',
+          'F. Wolff',
           2,
         ],
-        // No picture_url → photo:false; no primary_instruments → no instrument.
-        ['wikidata:Q2', 'Lee Morgan', [], '', 1],
+        // No picture_url → photo:false, no portrait carried.
+        ['wikidata:Q2', 'Lee Morgan', [], '', '', '', 1],
         // Malformed row: missing id → dropped.
-        [null, 'Ghost', ['piano'], 'https://x', 1],
+        [null, 'Ghost', ['piano'], 'https://x', '', '', 1],
         // Malformed row: missing name → dropped.
-        ['wikidata:Q3', null, ['piano'], 'https://x', 1],
+        ['wikidata:Q3', null, ['piano'], 'https://x', '', '', 1],
       ],
     }
     const peers = reshapePeerEra(result)
@@ -144,12 +158,31 @@ describe('reshapePeerEra → EraStrip-shaped items', () => {
       name: 'Sonny Rollins',
       instrument: 'tenor saxophone',
       photo: true,
+      portrait: {
+        url: 'https://commons.example/sonny.jpg',
+        license: 'CC-BY-SA-4.0',
+        attribution: 'F. Wolff',
+      },
     })
     expect(peers[1]).toEqual({
       id: 'wikidata:Q2',
       name: 'Lee Morgan',
       photo: false,
     })
+  })
+
+  it('omits empty license/attribution fields from the portrait (public-domain pattern)', () => {
+    // A public-domain image has a URL but empty license + attribution strings —
+    // the legal-caption builder will then render nothing. Mirrors the same
+    // logic in reshapeByIds.
+    const result: AuraResult = {
+      fields: FIELDS,
+      values: [
+        ['wikidata:Q9', 'Public Domain Pete', [], 'https://example/pd.jpg', '', '', 1],
+      ],
+    }
+    const peers = reshapePeerEra(result)
+    expect(peers[0]?.portrait).toEqual({ url: 'https://example/pd.jpg' })
   })
 })
 

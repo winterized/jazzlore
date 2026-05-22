@@ -1,14 +1,23 @@
 // ConnRow — the spine of the detail page (design `ConnRow`, 88px min).
 //
 // The card that lets the user make an informed tap: who, what they play, the
-// strongest shared record, the count, quick-listen. Entire row tappable; the
-// two listen buttons stop propagation (design "Connection card · anatomy").
-// Aria-label is verbatim per the design contract:
+// strongest shared record, the count, quick-listen. The full row navigates to
+// the collaborator's detail page; the two listen buttons go to Spotify/Apple
+// in a new tab (design "Connection card · anatomy"). Aria-label is verbatim
+// per the design contract:
 //   `${name} ${inst} ${count} records, most ${topRecord} ${year}`.
 // Color is never the sole signal — instrument + relationship text is always
 // present.
+//
+// Wave 1 / PR4a (audit Quality #15): the row's link target is a real <a>
+// so cmd-click / right-click / copy-link-address all work. To avoid a
+// nested-anchor invalid-HTML (the inner Spotify/Apple links are also <a>),
+// the row's <a> uses `display: contents` — it carries the navigation
+// semantics without claiming a grid cell, so the existing 3-column grid
+// (duo3 64px | text 1fr | conn-act auto) stays unchanged. `display: contents`
+// is accessibility-correct in WebKit 16.4+ / Chrome M105+ / Firefox 117+.
 
-import type { KeyboardEvent, MouseEvent } from 'react'
+import type { MouseEvent } from 'react'
 import type { Collaborator } from '../lib/types'
 import type { MusicianMinimal } from '../hooks/useMusicianData'
 import { spotifyMusicianUrl, appleMusicMusicianUrl } from '../lib/links'
@@ -37,15 +46,9 @@ function ariaLabel(c: Collaborator): string {
 }
 
 export function ConnRow({ c, pulse, onActivate, portrait }: Props) {
-  const activate = (): void => onActivate?.(c.id)
-  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault()
-      activate()
-    }
-  }
-  // Listen buttons must not bubble to the row (design "Listen buttons stop
-  // propagation"). They are real links (deep-link, open in a new tab).
+  // Listen buttons must not bubble to the row's <a> (design "Listen buttons
+  // stop propagation"). They are real links that open Spotify/Apple in a new
+  // tab — cmd-click etc. still works on them since they're proper anchors.
   const stop = (e: MouseEvent): void => e.stopPropagation()
 
   const role = c.instrument
@@ -56,41 +59,49 @@ export function ConnRow({ c, pulse, onActivate, portrait }: Props) {
     <div
       className={`conn${pulse ? ' pulse' : ''}`}
       data-collab-id={c.id}
-      role="link"
-      tabIndex={0}
-      aria-label={ariaLabel(c)}
-      onClick={activate}
-      onKeyDown={onKeyDown}
     >
-      <Duo3
-        name={c.name}
-        photo={portrait !== undefined ? portrait.photo : c.photo}
-        portrait={portrait?.portrait}
-      />
-      <div>
-        <div className="nm">{c.name}</div>
-        {role && <div className="role">{role}</div>}
-        <div className="why">
-          {c.topRecord ? (
-            <>
-              <span className="top">
-                Most:{' '}
-                <span className="t">&ldquo;{c.topRecord.title}&rdquo;</span>
-                {c.topRecord.year
-                  ? ` '${String(c.topRecord.year).slice(-2)}`
-                  : ''}
+      <a
+        className="conn-link"
+        href={`/musicians/${encodeURIComponent(c.id)}`}
+        aria-label={ariaLabel(c)}
+        onClick={(e) => {
+          // Preserve cmd/ctrl/shift-click (new tab/window) + middle-click.
+          // Only intercept the plain left-click for SPA nav.
+          if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
+          e.preventDefault()
+          onActivate?.(c.id)
+        }}
+      >
+        <Duo3
+          name={c.name}
+          photo={portrait !== undefined ? portrait.photo : c.photo}
+          portrait={portrait?.portrait}
+        />
+        <div>
+          <div className="nm">{c.name}</div>
+          {role && <div className="role">{role}</div>}
+          <div className="why">
+            {c.topRecord ? (
+              <>
+                <span className="top">
+                  Most:{' '}
+                  <span className="t">&ldquo;{c.topRecord.title}&rdquo;</span>
+                  {c.topRecord.year
+                    ? ` '${String(c.topRecord.year).slice(-2)}`
+                    : ''}
+                </span>
+                {c.sharedRecordCount > 1 && (
+                  <span className="ct">+{c.sharedRecordCount - 1} more</span>
+                )}
+              </>
+            ) : (
+              <span className="rel">
+                {c.relationship ?? 'No record details on file'}
               </span>
-              {c.sharedRecordCount > 1 && (
-                <span className="ct">+{c.sharedRecordCount - 1} more</span>
-              )}
-            </>
-          ) : (
-            <span className="rel">
-              {c.relationship ?? 'No record details on file'}
-            </span>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      </a>
       <div className="conn-act">
         <a
           className="ic"

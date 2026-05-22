@@ -6,7 +6,7 @@
 // therefore takes its own small `EraItem[]` shape; the page maps whatever the
 // BFF supplies into it. Renders nothing when empty.
 
-import type { KeyboardEvent } from 'react'
+import type { ImageAttribution } from '../lib/types'
 import { Duo3 } from './Duo3'
 
 export type EraItem = {
@@ -15,6 +15,11 @@ export type EraItem = {
   instrument?: string
   hint?: string
   photo: boolean
+  /** Optional portrait + legal attribution. When the BFF era-peer query
+   * carries a `picture_url`, this rides as a sibling so EraStrip renders the
+   * duotone photo (Wave 1 PR4c / audit HIGH-5). Same shape as the frozen
+   * `ImageAttribution`; structural-compatibility with worker PeerEraItem. */
+  portrait?: ImageAttribution
 }
 
 type Props = {
@@ -38,34 +43,30 @@ export function EraStrip({ items, onActivate }: Props) {
         </div>
       </div>
       <div className="era-strip">
-        {items.map((c) => {
-          const activate = (): void => onActivate?.(c.id)
-          const onKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {
-            if (e.key === 'Enter' || e.key === ' ') {
+        {items.map((c) => (
+          // Wave 1 / PR4a — real anchor so cmd-click / right-click /
+          // copy-link-address work, matching the orbit tiles + ConnRow
+          // change. Plain left-click is intercepted for SPA nav.
+          <a
+            key={c.id}
+            className="era-tile"
+            href={`/musicians/${encodeURIComponent(c.id)}`}
+            aria-label={`${c.name}${c.instrument ? `, ${c.instrument}` : ''}`}
+            onClick={(e) => {
+              if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
               e.preventDefault()
-              activate()
-            }
-          }
-          return (
-            <div
-              key={c.id}
-              className="era-tile"
-              role="link"
-              tabIndex={0}
-              aria-label={`${c.name}${c.instrument ? `, ${c.instrument}` : ''}`}
-              onClick={activate}
-              onKeyDown={onKeyDown}
-            >
-              <Duo3 name={c.name} photo={c.photo} />
-              <div className="body">
-                <div className="nm">{c.name}</div>
-                <div className="hint">
-                  {[c.instrument, c.hint].filter(Boolean).join(' · ')}
-                </div>
+              onActivate?.(c.id)
+            }}
+          >
+            <Duo3 name={c.name} photo={c.photo} portrait={c.portrait} />
+            <div className="body">
+              <div className="nm">{c.name}</div>
+              <div className="hint">
+                {[c.instrument, c.hint].filter(Boolean).join(' · ')}
               </div>
             </div>
-          )
-        })}
+          </a>
+        ))}
       </div>
     </section>
   )

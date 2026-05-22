@@ -139,10 +139,14 @@ describe('ConnRow', () => {
     expect(screen.getByText(/tenor saxophone/i)).toBeInTheDocument()
     expect(screen.getByText(/Kind of Blue/)).toBeInTheDocument()
     expect(screen.getByText('+2 more')).toBeInTheDocument()
+    // PR4a: the row navigation link is now a real <a href> with the verbatim
+    // aria-label. The two Spotify/Apple buttons are ALSO <a> in the same row,
+    // so we scope the query to the link bearing the aria-label.
     const row = screen.getByRole('link', {
       name: /John Coltrane tenor saxophone 3 records, most Kind of Blue 1959/i,
     })
     expect(row).toBeInTheDocument()
+    expect(row).toHaveAttribute('href', '/musicians/wikidata%3AQ7346')
   })
 
   it('renders instrument + relationship when relationship is present', () => {
@@ -179,20 +183,30 @@ describe('ConnRow', () => {
   })
 
   it('carries the pulse class only when pulse is set', () => {
+    // PR4a: the link is a `display: contents` <a> wrapped inside the .conn
+    // div — the pulse animation (background gradient) needs a box, so it
+    // stays on the outer .conn div. Walk up from the link to assert.
     const rowName = /John Coltrane tenor saxophone 3 records, most Kind of Blue 1959/i
     const { rerender } = render(<ConnRow c={collab()} />)
-    expect(screen.getByRole('link', { name: rowName })).not.toHaveClass('pulse')
+    expect(screen.getByRole('link', { name: rowName }).closest('.conn')).not.toHaveClass(
+      'pulse',
+    )
     rerender(<ConnRow c={collab()} pulse />)
-    expect(screen.getByRole('link', { name: rowName })).toHaveClass('pulse')
+    expect(screen.getByRole('link', { name: rowName }).closest('.conn')).toHaveClass(
+      'pulse',
+    )
   })
 
   it('exposes the collaborator id via data-collab-id for mosaic→rail scroll', () => {
+    // PR4a: data-collab-id stays on the outer .conn div (the box that
+    // scrollIntoView targets). Walk up from the link to assert.
     render(<ConnRow c={collab()} />)
-    expect(
-      screen.getByRole('link', {
+    const row = screen
+      .getByRole('link', {
         name: /John Coltrane tenor saxophone 3 records, most Kind of Blue 1959/i,
-      }),
-    ).toHaveAttribute('data-collab-id', 'wikidata:Q7346')
+      })
+      .closest('.conn')
+    expect(row).toHaveAttribute('data-collab-id', 'wikidata:Q7346')
   })
 })
 
@@ -244,6 +258,33 @@ describe('EraStrip', () => {
     expect(screen.getByText('Bill Evans')).toBeInTheDocument()
     expect(screen.getByText(/piano · modal pioneer/i)).toBeInTheDocument()
     expect(screen.getByText(/from the same era/i)).toBeInTheDocument()
+  })
+  // Wave 1 / PR4a — tiles are real anchors so cmd-click etc. work.
+  it('renders each tile as a real anchor with /musicians/<id> href', () => {
+    render(<EraStrip items={items} />)
+    const tile = screen.getByRole('link', { name: /Bill Evans, piano/i })
+    expect(tile).toHaveAttribute('href', '/musicians/a')
+  })
+  // Wave 1 / PR4c (audit HIGH-5) — the portrait sibling on an EraItem renders
+  // the real <img> via Duo3 instead of the monogram-only fallback.
+  it('renders a duotone photo when the peer carries a portrait', () => {
+    const withPortrait: EraItem[] = [
+      {
+        id: 'b',
+        name: 'Sonny Rollins',
+        instrument: 'tenor saxophone',
+        photo: true,
+        portrait: {
+          url: 'https://commons.example/sonny.jpg',
+          license: 'CC-BY-SA-4.0',
+          attribution: 'F. Wolff',
+        },
+      },
+    ]
+    render(<EraStrip items={withPortrait} />)
+    const img = screen.getByAltText('Sonny Rollins') as HTMLImageElement
+    expect(img.tagName).toBe('IMG')
+    expect(img).toHaveAttribute('src', 'https://commons.example/sonny.jpg')
   })
 })
 
