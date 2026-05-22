@@ -42,11 +42,15 @@ export function duotoneFor(key: string): readonly [string, string] {
 }
 
 /** First + last word initials, uppercased ("Bobby Timmons" → "BT"). A single
- * word doubles ("Madonna" → "MM"); empty input → "". */
+ * word doubles ("Madonna" → "MM"); empty input → "". Tokens whose first code
+ * point is not a Unicode letter are skipped — without that filter, raw upstream
+ * names like "Miles Davis + 19" produce "M1" and "Bobby Thompson (19" produces
+ * "B(" (audit HIGH-2). The Unicode-letter class keeps "Nguyên Lê" → "NL" and
+ * other non-ASCII names working. */
 export function initialsOf(name: string): string {
   const parts = String(name ?? '')
     .split(/\s+/)
-    .filter(Boolean)
+    .filter((p) => /^\p{L}/u.test(p))
   if (parts.length === 0) return ''
   const first = parts[0]?.[0] ?? ''
   const last = parts[parts.length - 1]?.[0] ?? ''
