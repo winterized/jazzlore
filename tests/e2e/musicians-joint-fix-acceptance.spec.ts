@@ -670,3 +670,52 @@ test.describe('joint-fix acceptance — Phase 0 scaffolding', () => {
     }
   }
 })
+
+/* ─────────────────── Wave 1 / PR3b — Audit HIGH-7 ────────────────────
+ *
+ * The 2026-05-21 audit reported 3 "preload-not-used" warnings per page
+ * load (geist-400, geist-600, newsreader-500) plus 3 per SPA nav.
+ * Investigation 2026-05-22 against current prod: 0 warnings on cold load
+ * AND 0 on a home → detail SPA nav. The preload list is correctly aligned
+ * with the actual @font-face requests fired by the home + detail routes.
+ *
+ * This block is the permanent regression guard: any future change to the
+ * preload tags in apps/musicians/index.html that breaks alignment will
+ * fail here. Gated by PREVIEW_BASE like the rest of this file.
+ */
+test.describe('Wave 1 / PR3b — font preload regression guard (HIGH-7)', () => {
+  test.skip(!ENABLED, 'PREVIEW_BASE not set — live-only suite')
+
+  test('cold load + SPA nav fires zero preload-not-used warnings', async ({ page }) => {
+    const warnings: string[] = []
+    // Anchor on the exact stable Chrome phrasing — `/preload/i` would catch
+    // unrelated warnings ("modulepreload", future React warnings, third-party
+    // chatter) and fail the test for the wrong reason.
+    const HIGH_7_PATTERN =
+      /was preloaded using link preload but not used/i
+    page.on('console', (msg) => {
+      const text = msg.text()
+      if (msg.type() === 'warning' && HIGH_7_PATTERN.test(text)) {
+        warnings.push(text)
+      }
+    })
+
+    // Cold load on home — preloads fire here.
+    await page.goto('/musicians', { waitUntil: 'load' })
+    await page.waitForTimeout(4500) // past the "few seconds from load" window
+
+    // SPA nav — a real in-app click, not page.goto (which would re-fire the
+    // preload tags). Detail page loads additional weights; the home preloads
+    // should still have been consumed without warning. The URL pattern
+    // matches a single-segment musician id (`/musicians/<id>`) and excludes
+    // the journey landing routes (`/musicians/journey/…`).
+    await page.locator('.home-card').first().click()
+    await page.waitForURL(/\/musicians\/(?!journey\/)[^/]+$/)
+    await page.waitForTimeout(2500)
+
+    // Single assertion, error message surfaces every warning verbatim so the
+    // failure is actionable. (Custom `expect` message is shown on failure;
+    // on pass the captured `warnings` is empty.)
+    expect(warnings, warnings.join('\n')).toEqual([])
+  })
+})
