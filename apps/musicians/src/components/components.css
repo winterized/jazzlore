@@ -1620,9 +1620,14 @@
    the effective desktop winner. With the max-width clamp here, no two
    `.home-grid` rules ever match the same viewport. */
 
+/* `minmax(0, 1fr)` is REQUIRED here — bare `1fr` resolves to
+   `minmax(auto, 1fr)` per spec, which uses each track's max-content as the
+   minimum. The hook text varies card-to-card → unequal column widths AND
+   layout pinning to whichever card has the widest unbreakable string.
+   Forcing min=0 lets `1fr` actually drive the column size. */
 @media (min-width: 640px) and (max-width: 1023.98px) {
   .mu3 .home-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -1655,7 +1660,8 @@
     height: 100dvh;
   }
   .mu3 .home-grid {
-    grid-template-columns: repeat(4, 1fr);
+    /* See the tablet rule above for the minmax(0, 1fr) rationale. */
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
   .mu3 .home-hero h1 {
     font-size: 48px;

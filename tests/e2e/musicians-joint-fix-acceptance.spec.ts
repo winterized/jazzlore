@@ -719,3 +719,46 @@ test.describe('Wave 1 / PR3b — font preload regression guard (HIGH-7)', () => 
     expect(warnings, warnings.join('\n')).toEqual([])
   })
 })
+
+/* ─────────────────── Wave 1 / PR3a regression guard — equal home-grid columns ───
+ *
+ * Audit HIGH-1 was "2 fat cards at desktop". The first fix (reorder + max-
+ * width clamp on the @media rules) gave 4 tracks at desktop — but the
+ * tracks were UNEQUAL (e.g. 252 / 334 / 328 / 393 px at 1024×800) because
+ * bare `repeat(N, 1fr)` resolves to `repeat(N, minmax(auto, 1fr))`. The
+ * `auto` minimum lets each track grow to its max-content (longest
+ * unbreakable hook string), so different cards → different track widths
+ * AND the cards stop resizing past some viewport widths. The follow-up
+ * fix is `minmax(0, 1fr)`. This guard asserts all visible columns are
+ * equal within ±1 px (sub-pixel rounding tolerance) across the 2-col
+ * AND 4-col breakpoints. */
+test.describe('Wave 1 / PR3a — home-grid columns equal at each breakpoint', () => {
+  test.skip(!ENABLED, 'PREVIEW_BASE not set — live-only suite')
+
+  for (const { w, h, cols } of [
+    { w: 800, h: 800, cols: 2 },
+    { w: 1024, h: 800, cols: 4 },
+    { w: 1280, h: 800, cols: 4 },
+    { w: 1536, h: 960, cols: 4 },
+  ]) {
+    test(`${w}×${h} renders ${cols} equal-width columns`, async ({ page }) => {
+      await page.setViewportSize({ width: w, height: h })
+      await page.goto('/musicians', { waitUntil: 'load' })
+      await page.waitForSelector('.home-card')
+      const widths = await page.evaluate(() => {
+        return Array.from(document.querySelectorAll('.home-card')).map((el) =>
+          el.getBoundingClientRect().width,
+        )
+      })
+      // The grid is a single uniform-row spec — the first `cols` widths
+      // represent every unique track width on the first row.
+      const rowWidths = widths.slice(0, cols)
+      const min = Math.min(...rowWidths)
+      const max = Math.max(...rowWidths)
+      expect(
+        max - min,
+        `column widths must be equal at ${w}×${h}; got ${rowWidths.map((n) => n.toFixed(1)).join(' / ')}`,
+      ).toBeLessThanOrEqual(1)
+    })
+  }
+})
