@@ -1577,6 +1577,21 @@
   align-items: center;
   justify-content: center;
 }
+/* Responsive home grid — MUTUALLY EXCLUSIVE breakpoint ranges so the rules
+   are order-independent. The tablet 2-col rule is clamped at the top so a
+   future reorder by `min-width` (a common style convention) cannot revive
+   the audit-HIGH-1 "2-fat-cards-at-desktop" bug: previously both 640px and
+   1024px queries matched at ≥1024 with identical specificity, and source
+   order alone decided — the 1024 block being declared FIRST made 2-col
+   the effective desktop winner. With the max-width clamp here, no two
+   `.home-grid` rules ever match the same viewport. */
+
+@media (min-width: 640px) and (max-width: 1023.98px) {
+  .mu3 .home-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (min-width: 1024px) {
   .mu3 .desk-detail {
     grid-template-columns: 480px 1fr;
@@ -1610,11 +1625,6 @@
   }
   .mu3 .home-hero h1 {
     font-size: 48px;
-  }
-}
-@media (min-width: 640px) {
-  .mu3 .home-grid {
-    grid-template-columns: repeat(2, 1fr);
   }
 }
 
