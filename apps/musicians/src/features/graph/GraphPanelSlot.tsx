@@ -60,9 +60,13 @@ export function GraphPanelSlot({
   // Cap is a no-op (returns same reference) when collaborators ≤ cap.
   // Audit CRIT-C: Miles had 1,304 SVG circles in a 600×500 viewBox without
   // this cap; see ./capGraph.ts for rationale + GRAPH_NODE_CAP.
+  // Dep is the graph reference (when ready) or null — re-runs only when the
+  // underlying data identity actually changes, not on every state-object
+  // re-creation (e.g. transient waking/loading transitions).
+  const readyGraph = state.kind === 'ready' ? state.data.graph : null
   const cappedGraph = useMemo(
-    () => (state.kind === 'ready' ? capGraphNodes(state.data.graph) : null),
-    [state],
+    () => (readyGraph !== null ? capGraphNodes(readyGraph) : null),
+    [readyGraph],
   )
 
   if (state.kind !== 'ready' || cappedGraph === null) {

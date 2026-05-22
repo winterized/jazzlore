@@ -88,4 +88,24 @@ describe('capGraphNodes', () => {
     }
     expect(capGraphNodes(g)).toBe(g)
   })
+
+  it('locates the focus by flag, not by index 0 (contract guard)', () => {
+    // Today mapGraphData puts focus at index 0, but the helper uses
+    // findIndex(n => n.focus === true) — pin that contract so a future
+    // refactor optimising to nodes[0] doesn't silently drop the focus when
+    // upstream ordering changes.
+    const collabs = Array.from({ length: 10 }, (_, i) => collab(i))
+    const f = focus()
+    const nodes: GraphNode[] = [...collabs.slice(0, 5), f, ...collabs.slice(5)]
+    const edges: GraphEdge[] = collabs.map((n) => ({
+      source: f.id,
+      target: n.id,
+      weight: n.recordCount,
+    }))
+    const out = capGraphNodes({ nodes, edges }, 3)
+    // Focus must be first in the output even though it was at index 5 in input.
+    expect(out.nodes[0]?.id).toBe('focus')
+    expect(out.nodes[0]?.focus).toBe(true)
+    expect(out.nodes).toHaveLength(4) // focus + 3
+  })
 })
