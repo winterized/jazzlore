@@ -68,7 +68,12 @@ export function EraStrip({ items, onActivate }: Props) {
               onActivate?.(c.id)
             }}
           >
-            <Duo3 name={c.name} photo={c.photo} portrait={c.portrait} />
+            <Duo3
+              name={c.name}
+              photo={c.photo}
+              portrait={c.portrait}
+              inst={c.instrument}
+            />
             <div className="body">
               <div className="nm">{c.name}</div>
               <div className="hint">

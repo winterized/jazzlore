@@ -113,6 +113,17 @@ export function HomeView({ curated, searchSlot }: Props) {
                       photo={m.photo}
                       portrait={m.portrait}
                       eager={i < EAGER_FIRST_ROW}
+                      /* Wave 2a — surface the editorial figure on the rare
+                       * photoless curated card. `CuratedCard.subtitle` is
+                       * already the primary instrument string today (the
+                       * BFF mapper sets it to `primary_instruments[0]`),
+                       * so `figKey()` resolves Bobby Timmons' "piano" to
+                       * the pianist figure; if the type-comment's hinted
+                       * era composition ever lands, the substring match
+                       * still keeps the right key. Any future no-photo
+                       * curated entry with an unknown instrument falls
+                       * through to figKey('rest'). */
+                      inst={m.subtitle}
                     />
                     {/* Always rendered (reserves a fixed-height row so a
                         credited card and an un-credited one keep an

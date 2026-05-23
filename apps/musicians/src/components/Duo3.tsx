@@ -22,6 +22,7 @@ import type { CSSProperties, ReactNode } from 'react'
 import { useState } from 'react'
 import type { ImageAttribution } from '../lib/types'
 import { duotoneFor, initialsOf } from './duotone'
+import { NoPhotoMark } from './noPhotoFigures'
 
 type Props = {
   name: string
@@ -36,6 +37,16 @@ type Props = {
   /** Eager-load the <img> (first home row / the detail hero, so LCP is not
    * harmed by lazy-loading the above-the-fold portrait). Default lazy. */
   eager?: boolean
+  /** Wave 2a — when supplied AND no photo is available, render the editorial
+   * `<NoPhotoMark>` (instrument figure + corner monogram) inside the tile
+   * instead of the corner-initials fallback. Pass the musician's primary
+   * instrument string (`Collaborator.instrument`, `EraItem.instrument`,
+   * `SearchCorpusEntry.primaryInstrument`, or the curated card's
+   * `subtitle`, which the BFF already populates from `primary_instruments[0]`).
+   * The photo path is unchanged — when a real portrait renders, the figure
+   * does not show. Omit (record covers, places that should keep today's
+   * monogram fallback) for byte-identical behaviour. */
+  inst?: string | null
   className?: string
   style?: CSSProperties
   children?: ReactNode
@@ -48,6 +59,7 @@ export function Duo3({
   photo = true,
   portrait,
   eager = false,
+  inst,
   className = '',
   style,
   children,
@@ -58,6 +70,16 @@ export function Duo3({
   const [imgFailed, setImgFailed] = useState(false)
   const url = portrait?.url?.trim()
   const showPhoto = photo && !!url && !imgFailed
+  // Surface the editorial figure mark (Wave 2a) ONLY when the data flag
+  // says the musician has no portrait (`photo === false`) AND the caller
+  // supplies an instrument string. Gating on `photo === false` instead of
+  // `!showPhoto` matters: during the brief transient where a photoed
+  // musician's portrait is being fetched by byIds enrichment, `photo` is
+  // still `true` and we keep the existing duotone+initials placeholder
+  // rather than flashing a figure that will be replaced in ~200ms. Every
+  // record-cover / no-`inst` caller is byte-behaviour-identical.
+  const showFigure =
+    photo === false && inst !== undefined && inst !== null
   const cls = ['duo3', photo ? '' : 'flat', showPhoto ? 'has-photo' : '', className]
     .filter(Boolean)
     .join(' ')
@@ -84,10 +106,14 @@ export function Duo3({
           onError={() => setImgFailed(true)}
         />
       )}
-      {initials && (
-        <span className="duo3-initials" aria-hidden="true">
-          {initialsOf(name)}
-        </span>
+      {showFigure ? (
+        <NoPhotoMark inst={inst} name={name} />
+      ) : (
+        initials && (
+          <span className="duo3-initials" aria-hidden="true">
+            {initialsOf(name)}
+          </span>
+        )
       )}
       {children}
     </div>

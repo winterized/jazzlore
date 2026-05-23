@@ -166,6 +166,66 @@
   opacity: 0;
 }
 
+/* ── Wave 2a — No-photo editorial mark ─────────────────────────────────
+ * Rendered inside `<Duo3 inst="…"/>` when no photograph is available
+ * (replaces the corner-initials fallback). A single SVG figure
+ * (figKey → FIG_LIB) sits on top of the duotone field; a small mono
+ * monogram in the bottom-right corner disambiguates two musicians who
+ * play the same instrument. Stroke weight + padding are tuned per .mu3
+ * context further down so the mark reads cleanly at every size the
+ * .duo3 appears (32 / 64 / 80 / 124 / 140 px). The wrapper is
+ * `aria-hidden` and `pointer-events: none` — purely visual; the parent
+ * already exposes the musician's name. */
+.duo3-mark {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12%;
+  pointer-events: none;
+}
+.duo3-mark svg {
+  width: 100%;
+  height: 100%;
+  color: color-mix(in srgb, var(--duo-hi) 82%, white);
+  opacity: 0.96;
+}
+.duo3-mark svg .ln {
+  stroke: currentColor;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3; /* base — overridden per context further down */
+}
+.duo3-mark svg .dot {
+  fill: currentColor;
+  stroke: none;
+}
+.duo3-mark svg .keyfill {
+  fill: color-mix(in srgb, var(--duo-hi) 60%, white);
+  fill-opacity: 0.22;
+  stroke: none;
+}
+/* Corner monogram — disambiguates two musicians who share an instrument
+ * (every pianist would otherwise look identical). Hidden by the per-
+ * context overrides below at dense sizes where the name lives alongside
+ * the tile (.conn / .ident / .suggest-row). */
+.duo3-mark-ini {
+  position: absolute;
+  right: 8%;
+  bottom: 6%;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  color: color-mix(in srgb, var(--duo-hi) 75%, white);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
 /* ─────────────────────── Header (mobile) ────────────────────────────── */
 .mu3 .hdr {
   position: sticky;
@@ -1691,4 +1751,111 @@
   .mu3 .duo3.has-photo::before {
     transition: none;
   }
+}
+
+/* ── Wave 2a — No-photo mark · per-context tuning ──────────────────────
+ * Stroke weight scales inversely with tile size so the line work reads
+ * cleanly at every render. Padding tuned so the figure breathes. Monograms
+ * are hidden below ~100px because the figure already fills the field and
+ * the musician's name lives alongside the tile (conn-row, ident-row,
+ * suggest-row); above that they disambiguate two musicians sharing an
+ * instrument. Matches the per-context table in the handoff README. */
+
+/* Mosaic tiles (variable sizes, image-only grid). */
+.mu3 .mtile .duo3-mark {
+  padding: 8%;
+}
+.mu3 .mtile .duo3-mark svg .ln {
+  stroke-width: 3;
+}
+.mu3 .mtile .duo3-mark-ini {
+  font-size: 17px;
+  right: 6%;
+  bottom: 5%;
+  opacity: 0.72;
+}
+.mu3 .mtile.hero .duo3-mark {
+  padding: 12%;
+}
+.mu3 .mtile.hero .duo3-mark svg .ln {
+  stroke-width: 2;
+}
+.mu3 .mtile.hero .duo3-mark-ini {
+  font-size: 32px;
+  right: 6%;
+  bottom: 5%;
+  opacity: 0.75;
+}
+
+/* Identity strip (64px mobile, 80px desktop) — dense, no monogram. */
+.mu3 .ident .duo3-mark {
+  padding: 10%;
+}
+.mu3 .ident .duo3-mark svg .ln {
+  stroke-width: 4;
+}
+.mu3 .ident .duo3-mark-ini {
+  display: none;
+}
+.mu3 .desk-rail .ident .duo3-mark {
+  padding: 10%;
+}
+.mu3 .desk-rail .ident .duo3-mark svg .ln {
+  stroke-width: 3.5;
+}
+.mu3 .desk-rail .ident .duo3-mark-ini {
+  display: none;
+}
+
+/* Conn row — main rail spine, 64×64 — dense, no monogram. */
+.mu3 .conn .duo3-mark {
+  padding: 9%;
+}
+.mu3 .conn .duo3-mark svg .ln {
+  stroke-width: 4;
+}
+.mu3 .conn .duo3-mark svg .dot {
+  transform-box: fill-box;
+}
+.mu3 .conn .duo3-mark-ini {
+  display: none;
+}
+
+/* Era strip — 140×140. */
+.mu3 .era-tile .duo3-mark {
+  padding: 12%;
+}
+.mu3 .era-tile .duo3-mark svg .ln {
+  stroke-width: 2.6;
+}
+.mu3 .era-tile .duo3-mark-ini {
+  font-size: 21px;
+  right: 7%;
+  bottom: 6%;
+  opacity: 0.72;
+}
+
+/* Autosuggest dropdown row — 44×44 — dense, no monogram. */
+.mu3 .suggest-row .duo3-mark {
+  padding: 11%;
+}
+.mu3 .suggest-row .duo3-mark svg .ln {
+  stroke-width: 4.5;
+}
+.mu3 .suggest-row .duo3-mark-ini {
+  display: none;
+}
+
+/* Home cards — large square tiles (mobile 2-col + desktop 4-col share). */
+.mu3 .home-card .duo3-mark {
+  padding: 14%;
+}
+.mu3 .home-card .duo3-mark svg .ln {
+  stroke-width: 2.2;
+}
+.mu3 .home-card .duo3-mark-ini {
+  font-size: 36px;
+  right: 7%;
+  bottom: 6%;
+  opacity: 0.72;
 }

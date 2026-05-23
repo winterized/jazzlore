@@ -87,6 +87,7 @@ export function ConnRow({ c, pulse, onActivate, portrait }: Props) {
           name={c.name}
           photo={portrait !== undefined ? portrait.photo : c.photo}
           portrait={portrait?.portrait}
+          inst={c.instrument}
         />
         <div>
           <div className="nm">{c.name}</div>
