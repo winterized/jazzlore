@@ -1,0 +1,1038 @@
+/* Jazzlore Musicians · Pass 3 (convergence) styles
+ * Single converged screen system. Light + dark tokens, mobile + desktop.
+ * Composition (locked):
+ *   header → identity strip → bio line + listen → image-only mosaic
+ *   → main ranked rail → "From the same era" section → records.
+ */
+
+/* ─────────────────────── Tokens (dark default) ──────────────────────── */
+.mu3 {
+  --bg: #0a0a0a;
+  --bg-soft: #0d0d0d;
+  --paper: #161616;
+  --card: #181818;
+  --card-hover: #1d1d1d;
+  --line: #242322;
+  --line-soft: #1c1c1b;
+  --text: #f4eede;
+  --text-soft: #d9d2c1;
+  --muted: #8a8378;
+  --dim: #565047;
+  --accent: #f4a233;
+  --accent-fg: #1a1410;
+  --accent-soft: rgba(244, 162, 51, 0.14);
+  --shadow: 0 1px 0 rgba(0,0,0,0.4), 0 8px 24px rgba(0,0,0,0.3);
+  --pulse-bg: rgba(244,162,51,0.20);
+  --kbd-bg: #1a1a1a;
+
+  background: var(--bg); color: var(--text);
+  font-family: "Geist", -apple-system, system-ui, sans-serif;
+  font-feature-settings: "ss01" on, "cv11" on;
+  -webkit-font-smoothing: antialiased;
+}
+.mu3[data-theme="light"] {
+  --bg: #f4f1ea;
+  --bg-soft: #f8f5ee;
+  --paper: #ffffff;
+  --card: #ffffff;
+  --card-hover: #faf7f0;
+  --line: #e2ddd0;
+  --line-soft: #ede8dc;
+  --text: #1a1612;
+  --text-soft: #3a342c;
+  --muted: #6a6258;
+  --dim: #9b9384;
+  --accent: #c87f1a;
+  --accent-fg: #ffffff;
+  --accent-soft: rgba(244, 162, 51, 0.16);
+  --shadow: 0 1px 0 rgba(0,0,0,0.04), 0 8px 24px rgba(60,50,30,0.06);
+  --pulse-bg: rgba(244,162,51,0.20);
+  --kbd-bg: #f4f1ea;
+}
+
+/* artboard shell */
+.mu3-artboard {
+  width: 100%; height: 100%;
+  overflow-y: auto; overflow-x: hidden;
+  position: relative;
+  scrollbar-width: none;
+  background: var(--bg); color: var(--text);
+}
+.mu3-artboard::-webkit-scrollbar { display: none; }
+.mu3-artboard *, .mu3-artboard *::before, .mu3-artboard *::after { box-sizing: border-box; }
+
+/* ─────────────────────── Duotone tile primitive ─────────────────────── */
+.duo3 {
+  position: relative; overflow: hidden;
+  display: flex; align-items: flex-end;
+  isolation: isolate;
+  border-radius: 4px;
+  background: #222;
+}
+.duo3::before {
+  content: ""; position: absolute; inset: 0;
+  background:
+    radial-gradient(120% 80% at 28% 22%, var(--duo-hi) 0%, transparent 55%),
+    radial-gradient(140% 100% at 78% 100%, var(--duo-lo) 0%, transparent 70%),
+    linear-gradient(180deg, var(--duo-lo) 0%, color-mix(in srgb, var(--duo-lo) 60%, #000) 100%);
+  z-index: 0;
+}
+.duo3::after {
+  content: ""; position: absolute; inset: 0;
+  background-image:
+    radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1.5px),
+    radial-gradient(rgba(0,0,0,0.10) 1px, transparent 1.5px);
+  background-size: 3px 3px, 5px 5px;
+  background-position: 0 0, 1px 2px;
+  mix-blend-mode: overlay; opacity: 0.5;
+  z-index: 1;
+}
+.duo3 > * { position: relative; z-index: 2; }
+.duo3-initials {
+  font-weight: 700; letter-spacing: -0.04em;
+  color: color-mix(in srgb, var(--duo-hi) 70%, white);
+  opacity: 0.55;
+}
+
+/* ─────────────────────── No-photo mark (editorial line) ──────────────
+ * Activated when <Duo3 inst="…"/> is rendered (instead of corner initials).
+ * Single SVG figure (figKey → FIG_LIB) on top of the duotone field.
+ * Stroke weight + padding are tuned per .mu3 context further down so the
+ * mark visually balances at every size the .duo3 appears (32 / 64 / 80 /
+ * 124 / 140 px).
+ * ─────────────────────────────────────────────────────────────────── */
+.duo3-mark {
+  position: absolute; inset: 0;
+  z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+  padding: 12%;
+  pointer-events: none;
+}
+.duo3-mark svg {
+  width: 100%; height: 100%;
+  color: color-mix(in srgb, var(--duo-hi) 82%, white);
+  opacity: 0.96;
+}
+.duo3-mark svg .ln {
+  stroke: currentColor;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;  /* base — overridden per context */
+}
+.duo3-mark svg .dot { fill: currentColor; stroke: none; }
+.duo3-mark svg .keyfill {
+  fill: color-mix(in srgb, var(--duo-hi) 60%, white);
+  fill-opacity: 0.22;
+  stroke: none;
+}
+/* Corner monogram — disambiguates two musicians playing the same
+   instrument (every pianist would otherwise look identical). */
+.duo3-mark-ini {
+  position: absolute;
+  right: 8%; bottom: 6%;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-weight: 600;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  color: color-mix(in srgb, var(--duo-hi) 75%, white);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* ─────────────────────── Sticky header (mobile) ─────────────────────── */
+.mu3 .hdr {
+  position: sticky; top: 0; z-index: 20;
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: 1px solid var(--line);
+}
+.mu3 .hdr-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 14px;
+}
+.mu3 .brand {
+  font-size: 14px; font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.mu3 .brand b { color: var(--accent); font-weight: 600; }
+.mu3 .spacer { flex: 1; }
+.mu3 .ic {
+  width: 32px; height: 32px; border-radius: 6px;
+  border: 1px solid var(--line); background: transparent;
+  color: var(--muted); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: background .12s, color .12s;
+}
+.mu3 .ic:hover { background: var(--card-hover); color: var(--text); }
+.mu3 .ic-back { transform: rotate(180deg); }
+.mu3 .crumb {
+  font-size: 13px; font-weight: 600;
+  letter-spacing: -0.005em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ─────────────────────── Identity banner (mobile) ───────────────────── */
+.mu3 .ident {
+  display: grid; grid-template-columns: 64px 1fr; gap: 14px;
+  padding: 14px 14px 6px;
+}
+.mu3 .ident .duo3 {
+  width: 64px; height: 64px; padding: 8px;
+}
+.mu3 .ident .duo3-initials { font-size: 22px; }
+.mu3 .ident .nm {
+  font-size: 20px; font-weight: 700;
+  letter-spacing: -0.015em; line-height: 1.0;
+}
+.mu3 .ident .ml {
+  font-size: 11.5px; color: var(--muted);
+  margin-top: 5px;
+  letter-spacing: 0.02em;
+}
+.mu3 .ident .ml b { color: var(--text-soft); font-weight: 500; }
+
+/* ─────────────────────── Bio line + listen ──────────────────────────── */
+.mu3 .bio {
+  padding: 6px 14px 12px;
+}
+.mu3 .bio p {
+  font-family: "Newsreader", "Source Serif 4", Georgia, serif;
+  font-style: italic;
+  font-size: 15px; line-height: 1.45;
+  color: var(--text-soft);
+  margin: 0;
+  text-wrap: pretty;
+}
+.mu3 .bio .more {
+  display: inline; font-style: normal; color: var(--accent);
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  text-decoration: none; cursor: pointer;
+  font-family: "Geist", sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  margin-left: 6px;
+  white-space: nowrap;
+}
+.mu3 .listen {
+  display: flex; gap: 8px;
+  padding: 0 14px 14px;
+}
+.mu3 .listen .btn {
+  flex: 1; height: 36px;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: var(--accent); color: var(--accent-fg);
+  font-size: 12.5px; font-weight: 600;
+  letter-spacing: 0.005em;
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  cursor: pointer;
+}
+.mu3 .listen .btn.alt {
+  background: transparent; color: var(--text);
+  border-color: var(--line);
+}
+
+/* ─────────────────────── Mosaic header (image-only) ─────────────────── */
+.mu3 .mosaic-h {
+  display: flex; align-items: baseline; justify-content: space-between;
+  padding: 12px 14px 6px;
+  font-size: 10px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--dim);
+  font-weight: 600;
+}
+.mu3 .mosaic-h .legend {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 9.5px; color: var(--muted);
+  text-transform: none; letter-spacing: 0.04em;
+}
+.mu3 .mosaic-h .legend .dot {
+  display: inline-block; width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.mu3 .mosaic {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-auto-rows: 44px;
+  gap: 3px;
+  padding: 0 14px 16px;
+}
+.mu3 .mtile {
+  position: relative; overflow: hidden;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: transform .14s, box-shadow .14s;
+}
+.mu3 .mtile:hover { transform: translateY(-1px); }
+.mu3 .mtile .duo3 {
+  position: absolute; inset: 0;
+  border-radius: 0;
+}
+/* Mosaic tiles are image-only. NO TEXT — the mosaic is a legend, not a card. */
+.mu3 .mtile-num {
+  position: absolute; bottom: 4px; right: 4px;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 9px; font-weight: 600;
+  color: rgba(255,255,255,0.92);
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(3px);
+  padding: 1.5px 4px;
+  border-radius: 2px;
+  letter-spacing: 0.02em;
+  z-index: 3;
+}
+/* size encodings */
+.mu3 .mtile.s2 { grid-column: span 2; }
+.mu3 .mtile.s3 { grid-column: span 3; }
+.mu3 .mtile.h2 { grid-row: span 2; }
+.mu3 .mtile.h3 { grid-row: span 3; }
+.mu3 .mtile.hero { grid-column: span 3; grid-row: span 3; }
+
+/* ─────────────────────── Section header ─────────────────────────────── */
+.mu3 .sec-h {
+  display: flex; align-items: baseline; justify-content: space-between;
+  padding: 18px 14px 10px;
+  font-size: 10.5px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--dim);
+  font-weight: 600;
+}
+.mu3 .sec-h em {
+  font-style: normal; letter-spacing: 0.04em;
+  text-transform: none; color: var(--muted);
+}
+.mu3 .sec-h .see-all {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 10px; color: var(--accent);
+  letter-spacing: 0.1em;
+  text-decoration: none; cursor: pointer;
+}
+
+/* ─────────────────────── Main rail (the spine) ──────────────────────── */
+.mu3 .rail { padding: 0 14px; }
+.mu3 .conn {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: 14px; align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line-soft);
+  cursor: pointer;
+  transition: background .14s;
+  margin: 0 -14px;
+  padding-left: 14px; padding-right: 14px;
+}
+.mu3 .conn:last-child { border-bottom: 0; }
+.mu3 .conn:hover { background: var(--card-hover); }
+.mu3 .conn.pulse { animation: pulse 1.4s ease-out 1; }
+@keyframes pulse {
+  0%   { background: var(--pulse-bg); }
+  100% { background: transparent; }
+}
+.mu3 .conn .duo3 { width: 64px; height: 64px; padding: 6px; border-radius: 4px; }
+.mu3 .conn .duo3-initials { font-size: 22px; }
+.mu3 .conn .nm {
+  font-size: 16px; font-weight: 600;
+  letter-spacing: -0.005em; line-height: 1.15;
+}
+.mu3 .conn .role {
+  font-size: 11px; color: var(--muted);
+  margin-top: 2px;
+  letter-spacing: 0.02em;
+}
+.mu3 .conn .why {
+  font-size: 11.5px;
+  margin-top: 7px;
+  display: flex; flex-wrap: wrap; gap: 4px 8px;
+  align-items: baseline;
+  line-height: 1.4;
+}
+.mu3 .conn .why .top {
+  color: var(--text);
+}
+.mu3 .conn .why .top .t {
+  font-family: "Newsreader", serif;
+  font-style: italic;
+  font-size: 12.5px;
+  color: var(--text);
+}
+.mu3 .conn .why .ct {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 10px; font-weight: 500;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 2px 5px; border-radius: 3px;
+  letter-spacing: 0.02em;
+}
+.mu3 .conn .why .rel {
+  font-size: 10.5px; color: var(--muted);
+  font-style: italic;
+}
+.mu3 .conn-act {
+  display: flex; flex-direction: column; gap: 5px;
+  align-items: flex-end;
+}
+.mu3 .conn-act .ic { width: 30px; height: 30px; }
+
+/* ─────────────────────── "From the same era" section ────────────────── */
+.mu3 .era {
+  margin-top: 18px;
+  padding: 18px 14px 12px;
+  border-top: 1px solid var(--line);
+  background: var(--bg-soft);
+}
+.mu3 .era-h {
+  display: flex; align-items: baseline; justify-content: space-between;
+  padding-bottom: 4px;
+}
+.mu3 .era-h .lab {
+  font-size: 12px; letter-spacing: 0.005em;
+  font-weight: 600; color: var(--text);
+}
+.mu3 .era-h .lab b {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 10.5px; font-weight: 500;
+  margin-left: 8px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 2px 5px; border-radius: 3px;
+  letter-spacing: 0.02em;
+}
+.mu3 .era-h .blurb {
+  font-family: "Newsreader", serif;
+  font-style: italic;
+  font-size: 12.5px; color: var(--muted);
+  margin-top: 4px;
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+.mu3 .era-strip {
+  display: flex; gap: 8px; overflow-x: auto;
+  padding: 10px 0 4px;
+  margin: 0 -14px; padding-left: 14px; padding-right: 14px;
+  scrollbar-width: none;
+}
+.mu3 .era-strip::-webkit-scrollbar { display: none; }
+.mu3 .era-tile {
+  flex: 0 0 140px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform .14s, background .14s;
+}
+.mu3 .era-tile:hover { transform: translateY(-2px); background: var(--card-hover); }
+.mu3 .era-tile .duo3 {
+  width: 100%; aspect-ratio: 1;
+  border-radius: 0;
+  padding: 8px;
+}
+.mu3 .era-tile .duo3-initials { font-size: 26px; }
+.mu3 .era-tile .body { padding: 8px 10px 10px; }
+.mu3 .era-tile .nm {
+  font-size: 13.5px; font-weight: 600;
+  letter-spacing: -0.005em; line-height: 1.15;
+}
+.mu3 .era-tile .hint {
+  font-size: 10.5px; color: var(--muted);
+  margin-top: 4px; line-height: 1.4;
+}
+
+/* ─────────────────────── Records strip ──────────────────────────────── */
+.mu3 .rec-strip {
+  display: flex; gap: 10px; overflow-x: auto;
+  padding: 6px 14px 16px;
+  scrollbar-width: none;
+}
+.mu3 .rec-strip::-webkit-scrollbar { display: none; }
+.mu3 .rec-tile {
+  flex: 0 0 124px;
+  cursor: pointer;
+}
+.mu3 .rec-tile .duo3 {
+  width: 124px; height: 124px; padding: 0;
+}
+.mu3 .rec-tile .rt {
+  font-size: 12.5px; font-weight: 600;
+  letter-spacing: -0.005em; line-height: 1.2;
+  margin-top: 8px;
+}
+.mu3 .rec-tile .rm {
+  font-size: 10.5px; color: var(--muted);
+  margin-top: 3px;
+  letter-spacing: 0.03em;
+}
+.mu3 .rec-tile .ry {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 10px; color: var(--accent);
+  margin-top: 2px;
+  letter-spacing: 0.04em;
+}
+
+/* ─────────────────────── Sparse-data treatment ─────────────────────── */
+.mu3 .sparse-note {
+  margin: 6px 14px 16px;
+  border: 1px dashed var(--line);
+  border-left: 2px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+  padding: 12px 14px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+.mu3 .sparse-note b {
+  display: block;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 9.5px; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.mu3 .dupe-flag {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 8px;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 10px; letter-spacing: 0.06em;
+  color: var(--accent);
+}
+.mu3 .empty-section {
+  padding: 22px 14px;
+  text-align: center;
+  font-family: "Newsreader", serif;
+  font-style: italic;
+  font-size: 14px;
+  color: var(--muted);
+  background: var(--bg-soft);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+/* ═════════════════════ Home ═════════════════════════════════════════ */
+.mu3 .home-hero {
+  padding: 22px 18px 8px;
+}
+.mu3 .home-hero .kicker {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 10px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.mu3 .home-hero h1 {
+  font-family: "Newsreader", "Source Serif 4", serif;
+  font-weight: 500;
+  font-size: 32px; line-height: 1.05;
+  letter-spacing: -0.015em;
+  margin: 0 0 10px;
+  text-wrap: balance;
+}
+.mu3 .home-hero h1 em {
+  font-style: italic; color: var(--text-soft);
+}
+.mu3 .home-hero .sub {
+  font-size: 14px; line-height: 1.5;
+  color: var(--muted);
+  margin: 0 0 0;
+  text-wrap: pretty;
+}
+.mu3 .home-search {
+  margin: 14px 14px 12px;
+  height: 42px;
+  border-radius: 8px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  display: flex; align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.mu3 .home-search .kbd {
+  margin-left: auto;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 10px;
+  background: var(--kbd-bg);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 2px 5px;
+  letter-spacing: 0.06em;
+}
+.mu3 .home-journeys-h {
+  font-size: 10.5px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--dim);
+  font-weight: 600;
+  padding: 6px 14px 8px;
+}
+.mu3 .journeys {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+  padding: 0 14px 18px;
+  border-bottom: 1px solid var(--line);
+}
+.mu3 .journey {
+  border: 1px solid var(--line);
+  background: var(--card);
+  border-radius: 8px;
+  padding: 12px 10px 11px;
+  text-align: left;
+  cursor: pointer;
+  transition: background .14s;
+}
+.mu3 .journey:hover { background: var(--card-hover); }
+.mu3 .journey .icn {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 16px; color: var(--accent);
+  margin-bottom: 6px;
+}
+.mu3 .journey .lab { font-size: 12.5px; font-weight: 600; letter-spacing: -0.005em; }
+.mu3 .journey .blb { font-size: 10.5px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+
+.mu3 .home-12-h {
+  display: flex; align-items: baseline; justify-content: space-between;
+  padding: 18px 14px 4px;
+}
+.mu3 .home-12-h .lab {
+  font-family: "Newsreader", serif;
+  font-style: italic;
+  font-size: 16px; color: var(--text);
+  letter-spacing: -0.005em;
+}
+.mu3 .home-12-h .ct {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 10.5px; color: var(--muted);
+  letter-spacing: 0.06em;
+}
+.mu3 .home-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+  padding: 10px 14px 24px;
+}
+.mu3 .home-card {
+  position: relative; overflow: hidden;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  cursor: pointer;
+  transition: transform .14s;
+}
+.mu3 .home-card:hover { transform: translateY(-1px); }
+.mu3 .home-card .duo3 {
+  width: 100%; aspect-ratio: 4/3;
+  border-radius: 0;
+  padding: 10px;
+}
+.mu3 .home-card .body { padding: 9px 11px 11px; }
+.mu3 .home-card .nm {
+  font-size: 14px; font-weight: 600;
+  letter-spacing: -0.005em; line-height: 1.15;
+}
+.mu3 .home-card .ml {
+  font-size: 11px; color: var(--muted);
+  margin-top: 3px; letter-spacing: 0.02em;
+}
+.mu3 .home-card .hook {
+  font-family: "Newsreader", serif; font-style: italic;
+  font-size: 12px; color: var(--text-soft);
+  margin-top: 6px; line-height: 1.4;
+}
+
+/* ─────────────────────── Autosuggest dropdown ──────────────────────── */
+.mu3 .suggest-shell {
+  padding: 14px;
+}
+.mu3 .suggest-input {
+  display: flex; align-items: center; gap: 10px;
+  height: 46px; padding: 0 12px;
+  border: 1.5px solid var(--accent);
+  border-radius: 8px 8px 0 0;
+  background: var(--card);
+  font-size: 16px; color: var(--text);
+}
+.mu3 .suggest-input .typed {
+  font-family: "Geist", sans-serif;
+}
+.mu3 .suggest-input .caret {
+  display: inline-block;
+  width: 1.5px; height: 18px;
+  background: var(--accent);
+  animation: blink 1s steps(1) infinite;
+  vertical-align: middle;
+  margin-left: 1px;
+}
+.mu3 .suggest-input .clear {
+  margin-left: auto;
+  font-family: "Geist Mono", monospace;
+  font-size: 10px; color: var(--muted);
+  letter-spacing: 0.08em;
+}
+@keyframes blink { 50% { opacity: 0; } }
+.mu3 .suggest-dropdown {
+  border: 1.5px solid var(--accent);
+  border-top: 0;
+  border-radius: 0 0 8px 8px;
+  background: var(--card);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.mu3 .suggest-row {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line-soft);
+  cursor: pointer;
+}
+.mu3 .suggest-row:last-child { border-bottom: 0; }
+.mu3 .suggest-row:hover { background: var(--card-hover); }
+.mu3 .suggest-row[aria-selected="true"] { background: var(--accent-soft); }
+.mu3 .suggest-row .duo3 { width: 44px; height: 44px; padding: 4px; border-radius: 4px; }
+.mu3 .suggest-row .duo3-initials { font-size: 16px; }
+.mu3 .suggest-row .nm {
+  font-size: 14.5px; font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.mu3 .suggest-row .nm em {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  color: var(--text); font-style: normal;
+  padding: 0 1px; border-radius: 1px;
+}
+.mu3 .suggest-row .meta {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 10px; color: var(--muted);
+  margin-top: 3px;
+  letter-spacing: 0.04em;
+}
+.mu3 .suggest-row .tag {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 9px; letter-spacing: 0.08em;
+  color: var(--dim);
+  text-transform: uppercase;
+}
+.mu3 .suggest-foot {
+  padding: 10px 12px;
+  background: var(--bg-soft);
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: 9.5px; color: var(--muted);
+  letter-spacing: 0.06em;
+  display: flex; justify-content: space-between;
+}
+.mu3 .suggest-foot kbd {
+  font-family: inherit;
+  background: var(--kbd-bg);
+  padding: 1px 5px; border-radius: 3px;
+  border: 1px solid var(--line);
+  margin: 0 2px;
+}
+.mu3 .suggest-fallback-h {
+  padding: 12px 14px 6px;
+  font-family: "Geist Mono", monospace;
+  font-size: 10px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--dim);
+}
+.mu3 .suggest-fallback-h em {
+  font-style: italic; color: var(--muted); letter-spacing: 0.02em; text-transform: none;
+}
+
+/* ─────────────────────── "More about" expansion ─────────────────────── */
+.mu3 .more-overlay {
+  position: absolute; inset: 0;
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 30;
+  display: flex; align-items: flex-end;
+}
+.mu3 .more-sheet {
+  width: 100%;
+  background: var(--paper);
+  border-radius: 14px 14px 0 0;
+  border-top: 1px solid var(--line);
+  padding: 8px 0 24px;
+  max-height: 78%;
+  display: flex; flex-direction: column;
+  box-shadow: 0 -20px 40px rgba(0,0,0,0.35);
+}
+.mu3 .more-handle {
+  width: 36px; height: 4px; border-radius: 2px;
+  background: var(--dim); opacity: 0.5;
+  margin: 6px auto 12px;
+}
+.mu3 .more-head {
+  padding: 0 18px 8px;
+  display: flex; align-items: baseline; justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+}
+.mu3 .more-head .ttl {
+  font-family: "Newsreader", serif;
+  font-size: 19px; font-weight: 500;
+  letter-spacing: -0.005em;
+}
+.mu3 .more-head .ttl em {
+  font-style: italic; color: var(--accent);
+}
+.mu3 .more-head .close {
+  font-family: "Geist Mono", monospace;
+  font-size: 10px; color: var(--muted);
+  letter-spacing: 0.08em;
+}
+.mu3 .more-body {
+  padding: 14px 18px;
+  overflow-y: auto;
+}
+.mu3 .more-body p {
+  font-family: "Newsreader", serif;
+  font-size: 15px; line-height: 1.55;
+  color: var(--text);
+  margin: 0 0 12px;
+  text-wrap: pretty;
+}
+.mu3 .more-body p:first-of-type::first-letter {
+  font-family: "Newsreader", serif;
+  font-weight: 600;
+  font-size: 46px; line-height: 0.85;
+  float: left;
+  padding: 6px 8px 0 0;
+  color: var(--text);
+}
+.mu3 .more-body .attribution {
+  font-family: "Geist Mono", monospace;
+  font-size: 9.5px; color: var(--dim);
+  letter-spacing: 0.08em;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+/* ═════════════════════ Desktop ═══════════════════════════════════════ */
+.mu3 .desk { padding: 0; }
+.mu3 .desk-hdr {
+  position: sticky; top: 0; z-index: 20;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: 1px solid var(--line);
+  padding: 14px 28px;
+  display: flex; align-items: center; gap: 16px;
+}
+.mu3 .desk-brand { font-size: 16px; font-weight: 600; letter-spacing: -0.005em; }
+.mu3 .desk-brand b { color: var(--accent); }
+.mu3 .desk-search {
+  flex: 0 1 380px;
+  height: 34px;
+  background: var(--card);
+  border: 1px solid var(--line); border-radius: 6px;
+  padding: 0 12px;
+  display: flex; align-items: center; gap: 8px;
+  color: var(--muted); font-size: 13px;
+}
+.mu3 .desk-search .kbd {
+  margin-left: auto;
+  font-family: "Geist Mono", monospace;
+  font-size: 10px; color: var(--muted);
+  background: var(--kbd-bg); border: 1px solid var(--line);
+  border-radius: 3px; padding: 2px 5px;
+  letter-spacing: 0.04em;
+}
+.mu3 .desk-nav { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+.mu3 .desk-nav .util {
+  font-size: 13px; color: var(--text-soft);
+  padding: 0 10px; height: 32px;
+  display: inline-flex; align-items: center;
+  border-radius: 6px;
+}
+.mu3 .desk-nav .util:hover { background: var(--card-hover); }
+
+/* Desktop detail layout: rail on left (~440px), graph on right.
+ * Identity strip + listen + mosaic top on rail side, sticky musician
+ * identity to the side. */
+.mu3 .desk-detail {
+  display: grid;
+  grid-template-columns: 480px 1fr;
+  gap: 0;
+  min-height: 100%;
+}
+.mu3 .desk-rail {
+  border-right: 1px solid var(--line);
+  background: var(--bg);
+  overflow-y: auto;
+  max-height: calc(100vh - 60px);
+}
+.mu3 .desk-rail .ident { padding: 20px 22px 8px; grid-template-columns: 80px 1fr; gap: 16px; }
+.mu3 .desk-rail .ident .duo3 { width: 80px; height: 80px; padding: 10px; }
+.mu3 .desk-rail .ident .duo3-initials { font-size: 28px; }
+.mu3 .desk-rail .ident .nm { font-size: 24px; }
+.mu3 .desk-rail .bio { padding: 8px 22px 14px; }
+.mu3 .desk-rail .bio p { font-size: 15.5px; }
+.mu3 .desk-rail .listen { padding: 0 22px 16px; }
+.mu3 .desk-rail .mosaic-h { padding: 10px 22px 6px; }
+.mu3 .desk-rail .mosaic { padding: 0 22px 14px; grid-template-columns: repeat(6, 1fr); grid-auto-rows: 36px; }
+.mu3 .desk-rail .sec-h { padding: 18px 22px 10px; }
+.mu3 .desk-rail .rail { padding: 0 22px; }
+.mu3 .desk-rail .conn { margin: 0 -22px; padding-left: 22px; padding-right: 22px; }
+.mu3 .desk-rail .era { padding: 18px 22px; }
+.mu3 .desk-rail .era-strip { margin: 0 -22px; padding-left: 22px; padding-right: 22px; }
+.mu3 .desk-rail .rec-strip { padding: 8px 22px 28px; }
+
+.mu3 .desk-graph {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--accent) 6%, transparent) 0%, transparent 60%),
+    var(--bg-soft);
+  min-height: 720px;
+}
+.mu3 .desk-graph-bar {
+  position: absolute; top: 16px; left: 24px; right: 24px;
+  display: flex; align-items: baseline; justify-content: space-between;
+  z-index: 4;
+}
+.mu3 .desk-graph-bar .ttl {
+  font-family: "Geist Mono", monospace;
+  font-size: 10.5px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--dim);
+}
+.mu3 .desk-graph-bar .ttl b { color: var(--text); letter-spacing: 0.005em; }
+.mu3 .desk-graph-bar .ctrls {
+  display: inline-flex; gap: 4px;
+}
+.mu3 .desk-graph-bar .ctrls button {
+  background: var(--card); border: 1px solid var(--line); border-radius: 6px;
+  width: 30px; height: 30px;
+  color: var(--text-soft);
+  font: 500 12px/1 "Geist Mono", monospace;
+}
+.mu3 .desk-graph-bar .ctrls button.toggle {
+  background: var(--accent); color: var(--accent-fg); border-color: var(--accent);
+}
+.mu3 .desk-graph .legend-bottom {
+  position: absolute; bottom: 16px; left: 24px;
+  font-family: "Geist Mono", monospace;
+  font-size: 9.5px; color: var(--muted);
+  letter-spacing: 0.06em;
+  display: flex; align-items: center; gap: 14px;
+  z-index: 4;
+}
+.mu3 .desk-graph .legend-bottom .lk { display: inline-flex; align-items: center; gap: 6px; }
+.mu3 .desk-graph .legend-bottom .lk .dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+}
+.mu3 .desk-graph .legend-bottom .lk .lin {
+  display: inline-block; width: 24px; height: 2px; background: var(--accent);
+  border-radius: 1px;
+}
+.mu3 .desk-graph-svg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+}
+.mu3 .gnode { cursor: pointer; }
+.mu3 .gnode-label {
+  font-family: "Geist", sans-serif;
+  font-weight: 600; font-size: 11px;
+  fill: var(--text);
+  letter-spacing: -0.005em;
+}
+.mu3 .gnode-sub {
+  font-family: "Geist Mono", monospace;
+  font-size: 9px;
+  fill: var(--muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.mu3 .gnode-center .gnode-label { font-size: 14px; font-weight: 700; }
+.mu3 .gedge {
+  stroke: var(--line);
+  stroke-linecap: round;
+  fill: none;
+  opacity: 0.7;
+}
+.mu3 .gedge.strong { stroke: var(--accent); opacity: 0.5; }
+
+/* Desktop home: 4-col grid, generous, invitational headline */
+.mu3 .desk-home-wrap { padding: 36px 28px 60px; max-width: 1320px; margin: 0 auto; }
+.mu3 .desk-home-wrap .home-hero { padding: 0 0 8px; }
+.mu3 .desk-home-wrap .home-hero h1 { font-size: 56px; line-height: 0.95; }
+.mu3 .desk-home-wrap .home-hero .sub { font-size: 18px; max-width: 640px; }
+.mu3 .desk-home-wrap .desk-search-row {
+  display: flex; gap: 8px; margin: 24px 0 8px;
+  max-width: 560px;
+}
+.mu3 .desk-home-wrap .desk-search-row .desk-search {
+  flex: 1; height: 44px; font-size: 14px;
+}
+.mu3 .desk-home-wrap .home-journeys-h { padding: 26px 0 10px; }
+.mu3 .desk-home-wrap .journeys {
+  grid-template-columns: repeat(3, 1fr); gap: 10px;
+  padding: 0 0 24px;
+  max-width: 760px;
+  border-bottom: 1px solid var(--line);
+}
+.mu3 .desk-home-wrap .journey { padding: 18px; }
+.mu3 .desk-home-wrap .journey .lab { font-size: 14px; }
+.mu3 .desk-home-wrap .journey .blb { font-size: 12px; }
+.mu3 .desk-home-wrap .home-12-h { padding: 32px 0 12px; }
+.mu3 .desk-home-wrap .home-12-h .lab { font-size: 22px; }
+.mu3 .desk-home-wrap .home-grid {
+  grid-template-columns: repeat(4, 1fr); gap: 14px; padding: 0;
+}
+.mu3 .desk-home-wrap .home-card .duo3 { aspect-ratio: 1; padding: 14px; }
+.mu3 .desk-home-wrap .home-card .nm { font-size: 16px; }
+.mu3 .desk-home-wrap .home-card .hook { font-size: 13px; }
+
+/* ─────────────── No-photo mark · per-context tuning ───────────────
+ * Stroke weight scales inversely with tile size so the line work reads
+ * cleanly at every render. Padding tuned so the figure breathes.
+ * ─────────────────────────────────────────────────────────────────── */
+
+/* Mosaic tiles (variable sizes, image-only grid) */
+.mu3 .mtile .duo3-mark { padding: 8%; }
+.mu3 .mtile .duo3-mark svg .ln { stroke-width: 3; }
+.mu3 .mtile .duo3-mark-ini { font-size: 17px; right: 6%; bottom: 5%; opacity: 0.72; }
+.mu3 .mtile.hero .duo3-mark { padding: 12%; }
+.mu3 .mtile.hero .duo3-mark svg .ln { stroke-width: 2; }
+.mu3 .mtile.hero .duo3-mark-ini { font-size: 32px; right: 6%; bottom: 5%; opacity: 0.75; }
+
+/* Identity strip (64px mobile, 80px desktop) — dense, no monogram */
+.mu3 .ident .duo3-mark { padding: 10%; }
+.mu3 .ident .duo3-mark svg .ln { stroke-width: 4; }
+.mu3 .ident .duo3-mark-ini { display: none; }
+.mu3 .desk-rail .ident .duo3-mark { padding: 10%; }
+.mu3 .desk-rail .ident .duo3-mark svg .ln { stroke-width: 3.5; }
+.mu3 .desk-rail .ident .duo3-mark-ini { display: none; }
+
+/* Conn row — main rail spine, 64×64 — dense, no monogram */
+.mu3 .conn .duo3-mark { padding: 9%; }
+.mu3 .conn .duo3-mark svg .ln { stroke-width: 4; }
+.mu3 .conn .duo3-mark svg .dot { transform-box: fill-box; }
+.mu3 .conn .duo3-mark-ini { display: none; }
+
+/* Era strip — 140×140 */
+.mu3 .era-tile .duo3-mark { padding: 12%; }
+.mu3 .era-tile .duo3-mark svg .ln { stroke-width: 2.6; }
+.mu3 .era-tile .duo3-mark-ini { font-size: 21px; right: 7%; bottom: 6%; opacity: 0.72; }
+
+/* Records strip — Duo3 here is the record-cover placeholder, no mark
+   (RecordsStrip doesn't pass an `inst`). No override needed. */
+
+/* Autosuggest dropdown row — 44×44 — dense, no monogram */
+.mu3 .suggest-row .duo3-mark { padding: 11%; }
+.mu3 .suggest-row .duo3-mark svg .ln { stroke-width: 4.5; }
+.mu3 .suggest-row .duo3-mark-ini { display: none; }
+
+/* Desktop home cards (large square tiles) */
+.mu3 .desk-home-wrap .home-card .duo3-mark { padding: 14%; }
+.mu3 .desk-home-wrap .home-card .duo3-mark svg .ln { stroke-width: 2.2; }
+.mu3 .desk-home-wrap .home-card .duo3-mark-ini { font-size: 36px; right: 7%; bottom: 6%; opacity: 0.72; }
+
+/* Detail-page hero — large 5:4 tile. Opt-in modifier .duo3.hero. */
+.duo3.hero .duo3-mark { padding: 12%; }
+.duo3.hero .duo3-mark svg .ln { stroke-width: 2; }
+.duo3.hero .duo3-mark-ini { font-size: 32px; right: 7%; bottom: 6%; opacity: 0.72; }
+
+/* Tiles ≤ 36px (sticky header avatar, etc.) — the monogram becomes the
+   primary read and the figure becomes too tiny to parse. Container queries
+   would handle this; in their absence, callers can opt-in via .duo3.tiny. */
+.duo3.tiny .duo3-mark-ini { display: none; }
+
+

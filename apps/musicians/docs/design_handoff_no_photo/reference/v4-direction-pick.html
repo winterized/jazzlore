@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Jazzlore · no-photo · editorial line · pass 4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500;1,6..72,600&display=swap" rel="stylesheet">
+<style>
+  .pane[data-theme="dark"] {
+    --bg: #0a0a0a; --bg-soft: #0d0d0d; --paper: #161616;
+    --line: #242322; --line-soft: #1c1c1b;
+    --text: #f4eede; --text-soft: #d9d2c1;
+    --muted: #8a8378; --dim: #565047; --accent: #f4a233;
+  }
+  .pane[data-theme="light"] {
+    --bg: #f4f1ea; --bg-soft: #f8f5ee; --paper: #ffffff;
+    --line: #e2ddd0; --line-soft: #ede8dc;
+    --text: #1a1612; --text-soft: #3a342c;
+    --muted: #6a6258; --dim: #9b9384; --accent: #c87f1a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: #2a2724; color: #d9d2c1; }
+  body {
+    font-family: "Geist", -apple-system, system-ui, sans-serif;
+    font-feature-settings: "ss01" on, "cv11" on;
+    -webkit-font-smoothing: antialiased;
+    padding: 32px 36px 80px;
+    min-height: 100vh;
+  }
+
+  /* ─────────────── Page chrome ─────────────── */
+  .page-head { max-width: 1520px; margin: 0 auto 28px; padding-bottom: 16px; border-bottom: 1px solid #3a3530; }
+  .page-head .eyebrow {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 10.5px; letter-spacing: 0.08em;
+    color: #a09588; text-transform: uppercase;
+  }
+  .page-head h1 {
+    font-family: "Newsreader", serif; font-style: italic; font-weight: 500;
+    font-size: 30px; letter-spacing: -0.015em;
+    color: #f4eede; margin-top: 6px; text-wrap: balance;
+  }
+  .page-head p {
+    margin-top: 10px; max-width: 760px;
+    font-size: 13px; line-height: 1.55;
+    color: #a09588; text-wrap: pretty;
+  }
+  .page-head p b { color: #d9d2c1; font-weight: 500; }
+  .page-head .strap {
+    margin-top: 14px;
+    display: inline-flex; gap: 14px; flex-wrap: wrap;
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 10.5px; letter-spacing: 0.05em;
+  }
+  .page-head .strap span { color: #a09588; }
+  .page-head .strap b { color: #f4a233; font-weight: 500; }
+
+  .pane {
+    max-width: 1520px; margin: 0 auto 28px;
+    background: var(--bg); color: var(--text);
+    border: 1px solid #3a3530; border-radius: 8px;
+    overflow: hidden;
+  }
+  .pane-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding: 18px 24px 14px;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg-soft);
+  }
+  .pane-head .lbl {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 10.5px; letter-spacing: 0.08em;
+    color: var(--muted); text-transform: uppercase;
+  }
+  .pane-head .lbl b { color: var(--text); font-weight: 500; }
+  .pane-head .what { font-size: 12px; color: var(--muted); }
+
+  /* ─────────────── Sections ─────────────── */
+  .section {
+    padding: 28px 24px 30px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .section:last-child { border-bottom: 0; }
+  .section-head {
+    display: flex; align-items: baseline; gap: 14px;
+    margin-bottom: 22px;
+  }
+  .section-tag {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 10.5px; font-weight: 500;
+    color: var(--accent); letter-spacing: 0.05em;
+  }
+  .section-name {
+    font-family: "Newsreader", serif; font-style: italic; font-weight: 500;
+    font-size: 20px; letter-spacing: -0.01em; color: var(--text);
+  }
+  .section-note {
+    margin-left: auto; font-size: 12px; color: var(--muted);
+    max-width: 640px; text-align: right;
+    text-wrap: pretty; line-height: 1.5;
+  }
+  .section-note em { color: var(--text-soft); font-style: italic; }
+
+  /* ─────────────── Size-scale row ─────────────── */
+  .scale {
+    display: grid;
+    grid-template-columns: 320px 140px 80px 32px 1fr;
+    column-gap: 28px;
+    align-items: end;
+    margin-bottom: 26px;
+    padding-bottom: 24px;
+    border-bottom: 1px dashed var(--line-soft);
+  }
+  .scale .slot {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .scale .slot .cap {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 9.5px; letter-spacing: 0.05em;
+    color: var(--dim); text-transform: uppercase;
+  }
+  .scale .slot .lab {
+    font-size: 11px; color: var(--muted);
+  }
+  .scale .slot.hero .tile { width: 320px; height: 400px; }
+  .scale .slot.strip .tile { width: 140px; height: 140px; }
+  .scale .slot.mosaic .tile { width: 80px; height: 100px; }
+  .scale .slot.tiny .tile { width: 32px; height: 32px; }
+  .scale .slot.hero .lab { font-size: 13px; color: var(--text); font-weight: 500; }
+  .scale .reasoning {
+    padding: 0 0 4px 18px;
+    border-left: 1px solid var(--line);
+    font-size: 11.5px; line-height: 1.6; color: var(--muted);
+    text-wrap: pretty;
+    align-self: stretch;
+    display: flex; flex-direction: column; justify-content: flex-end;
+  }
+  .scale .reasoning .pt { display: block; margin-top: 8px; }
+  .scale .reasoning .pt:first-child { margin-top: 0; }
+  .scale .reasoning .pt b { color: var(--accent); font-weight: 500; }
+
+  /* ─────────────── 7-musician grid (strip size) ─────────────── */
+  .seven {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 14px;
+  }
+  .seven .cell { display: flex; flex-direction: column; gap: 4px; }
+  .seven .cell .tile { width: 100%; aspect-ratio: 4/5; }
+  .seven .cell .nm {
+    font-size: 11.5px; font-weight: 500;
+    color: var(--text-soft); letter-spacing: -0.005em;
+    line-height: 1.2; margin-top: 4px;
+  }
+  .seven .cell .meta {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 9.5px; color: var(--muted);
+    letter-spacing: 0.03em; text-transform: uppercase;
+  }
+  .seven .cell.unknown .nm { color: var(--muted); font-style: italic; }
+  .seven .cell.unknown .meta { color: var(--accent); }
+
+  /* ─────────────── In-context demo strips ─────────────── */
+  .ctx-block {
+    margin-top: 26px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line-soft);
+  }
+  .ctx-block .ctx-title {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 10.5px; letter-spacing: 0.08em;
+    color: var(--muted); text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .ctx-block .ctx-title b { color: var(--text); font-weight: 500; }
+  .ctx-row {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 24px;
+    align-items: start;
+    margin-bottom: 22px;
+  }
+  .ctx-row:last-child { margin-bottom: 0; }
+  .ctx-row .ctx-label {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 10px; letter-spacing: 0.05em;
+    color: var(--muted); text-transform: uppercase;
+  }
+  .ctx-row .ctx-label b { display: block; color: var(--text); font-weight: 500; font-size: 12px; margin-bottom: 4px; letter-spacing: -0.005em; text-transform: none; font-family: "Geist", sans-serif; }
+  .ctx-row .ctx-label .desc { display: block; font-family: "Geist", sans-serif; font-size: 11px; color: var(--muted); text-transform: none; letter-spacing: 0; line-height: 1.5; margin-top: 6px; text-wrap: pretty; }
+
+  /* Era strip (horizontal scroll-like row of 140x140 tiles + meta) */
+  .era-strip { display: flex; gap: 10px; overflow: hidden; }
+  .era-strip .ent { flex: 0 0 140px; display: flex; flex-direction: column; }
+  .era-strip .ent .tile { width: 140px; height: 140px; }
+  .era-strip .ent .et-nm {
+    font-size: 12.5px; font-weight: 500; color: var(--text);
+    letter-spacing: -0.005em; line-height: 1.2;
+    margin-top: 8px;
+  }
+  .era-strip .ent .et-hint {
+    font-size: 10.5px; color: var(--muted);
+    margin-top: 3px; line-height: 1.35;
+  }
+
+  /* Dense connection row (64px tile) — the spine */
+  .conn-row {
+    display: grid; grid-template-columns: 64px 1fr auto;
+    gap: 14px; align-items: center;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--line-soft);
+    background: var(--paper);
+    border-radius: 4px;
+    margin-bottom: 6px;
+  }
+  .conn-row .tile { width: 64px; height: 64px; border-radius: 4px; }
+  .conn-row .cmid .cnm { font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: -0.005em; }
+  .conn-row .cmid .crole { font-size: 11px; color: var(--muted); margin-top: 2px; letter-spacing: 0.02em; }
+  .conn-row .cmid .cwhy {
+    font-family: "Newsreader", serif; font-style: italic;
+    font-size: 11.5px; color: var(--text-soft);
+    margin-top: 5px; line-height: 1.4;
+  }
+  .conn-row .cact {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 10px; color: var(--accent); letter-spacing: 0.05em;
+  }
+
+  /* Mosaic (image-only grid) */
+  .mosaic-demo {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-auto-rows: 64px;
+    gap: 4px;
+    padding: 10px; background: var(--paper); border-radius: 4px;
+  }
+  .mosaic-demo .mt { position: relative; }
+  .mosaic-demo .mt .tile { width: 100%; height: 100%; border-radius: 2px; }
+  .mosaic-demo .mt.s2 { grid-column: span 2; }
+  .mosaic-demo .mt.h2 { grid-row: span 2; }
+  .mosaic-demo .mt.big { grid-column: span 2; grid-row: span 2; }
+
+  /* Dense header — 32px row */
+  .header-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    background: var(--paper);
+    border-radius: 4px;
+    border: 1px solid var(--line);
+  }
+  .header-row .tile { width: 32px; height: 32px; border-radius: 4px; }
+  .header-row .h-nm { font-size: 13px; font-weight: 600; color: var(--text); letter-spacing: -0.005em; }
+  .header-row .h-meta { font-size: 11px; color: var(--muted); margin-left: auto; font-family: "Geist Mono", monospace; letter-spacing: 0.03em; }
+
+  /* ─────────────── Unknown callout ─────────────── */
+  .unknown-call {
+    margin-top: 20px;
+    padding: 18px 22px;
+    border: 1px dashed color-mix(in srgb, var(--accent) 35%, var(--line));
+    background: color-mix(in srgb, var(--accent) 4%, transparent);
+    border-radius: 6px;
+    display: grid; grid-template-columns: 72px 1fr; gap: 22px;
+    align-items: start;
+  }
+  .unknown-call .demo .tile { width: 72px; height: 90px; }
+  .unknown-call .copy .l {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 10px; letter-spacing: 0.08em;
+    color: var(--accent); text-transform: uppercase;
+  }
+  .unknown-call .copy h3 {
+    font-family: "Newsreader", serif; font-style: italic; font-weight: 500;
+    font-size: 17px; letter-spacing: -0.01em;
+    color: var(--text); margin-top: 4px;
+  }
+  .unknown-call .copy p {
+    margin-top: 6px; font-size: 12.5px; line-height: 1.55;
+    color: var(--muted); max-width: 920px; text-wrap: pretty;
+  }
+  .unknown-call .copy p b { color: var(--text-soft); font-weight: 500; }
+
+  /* ─────────────── Duotone primitive ─────────────── */
+  .tile {
+    position: relative; overflow: hidden;
+    isolation: isolate;
+    border-radius: 4px;
+    background: #222;
+  }
+  .tile::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(120% 80% at 28% 22%, var(--duo-hi) 0%, transparent 55%),
+      radial-gradient(140% 100% at 78% 100%, var(--duo-lo) 0%, transparent 70%),
+      linear-gradient(180deg, var(--duo-lo) 0%, color-mix(in srgb, var(--duo-lo) 60%, #000) 100%);
+    z-index: 0;
+  }
+  .tile::after {
+    content: ""; position: absolute; inset: 0;
+    background-image:
+      radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1.5px),
+      radial-gradient(rgba(0,0,0,0.10) 1px, transparent 1.5px);
+    background-size: 3px 3px, 5px 5px;
+    background-position: 0 0, 1px 2px;
+    mix-blend-mode: overlay; opacity: 0.5;
+    z-index: 1; pointer-events: none;
+  }
+  .tile > .layer { position: absolute; inset: 0; z-index: 2; }
+
+  /* ─────────────── The mark (editorial line) ─────────────── */
+  .mark {
+    padding: 6% 6%;
+    display: flex; flex-direction: column;
+  }
+  .mark .strap {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 9.5px; letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--duo-hi) 55%, white);
+    opacity: 0.85;
+  }
+  .mark .figure {
+    flex: 1; min-height: 0;
+    margin: 5% 0 4%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .mark .figure svg {
+    width: 100%; height: 100%;
+    color: color-mix(in srgb, var(--duo-hi) 82%, white);
+    opacity: 0.96;
+  }
+  .mark .figure svg .ln {
+    stroke: currentColor; fill: none;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+  .mark .figure svg .dot { fill: currentColor; stroke: none; }
+  .mark .figure svg .keyfill {
+    fill: color-mix(in srgb, var(--duo-hi) 60%, white);
+    fill-opacity: 0.25; stroke: none;
+  }
+  .mark .nm {
+    font-family: "Newsreader", serif;
+    font-style: italic; font-weight: 500;
+    line-height: 0.92; letter-spacing: -0.025em;
+    color: color-mix(in srgb, var(--duo-hi) 92%, white);
+    text-wrap: balance;
+  }
+  .mark .meta {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid color-mix(in srgb, var(--duo-hi) 28%, transparent);
+    display: flex; justify-content: space-between; gap: 6px;
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 9px; letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--duo-hi) 65%, white);
+  }
+
+  /* hero size */
+  .hero .mark .strap { font-size: 11px; }
+  .hero .mark .nm { font-size: 36px; }
+  .hero .mark .meta { font-size: 11px; margin-top: 10px; padding-top: 10px; }
+  .hero .mark { padding: 7% 7%; }
+  /* strip size (140) */
+  .strip .mark { padding: 8% 8%; }
+  .strip .mark .strap { font-size: 7.5px; }
+  .strip .mark .nm { font-size: 13.5px; line-height: 0.95; }
+  .strip .mark .meta { font-size: 7.5px; margin-top: 5px; padding-top: 5px; }
+  .strip .mark .meta .r { display: none; }
+  /* mosaic size (80) — drop typography, keep figure only */
+  .mosaic .mark { padding: 0; }
+  .mosaic .mark .strap, .mosaic .mark .nm, .mosaic .mark .meta { display: none; }
+  .mosaic .mark .figure { margin: 12%; }
+  /* tiny size (32) — pure figure */
+  .tiny .mark { padding: 0; }
+  .tiny .mark .strap, .tiny .mark .nm, .tiny .mark .meta { display: none; }
+  .tiny .mark .figure { margin: 12%; }
+
+  /* same scaling for cells/strips/etc inside contextual demos */
+  .era-strip .ent .tile .mark { padding: 8% 8%; }
+  .era-strip .ent .tile .mark .strap { font-size: 7.5px; }
+  .era-strip .ent .tile .mark .nm { font-size: 13.5px; line-height: 0.95; }
+  .era-strip .ent .tile .mark .meta { font-size: 7.5px; margin-top: 5px; padding-top: 5px; }
+  .era-strip .ent .tile .mark .meta .r { display: none; }
+
+  .conn-row .tile .mark { padding: 0; }
+  .conn-row .tile .mark .strap, .conn-row .tile .mark .nm, .conn-row .tile .mark .meta { display: none; }
+  .conn-row .tile .mark .figure { margin: 15%; }
+
+  .header-row .tile .mark { padding: 0; }
+  .header-row .tile .mark .strap, .header-row .tile .mark .nm, .header-row .tile .mark .meta { display: none; }
+  .header-row .tile .mark .figure { margin: 12%; }
+
+  .mosaic-demo .mt .tile .mark { padding: 0; }
+  .mosaic-demo .mt .tile .mark .strap, .mosaic-demo .mt .tile .mark .nm, .mosaic-demo .mt .tile .mark .meta { display: none; }
+  .mosaic-demo .mt .tile .mark .figure { margin: 10%; }
+
+  /* seven-grid is strip-size */
+  .seven .cell .tile .mark { padding: 8% 8%; }
+  .seven .cell .tile .mark .strap { font-size: 7.5px; }
+  .seven .cell .tile .mark .nm { font-size: 13px; line-height: 0.95; }
+  .seven .cell .tile .mark .meta { font-size: 7.5px; margin-top: 5px; padding-top: 5px; }
+  .seven .cell .tile .mark .meta .r { display: none; }
+
+  /* Unknown callout — uses strip-style */
+  .unknown-call .demo .tile .mark { padding: 8% 8%; }
+  .unknown-call .demo .tile .mark .strap { font-size: 5.5px; }
+  .unknown-call .demo .tile .mark .nm { font-size: 8.5px; line-height: 0.95; }
+  .unknown-call .demo .tile .mark .meta { font-size: 5px; margin-top: 3px; padding-top: 3px; }
+  .unknown-call .demo .tile .mark .meta .r { display: none; }
+</style>
+</head>
+<body>
+
+<header class="page-head">
+  <div class="eyebrow">JAZZLORE · musicians · no-photo treatment · pass 4 · editorial line · refined</div>
+  <h1>Editorial-line silhouettes — refined drawings, full size system, both themes</h1>
+  <p>
+    Direction A selected. Drawings refined: cleaner posture, more confident curves, each instrument's
+    silhouette tightened so the pose alone communicates the act. Same six instruments plus the
+    <b>"figure at rest"</b> mark used when primary instrument is unknown (~200 musicians).
+  </p>
+  <div class="strap">
+    <b>Hero · 5:4</b> <span>detail page</span>
+    <b>·</b>
+    <b>Strip · 140</b> <span>era + record rails</span>
+    <b>·</b>
+    <b>Mosaic · 80</b> <span>image-only grid</span>
+    <b>·</b>
+    <b>Tiny · 32</b> <span>dense rows / sticky header</span>
+  </div>
+</header>
+
+<section class="pane" data-theme="dark" id="pane-dark"></section>
+<section class="pane" data-theme="light" id="pane-light"></section>
+
+<script>
+// ───────── Data ─────────
+const MUSICIANS = [
+  { id:'bobby-timmons',     name:'Bobby Timmons',     inst:'Piano',     era:'Hard bop', life:[1935,1974], serial:'042', duo:{lo:'#4a2f15', hi:'#c87f1a'} },
+  { id:'lee-morgan',        name:'Lee Morgan',        inst:'Trumpet',   era:'Hard bop', life:[1938,1972], serial:'113', duo:{lo:'#5a261a', hi:'#c8541a'} },
+  { id:'sam-jones',         name:'Sam Jones',         inst:'Bass',      era:'Hard bop', life:[1924,1981], serial:'088', duo:{lo:'#3a3018', hi:'#8c7028'} },
+  { id:'tony-williams',     name:'Tony Williams',     inst:'Drums',     era:'Post bop', life:[1945,1997], serial:'201', duo:{lo:'#2a2a30', hi:'#6a7088'} },
+  { id:'wayne-shorter',     name:'Wayne Shorter',     inst:'Tenor sax', era:'Post bop', life:[1933,2023], serial:'199', duo:{lo:'#2f2840', hi:'#6a5b90'} },
+  { id:'charlie-christian', name:'Charlie Christian', inst:'Guitar',    era:'Swing',    life:[1916,1942], serial:'015', duo:{lo:'#3a2a1a', hi:'#9a7250'} },
+  { id:'r-tomlin',          name:'Russell Tomlin',    inst:'—',         era:'Hard bop', life:[1929,1981], serial:'377', duo:{lo:'#332a1f', hi:'#7a6248'}, unknown:true },
+];
+
+function figKey(inst) {
+  if (!inst || inst === '—') return 'rest';
+  const i = inst.toLowerCase();
+  if (i.includes('piano')) return 'piano';
+  if (i.includes('trumpet') || i.includes('cornet')) return 'trumpet';
+  if (i.includes('bass')) return 'bass';
+  if (i.includes('drum')) return 'drums';
+  if (i.includes('sax')) return 'sax';
+  if (i.includes('guitar')) return 'guitar';
+  return 'rest';
+}
+
+// ───────── SVG figure library · editorial line ─────────
+// viewBox 0 0 100 140. Single-weight strokes (passed in via sw).
+// Designed for clear silhouette at small sizes, refinement at large.
+const FIG = {
+  // PIANO — pianist seated profile, both arms reaching forward to keys.
+  // Read: seated figure (back-curve) + horizontal keyboard mass to the right.
+  piano: ({sw=1.4}) => `
+    <g class="ln" stroke-width="${sw}">
+      <!-- Bench supports -->
+      <line x1="22" y1="98" x2="22" y2="108"></line>
+      <line x1="50" y1="98" x2="50" y2="108"></line>
+      <line x1="18" y1="98" x2="54" y2="98"></line>
+      <!-- Far leg (back) -->
+      <path d="M 34 100 C 31 114, 28 124, 26 134"></path>
+      <!-- Near leg (forward, foot on pedal) -->
+      <path d="M 44 100 C 47 114, 52 126, 56 136"></path>
+      <!-- Foot heel marks -->
+      <line x1="20" y1="134" x2="30" y2="134"></line>
+      <line x1="52" y1="136" x2="62" y2="136"></line>
+      <!-- Body back curve from head to seat -->
+      <path d="M 36 28 C 32 42, 32 64, 36 98"></path>
+      <!-- Body front curve -->
+      <path d="M 46 28 C 47 42, 48 60, 46 78"></path>
+      <!-- Head -->
+      <ellipse cx="41" cy="20" rx="6.5" ry="7.5"></ellipse>
+      <!-- Profile nose -->
+      <path d="M 47 19 L 49 21 L 48 23"></path>
+      <!-- Hair sweep -->
+      <path d="M 36 14 Q 42 10, 47 14"></path>
+      <!-- Far arm (deeper into keys) -->
+      <path d="M 44 32 C 56 36, 68 42, 78 50"></path>
+      <path d="M 78 50 L 86 54"></path>
+      <!-- Near arm (closer to viewer) -->
+      <path d="M 45 40 C 56 44, 68 50, 78 56"></path>
+      <path d="M 78 56 L 86 60"></path>
+      <!-- Keyboard plane (top edge) -->
+      <line x1="58" y1="54" x2="100" y2="54"></line>
+      <!-- Front edge of key plane -->
+      <line x1="58" y1="62" x2="100" y2="62"></line>
+      <!-- Black keys -->
+      <rect class="keyfill" x="64" y="54" width="3.5" height="5"></rect>
+      <rect class="keyfill" x="71" y="54" width="3.5" height="5"></rect>
+      <rect class="keyfill" x="80" y="54" width="3.5" height="5"></rect>
+      <rect class="keyfill" x="87" y="54" width="3.5" height="5"></rect>
+      <rect class="keyfill" x="94" y="54" width="3.5" height="5"></rect>
+      <!-- Piano body case (under keyboard) -->
+      <line x1="58" y1="62" x2="58" y2="74"></line>
+      <line x1="100" y1="62" x2="100" y2="74"></line>
+      <line x1="58" y1="74" x2="100" y2="74"></line>
+    </g>
+  `,
+
+  // TRUMPET — standing, slight back-tilt, horn extending up-right.
+  // Read: vertical figure + dramatic horn line angled up.
+  trumpet: ({sw=1.4}) => `
+    <g class="ln" stroke-width="${sw}">
+      <!-- Head (tilted back slightly) -->
+      <ellipse cx="46" cy="22" rx="6.5" ry="7.5" transform="rotate(-8 46 22)"></ellipse>
+      <!-- Hair sweep -->
+      <path d="M 42 16 Q 47 12, 51 17"></path>
+      <!-- Body sides -->
+      <path d="M 40 32 C 38 50, 38 70, 40 88"></path>
+      <path d="M 54 32 C 56 50, 56 70, 54 88"></path>
+      <!-- Hipline (subtle) -->
+      <path d="M 40 78 Q 47 80, 54 78" opacity="0.8"></path>
+      <!-- Far arm: up to mouthpiece, elbow bent -->
+      <path d="M 41 36 C 46 32, 54 28, 60 22"></path>
+      <!-- Near arm: out to valves, elbow bent forward -->
+      <path d="M 53 36 C 60 30, 70 24, 78 18"></path>
+      <!-- Trumpet body, two parallel lines suggesting tube depth -->
+      <line x1="55" y1="18" x2="92" y2="10"></line>
+      <line x1="56" y1="22" x2="92" y2="14"></line>
+      <!-- Bell -->
+      <path d="M 92 8 L 99 4 L 99 18 L 92 16 Z"></path>
+      <!-- Three valves on top -->
+      <line x1="68" y1="16" x2="68" y2="12"></line>
+      <line x1="73" y1="15" x2="73" y2="11"></line>
+      <line x1="78" y1="14" x2="78" y2="10"></line>
+      <circle class="dot" cx="68" cy="11" r="1.2"></circle>
+      <circle class="dot" cx="73" cy="10" r="1.2"></circle>
+      <circle class="dot" cx="78" cy="9" r="1.2"></circle>
+      <!-- Legs -->
+      <path d="M 40 88 C 38 104, 38 120, 40 134"></path>
+      <path d="M 54 88 C 56 104, 56 120, 54 134"></path>
+      <!-- Feet -->
+      <line x1="34" y1="134" x2="42" y2="134"></line>
+      <line x1="50" y1="134" x2="58" y2="134"></line>
+    </g>
+  `,
+
+  // SAX — standing, sax body J-curves down across torso, bell flaring right.
+  // Read: vertical figure with J-shaped instrument silhouette.
+  sax: ({sw=1.4}) => `
+    <g class="ln" stroke-width="${sw}">
+      <!-- Head -->
+      <ellipse cx="42" cy="22" rx="6.5" ry="7.5"></ellipse>
+      <!-- Hair -->
+      <path d="M 38 16 Q 42 12, 47 16"></path>
+      <!-- Body sides -->
+      <path d="M 36 32 C 34 50, 34 70, 36 88"></path>
+      <path d="M 50 32 C 52 50, 52 70, 50 88"></path>
+      <!-- Mouthpiece neck (from face) -->
+      <line x1="46" y1="28" x2="52" y2="36"></line>
+      <!-- Sax body: curves down right, then J-loop -->
+      <path d="M 52 36 C 56 46, 60 58, 62 70 C 64 84, 62 96, 68 98 C 76 98, 76 90, 76 80 L 76 70"></path>
+      <!-- Bell flare -->
+      <path d="M 74 64 L 90 60 L 90 82 L 74 78 Z"></path>
+      <!-- Sax keys (dots down the body) -->
+      <circle class="dot" cx="60" cy="56" r="0.9"></circle>
+      <circle class="dot" cx="61" cy="64" r="0.9"></circle>
+      <circle class="dot" cx="62" cy="72" r="0.9"></circle>
+      <circle class="dot" cx="63" cy="80" r="0.9"></circle>
+      <!-- Far arm to mouthpiece -->
+      <path d="M 38 36 C 42 32, 46 30, 48 28"></path>
+      <!-- Near arm cradling body -->
+      <path d="M 50 38 C 54 42, 58 50, 60 56"></path>
+      <!-- Hand on lower keys -->
+      <path d="M 50 56 C 54 60, 58 64, 60 70"></path>
+      <!-- Legs -->
+      <path d="M 36 88 C 34 104, 34 120, 36 134"></path>
+      <path d="M 50 88 C 52 104, 52 120, 50 134"></path>
+      <line x1="30" y1="134" x2="38" y2="134"></line>
+      <line x1="46" y1="134" x2="54" y2="134"></line>
+    </g>
+  `,
+
+  // BASS — standing tall on left, upright bass to the right.
+  // Read: figure embracing a tall rounded instrument with scroll above.
+  bass: ({sw=1.4}) => `
+    <g class="ln" stroke-width="${sw}">
+      <!-- Head -->
+      <ellipse cx="22" cy="24" rx="6.5" ry="7.5"></ellipse>
+      <!-- Hair -->
+      <path d="M 18 18 Q 22 14, 27 18"></path>
+      <!-- Body sides -->
+      <path d="M 16 34 C 14 50, 14 70, 16 88"></path>
+      <path d="M 28 34 C 30 50, 30 70, 28 88"></path>
+      <!-- Legs -->
+      <path d="M 16 88 C 14 104, 14 120, 16 134"></path>
+      <path d="M 28 88 C 30 104, 30 120, 28 134"></path>
+      <line x1="10" y1="134" x2="18" y2="134"></line>
+      <line x1="24" y1="134" x2="32" y2="134"></line>
+      <!-- Bass scroll (top, with curl) -->
+      <path d="M 52 14 Q 46 14, 46 19 Q 46 24, 52 24"></path>
+      <path d="M 52 16 Q 50 16, 50 19 Q 50 22, 52 22"></path>
+      <!-- Tuning pegs -->
+      <line x1="48" y1="20" x2="46" y2="22"></line>
+      <line x1="56" y1="20" x2="58" y2="22"></line>
+      <!-- Bass neck (two strings hint) -->
+      <line x1="52" y1="24" x2="58" y2="62"></line>
+      <line x1="56" y1="24" x2="62" y2="62"></line>
+      <!-- Fretboard fingerboard -->
+      <line x1="54" y1="24" x2="60" y2="62" opacity="0.5"></line>
+      <!-- Bass body (rounded, classical violin-family shape) -->
+      <path d="M 60 62 Q 80 62, 82 80 Q 86 102, 78 116 Q 64 126, 56 116 Q 46 102, 50 80 Q 54 62, 60 62 Z"></path>
+      <!-- F-hole left and right -->
+      <path d="M 58 86 Q 56 92, 58 100"></path>
+      <path d="M 76 86 Q 78 92, 76 100"></path>
+      <!-- Bridge -->
+      <line x1="62" y1="98" x2="72" y2="98"></line>
+      <!-- Strings across bridge -->
+      <line x1="64" y1="62" x2="65" y2="116" opacity="0.5"></line>
+      <line x1="68" y1="62" x2="69" y2="116" opacity="0.5"></line>
+      <line x1="71" y1="62" x2="72" y2="116" opacity="0.5"></line>
+      <!-- Fretting arm reaching up to neck -->
+      <path d="M 28 38 C 38 32, 46 26, 50 22"></path>
+      <!-- Plucking arm reaching across to bridge -->
+      <path d="M 28 56 C 38 60, 50 72, 62 92"></path>
+    </g>
+  `,
+
+  // DRUMS — drummer seated, arms raised, sticks crossed at the air,
+  //         snare drum in front, hi-hat or cymbal hint to one side.
+  drums: ({sw=1.4}) => `
+    <g class="ln" stroke-width="${sw}">
+      <!-- Head -->
+      <ellipse cx="50" cy="20" rx="6.5" ry="7.5"></ellipse>
+      <!-- Hair -->
+      <path d="M 46 14 Q 50 10, 55 14"></path>
+      <!-- Body sides -->
+      <path d="M 44 30 C 42 46, 42 64, 44 76"></path>
+      <path d="M 56 30 C 58 46, 58 64, 56 76"></path>
+      <!-- Far arm raised, stick angling outward -->
+      <path d="M 43 34 C 32 28, 22 20, 14 12"></path>
+      <line x1="14" y1="12" x2="6" y2="4"></line>
+      <circle class="dot" cx="6" cy="4" r="1.6"></circle>
+      <!-- Near arm raised opposite -->
+      <path d="M 57 34 C 68 28, 78 20, 86 12"></path>
+      <line x1="86" y1="12" x2="94" y2="4"></line>
+      <circle class="dot" cx="94" cy="4" r="1.6"></circle>
+      <!-- Snare drum top oval -->
+      <ellipse cx="50" cy="92" rx="22" ry="6"></ellipse>
+      <!-- Snare body -->
+      <line x1="28" y1="92" x2="28" y2="108"></line>
+      <line x1="72" y1="92" x2="72" y2="108"></line>
+      <line x1="28" y1="108" x2="72" y2="108"></line>
+      <!-- Snare lugs/tension marks -->
+      <line x1="34" y1="92" x2="34" y2="108" opacity="0.45"></line>
+      <line x1="50" y1="92" x2="50" y2="108" opacity="0.45"></line>
+      <line x1="66" y1="92" x2="66" y2="108" opacity="0.45"></line>
+      <!-- Cymbal (top right, on stand) -->
+      <ellipse cx="86" cy="38" rx="9" ry="2.5"></ellipse>
+      <line x1="86" y1="40.5" x2="86" y2="62"></line>
+      <line x1="82" y1="62" x2="90" y2="62"></line>
+      <!-- Hi-hat (left side, smaller) -->
+      <ellipse cx="16" cy="62" rx="7" ry="2"></ellipse>
+      <line x1="16" y1="64" x2="16" y2="80"></line>
+      <!-- Legs straddling -->
+      <path d="M 44 76 C 32 90, 24 110, 22 134"></path>
+      <path d="M 56 76 C 68 90, 76 110, 78 134"></path>
+      <line x1="18" y1="134" x2="26" y2="134"></line>
+      <line x1="74" y1="134" x2="82" y2="134"></line>
+    </g>
+  `,
+
+  // GUITAR — seated 3/4, guitar body on lap, neck angled up.
+  guitar: ({sw=1.4}) => `
+    <g class="ln" stroke-width="${sw}">
+      <!-- Head -->
+      <ellipse cx="28" cy="22" rx="6.5" ry="7.5"></ellipse>
+      <!-- Hair -->
+      <path d="M 24 16 Q 28 12, 33 16"></path>
+      <!-- Body, slight forward hunch -->
+      <path d="M 22 32 C 20 50, 22 64, 26 78"></path>
+      <path d="M 34 32 C 38 48, 42 60, 42 70"></path>
+      <!-- Far leg (seated, knee forward) -->
+      <path d="M 26 78 C 24 92, 22 108, 22 122"></path>
+      <line x1="16" y1="122" x2="28" y2="122"></line>
+      <!-- Near thigh (lap holds guitar) -->
+      <path d="M 42 70 C 50 76, 56 88, 60 102"></path>
+      <line x1="55" y1="102" x2="66" y2="102"></line>
+      <!-- Guitar body: tilted oval (acoustic shape) -->
+      <ellipse cx="56" cy="70" rx="17" ry="13" transform="rotate(-22 56 70)"></ellipse>
+      <!-- Sound hole -->
+      <circle cx="54" cy="72" r="3.5"></circle>
+      <!-- Bridge -->
+      <line x1="47" y1="78" x2="55" y2="84"></line>
+      <!-- Guitar neck up-right -->
+      <line x1="68" y1="60" x2="92" y2="34"></line>
+      <line x1="72" y1="64" x2="96" y2="38"></line>
+      <!-- Strings on neck -->
+      <line x1="69" y1="62" x2="93" y2="36" opacity="0.4"></line>
+      <line x1="70.5" y1="63" x2="94.5" y2="37" opacity="0.4"></line>
+      <!-- Headstock with tuners -->
+      <path d="M 92 34 L 100 26 L 102 28 L 94 36 Z"></path>
+      <circle class="dot" cx="96" cy="30" r="0.8"></circle>
+      <circle class="dot" cx="100" cy="28" r="0.8"></circle>
+      <!-- Fret markers -->
+      <line x1="76" y1="58" x2="80" y2="62" opacity="0.5"></line>
+      <line x1="82" y1="52" x2="86" y2="56" opacity="0.5"></line>
+      <!-- Fretting hand (high on neck) -->
+      <circle class="dot" cx="84" cy="48" r="2"></circle>
+      <path d="M 34 34 C 50 36, 70 42, 84 48"></path>
+      <!-- Strumming arm + hand at body -->
+      <path d="M 38 42 C 46 50, 50 58, 52 68"></path>
+      <circle class="dot" cx="52" cy="70" r="1.8"></circle>
+    </g>
+  `,
+
+  // REST — figure at rest, no instrument. Used for unknown-instrument case.
+  rest: ({sw=1.4}) => `
+    <g class="ln" stroke-width="${sw}">
+      <!-- Head, slight downward thoughtful tilt -->
+      <ellipse cx="50" cy="24" rx="6.5" ry="7.5" transform="rotate(6 50 24)"></ellipse>
+      <!-- Hair -->
+      <path d="M 46 18 Q 50 14, 55 18"></path>
+      <!-- Body sides -->
+      <path d="M 44 34 C 42 52, 42 72, 44 88"></path>
+      <path d="M 56 34 C 58 52, 58 72, 56 88"></path>
+      <!-- Arms folded across chest -->
+      <path d="M 44 44 C 50 50, 56 50, 60 46"></path>
+      <path d="M 56 50 C 50 54, 46 54, 40 50"></path>
+      <!-- Subtle hand hint -->
+      <circle class="dot" cx="60" cy="46" r="1"></circle>
+      <circle class="dot" cx="40" cy="50" r="1"></circle>
+      <!-- Legs -->
+      <path d="M 44 88 C 42 104, 42 120, 44 134"></path>
+      <path d="M 56 88 C 58 104, 58 120, 56 134"></path>
+      <line x1="40" y1="134" x2="48" y2="134"></line>
+      <line x1="52" y1="134" x2="60" y2="134"></line>
+      <!-- Discreet question-mark hint above head -->
+      <path d="M 48 8 Q 48 4, 52 4 Q 56 4, 56 7 Q 56 10, 53 11"></path>
+      <circle class="dot" cx="53" cy="13.5" r="0.8"></circle>
+    </g>
+  `,
+};
+
+// stroke weight per size
+const SW = { hero: 1.4, strip: 2.0, mosaic: 2.8, tiny: 4.5 };
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function renderMark(m, size /* 'hero'|'strip'|'mosaic'|'tiny' */) {
+  const fig = FIG[figKey(m.inst)];
+  const sw = SW[size] || 2;
+  const instLabel = m.unknown ? 'Instrument unknown' : m.inst;
+  return `
+    <div class="layer mark">
+      <div class="strap">
+        <span>JL · ${m.serial}</span>
+        <span>${(m.unknown ? '—' : m.inst).toUpperCase()}</span>
+      </div>
+      <div class="figure">
+        <svg viewBox="0 0 100 140" preserveAspectRatio="xMidYMax meet">
+          ${fig({sw})}
+        </svg>
+      </div>
+      <div class="nm">${escapeHtml(m.name)}</div>
+      <div class="meta">
+        <span>${escapeHtml(instLabel)}</span>
+        <span class="r">${escapeHtml(m.era)} · ${m.life[0]}–${String(m.life[1]).slice(2)}</span>
+      </div>
+    </div>
+  `;
+}
+
+function makeTile(m, size) {
+  return `<div class="tile" style="--duo-lo:${m.duo.lo}; --duo-hi:${m.duo.hi};">${renderMark(m, size)}</div>`;
+}
+
+function scaleBlock(m) {
+  return `
+    <div class="scale">
+      <div class="slot hero">
+        <div class="cap">HERO · 5:4 · 320 × 400</div>
+        ${makeTile(m, 'hero')}
+        <div class="lab">${escapeHtml(m.name)} · detail page</div>
+      </div>
+      <div class="slot strip">
+        <div class="cap">STRIP · 140</div>
+        ${makeTile(m, 'strip')}
+        <div class="lab">era + record rails</div>
+      </div>
+      <div class="slot mosaic">
+        <div class="cap">MOSAIC · 80</div>
+        ${makeTile(m, 'mosaic')}
+        <div class="lab">image-only grid</div>
+      </div>
+      <div class="slot tiny">
+        <div class="cap">TINY · 32</div>
+        ${makeTile(m, 'tiny')}
+        <div class="lab">dense rows</div>
+      </div>
+      <div class="reasoning">
+        <span class="pt"><b>Hero (320)</b> carries the strap, big italic name, hairline meta. The figure occupies the top
+        <em>two-thirds</em> with the typography settling at the bottom.</span>
+        <span class="pt"><b>Strip (140)</b> keeps the system: strap shrinks, name drops to 13.5px italic, instrument
+        label only (era moves out). Figure still reads.</span>
+        <span class="pt"><b>Mosaic (80)</b> and <b>tiny (32)</b> drop all typography — the figure is the entire mark.
+        Stroke weight scales up so the line work survives.</span>
+      </div>
+    </div>
+  `;
+}
+
+function sevenBlock() {
+  const cells = MUSICIANS.map(m => `
+    <div class="cell ${m.unknown ? 'unknown' : ''}">
+      ${makeTile(m, 'strip')}
+      <div class="nm">${escapeHtml(m.name)}</div>
+      <div class="meta">${m.unknown ? 'INSTRUMENT —' : m.inst.toUpperCase()}</div>
+    </div>
+  `).join('');
+  return `<div class="seven">${cells}</div>`;
+}
+
+function unknownCallout() {
+  const m = MUSICIANS[MUSICIANS.length - 1];
+  return `
+    <div class="unknown-call">
+      <div class="demo">${makeTile(m, 'strip')}</div>
+      <div class="copy">
+        <div class="l">Unknown-instrument fallback</div>
+        <h3>The "figure at rest" mark</h3>
+        <p>
+          For the ~200 musicians where Jazzlore doesn't hold a primary instrument, we render a
+          <b>seated figure with arms folded</b> and a small question-mark accent above the head —
+          same drawing system, no instrument. The strap still shows <b>JL · serial</b> and the
+          instrument field becomes a long-dash. Reads as <em>"we know they're a musician, we don't
+          know the role"</em> — never blank, never a generic placeholder. Degrades to a bare
+          figure-only mark at mosaic and tiny sizes, identical to the others in shape and weight.
+        </p>
+      </div>
+    </div>
+  `;
+}
+
+// ───────── In-context demos ─────────
+
+function eraStripDemo() {
+  const ents = [
+    { m: MUSICIANS[0], hint: 'Predecessor at the Messengers piano chair' },
+    { m: MUSICIANS[1], hint: 'Frontline together · 1958–60' },
+    { m: MUSICIANS[2], hint: 'Adderley rhythm section' },
+    { m: MUSICIANS[4], hint: 'Messengers frontline · 1960' },
+    { m: MUSICIANS[3], hint: 'Generation later · indirect tie' },
+    { m: MUSICIANS[6], hint: 'Same era — possible connection, data sparse' },
+  ];
+  const cards = ents.map(e => `
+    <div class="ent">
+      ${makeTile(e.m, 'strip')}
+      <div class="et-nm">${escapeHtml(e.m.name)}</div>
+      <div class="et-hint">${escapeHtml(e.hint)}</div>
+    </div>
+  `).join('');
+  return `<div class="era-strip">${cards}</div>`;
+}
+
+function denseSpineDemo() {
+  const rows = [
+    { m: MUSICIANS[1], role: 'Trumpet · Frontline', why: '"Moanin\'", 1958 · 7 shared sessions' },
+    { m: MUSICIANS[2], role: 'Bass · Rhythm section', why: '"In San Francisco", 1959 · 5 shared sessions' },
+    { m: MUSICIANS[4], role: 'Tenor sax · Frontline', why: '"A Night in Tunisia", 1960 · 3 shared sessions' },
+    { m: MUSICIANS[6], role: 'Instrument unknown', why: 'Listed on personnel of one ONJ session, c.1989' },
+  ];
+  return rows.map(r => `
+    <div class="conn-row">
+      ${makeTile(r.m, 'tiny')}
+      <div class="cmid">
+        <div class="cnm">${escapeHtml(r.m.name)}</div>
+        <div class="crole">${escapeHtml(r.role)}</div>
+        <div class="cwhy">${escapeHtml(r.why)}</div>
+      </div>
+      <div class="cact">PLAY ›</div>
+    </div>
+  `).join('');
+}
+
+function mosaicGridDemo() {
+  // Mix of sizes mimicking the mosaic system
+  const m = i => MUSICIANS[i];
+  return `
+    <div class="mosaic-demo">
+      <div class="mt big">${makeTile(m(1), 'mosaic')}</div>
+      <div class="mt">${makeTile(m(0), 'mosaic')}</div>
+      <div class="mt">${makeTile(m(4), 'mosaic')}</div>
+      <div class="mt">${makeTile(m(2), 'mosaic')}</div>
+      <div class="mt">${makeTile(m(3), 'mosaic')}</div>
+      <div class="mt">${makeTile(m(6), 'mosaic')}</div>
+      <div class="mt s2">${makeTile(m(5), 'mosaic')}</div>
+      <div class="mt s2">${makeTile(m(4), 'mosaic')}</div>
+    </div>
+  `;
+}
+
+function headerRowDemo() {
+  const m = MUSICIANS[1];
+  return `
+    <div class="header-row">
+      ${makeTile(m, 'tiny')}
+      <div class="h-nm">${escapeHtml(m.name)}</div>
+      <div class="h-meta">${m.inst.toUpperCase()} · ${m.era.toUpperCase()}</div>
+    </div>
+  `;
+}
+
+// ───────── Build panes ─────────
+
+function buildPane(themeName, themeWhat) {
+  const focus = MUSICIANS[1]; // Lee Morgan (trumpet) — dramatic horn read
+
+  return `
+    <div class="pane-head">
+      <div class="lbl">Theme · <b>${themeName}</b></div>
+      <div class="what">${themeWhat}</div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <span class="section-tag">01</span>
+        <span class="section-name">Single musician across all four sizes</span>
+        <span class="section-note">
+          Lee Morgan, trumpet — the dramatic horn extension lets the silhouette work hard at every size.
+          Typography degrades by size band; figure scales by stroke weight.
+        </span>
+      </div>
+      ${scaleBlock(focus)}
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <span class="section-tag">02</span>
+        <span class="section-name">Seven musicians · strip size</span>
+        <span class="section-note">
+          Six instruments + the unknown case. Each figure is recognizable by silhouette alone:
+          horn raised (trumpet), J-curve sax, embraced upright bass, raised drumsticks, seated pianist
+          in profile, seated guitarist, and the at-rest unknown.
+        </span>
+      </div>
+      ${sevenBlock()}
+      ${unknownCallout()}
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <span class="section-tag">03</span>
+        <span class="section-name">In context · how the mark behaves in real screens</span>
+        <span class="section-note">
+          The mark inside actual <em>.mu3</em> compositions — era strip, mosaic, dense spine row,
+          sticky header. Verifies the system reads in situ, not only in isolation.
+        </span>
+      </div>
+
+      <div class="ctx-block">
+        <div class="ctx-title">A · <b>"From the same era" strip</b> — 140 px tiles</div>
+        <div class="ctx-row">
+          <div class="ctx-label">
+            <b>Era strip</b>
+            HARD BOP · 1955–1965
+            <span class="desc">Horizontal scrolling rail of contemporaries. Photo-less musicians blend in with photographed ones at this size.</span>
+          </div>
+          ${eraStripDemo()}
+        </div>
+      </div>
+
+      <div class="ctx-block">
+        <div class="ctx-title">B · <b>Image-only mosaic</b> — 80 px tiles, no text</div>
+        <div class="ctx-row">
+          <div class="ctx-label">
+            <b>Mosaic legend</b>
+            DEEPEST TIES
+            <span class="desc">Silent grid of related musicians, mixed sizes. At mosaic the figure is the entire read — no typography, just silhouette.</span>
+          </div>
+          ${mosaicGridDemo()}
+        </div>
+      </div>
+
+      <div class="ctx-block">
+        <div class="ctx-title">C · <b>Dense spine row</b> — 64 px thumbnail + record + reason</div>
+        <div class="ctx-row">
+          <div class="ctx-label">
+            <b>Main rail</b>
+            COLLABORATORS · RANKED
+            <span class="desc">The main detail-page list. Thumbnail is small but the figure pose is still visible at this density.</span>
+          </div>
+          <div>${denseSpineDemo()}</div>
+        </div>
+      </div>
+
+      <div class="ctx-block">
+        <div class="ctx-title">D · <b>Sticky header row</b> — 32 px in dense layout</div>
+        <div class="ctx-row">
+          <div class="ctx-label">
+            <b>Header / dense row</b>
+            NAME + AVATAR
+            <span class="desc">The smallest size used in the product. Figure occupies the whole tile, no typography.</span>
+          </div>
+          ${headerRowDemo()}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+document.getElementById('pane-dark').innerHTML = buildPane('Dark', 'stone + amber on #0a0a0a · text #f4eede · line #242322');
+document.getElementById('pane-light').innerHTML = buildPane('Light', 'stone + amber on #f4f1ea · text #1a1612 · line #e2ddd0');
+</script>
+</body>
+</html>

@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Jazzlore · no-photo · v5 · all instruments + wiring</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500;1,6..72,600&display=swap" rel="stylesheet">
+
+<!-- Production CSS: tokens + .duo3 primitive + the new .duo3-mark styles -->
+<link rel="stylesheet" href="app/musicians3-styles.css"/>
+
+<!-- Production figure library — defines window.FIG_LIB, window.figKey,
+     window.serialFor, window.NoPhotoMark -->
+<script src="app/no-photo-figures.js"></script>
+
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: #2a2724; color: #d9d2c1; }
+  body {
+    font-family: "Geist", -apple-system, system-ui, sans-serif;
+    font-feature-settings: "ss01" on, "cv11" on;
+    -webkit-font-smoothing: antialiased;
+    padding: 32px 36px 80px;
+    min-height: 100vh;
+  }
+
+  .page-head { max-width: 1520px; margin: 0 auto 28px; padding-bottom: 16px; border-bottom: 1px solid #3a3530; }
+  .page-head .eyebrow {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 10.5px; letter-spacing: 0.08em;
+    color: #a09588; text-transform: uppercase;
+  }
+  .page-head h1 {
+    font-family: "Newsreader", serif; font-style: italic; font-weight: 500;
+    font-size: 30px; letter-spacing: -0.015em;
+    color: #f4eede; margin-top: 6px; text-wrap: balance;
+  }
+  .page-head p {
+    margin-top: 10px; max-width: 820px;
+    font-size: 13px; line-height: 1.55;
+    color: #a09588; text-wrap: pretty;
+  }
+  .page-head p b { color: #d9d2c1; font-weight: 500; }
+  .page-head .strap {
+    margin-top: 12px;
+    display: inline-flex; gap: 14px; flex-wrap: wrap;
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 10.5px; letter-spacing: 0.05em;
+  }
+  .page-head .strap span { color: #a09588; }
+  .page-head .strap b { color: #f4a233; font-weight: 500; }
+
+  /* themed pane uses .mu3 for the production tokens */
+  .pane {
+    max-width: 1520px; margin: 0 auto 28px;
+    background: var(--bg, #0a0a0a); color: var(--text, #f4eede);
+    border: 1px solid #3a3530; border-radius: 8px;
+    overflow: hidden;
+  }
+  .pane[data-theme="light"] { background: var(--bg); }
+
+  .pane-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding: 18px 24px 14px;
+    border-bottom: 1px solid var(--line, #242322);
+    background: var(--bg-soft, #0d0d0d);
+  }
+  .pane-head .lbl {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 10.5px; letter-spacing: 0.08em;
+    color: var(--muted, #8a8378); text-transform: uppercase;
+  }
+  .pane-head .lbl b { color: var(--text, #f4eede); font-weight: 500; }
+  .pane-head .what { font-size: 12px; color: var(--muted, #8a8378); }
+
+  .section {
+    padding: 28px 24px 30px;
+    border-bottom: 1px solid var(--line-soft, #1c1c1b);
+  }
+  .section:last-child { border-bottom: 0; }
+  .section-head {
+    display: flex; align-items: baseline; gap: 14px;
+    margin-bottom: 18px;
+  }
+  .section-tag {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 10.5px; font-weight: 500;
+    color: var(--accent, #f4a233); letter-spacing: 0.05em;
+  }
+  .section-name {
+    font-family: "Newsreader", serif; font-style: italic; font-weight: 500;
+    font-size: 20px; letter-spacing: -0.01em; color: var(--text, #f4eede);
+  }
+  .section-note {
+    margin-left: auto; font-size: 12px; color: var(--muted, #8a8378);
+    max-width: 640px; text-align: right;
+    text-wrap: pretty; line-height: 1.5;
+  }
+
+  /* All-instruments grid */
+  .all {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 14px;
+  }
+  .all .cell {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .all .cell .duo3 {
+    width: 100%; aspect-ratio: 4/5;
+    border-radius: 4px;
+  }
+  .all .cell .nm {
+    font-size: 12px; font-weight: 500;
+    color: var(--text-soft, #d9d2c1); letter-spacing: -0.005em;
+    line-height: 1.2; margin-top: 4px;
+  }
+  .all .cell .meta {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 9.5px; color: var(--muted, #8a8378);
+    letter-spacing: 0.03em; text-transform: uppercase;
+  }
+  .all .cell.unknown .nm { color: var(--muted, #8a8378); font-style: italic; }
+  .all .cell.unknown .meta { color: var(--accent, #f4a233); }
+  .all .cell .key {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 8.5px; color: var(--dim, #565047);
+    letter-spacing: 0.04em;
+    margin-top: 1px;
+  }
+
+  /* Hero — single big tile */
+  .hero-row {
+    display: grid; grid-template-columns: 320px 1fr; gap: 28px;
+    align-items: end;
+    margin-bottom: 24px;
+  }
+  .hero-row .hero-tile { width: 320px; height: 400px; }
+  .hero-row .hero-info { padding: 0 0 6px; }
+  .hero-row .hero-info h2 {
+    font-family: "Newsreader", serif; font-style: italic; font-weight: 500;
+    font-size: 38px; letter-spacing: -0.015em; line-height: 1.0;
+    color: var(--text, #f4eede); text-wrap: balance;
+  }
+  .hero-row .hero-info .role {
+    margin-top: 8px;
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--muted, #8a8378);
+  }
+  .hero-row .hero-info p {
+    margin-top: 14px; font-size: 13px; line-height: 1.55;
+    color: var(--text-soft, #d9d2c1); max-width: 520px; text-wrap: pretty;
+  }
+  .hero-row .hero-info .meta-grid {
+    margin-top: 16px;
+    display: grid; grid-template-columns: auto 1fr; gap: 6px 14px;
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 10.5px; letter-spacing: 0.04em;
+    max-width: 380px;
+  }
+  .hero-row .hero-info .meta-grid dt { color: var(--muted, #8a8378); text-transform: uppercase; }
+  .hero-row .hero-info .meta-grid dd { color: var(--text-soft, #d9d2c1); }
+
+  /* In-context demos — reuses production .mu3 classes */
+  .ctx-block { margin-top: 22px; }
+  .ctx-title {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 10.5px; letter-spacing: 0.08em;
+    color: var(--muted, #8a8378); text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .ctx-title b { color: var(--text, #f4eede); font-weight: 500; }
+  .ctx-row {
+    display: grid; grid-template-columns: 200px 1fr; gap: 24px;
+    align-items: start; margin-bottom: 22px;
+  }
+  .ctx-row .ctx-lbl {
+    font-size: 11px; color: var(--muted, #8a8378); line-height: 1.5;
+  }
+  .ctx-row .ctx-lbl b { color: var(--text, #f4eede); font-weight: 500; font-size: 12.5px; display: block; margin-bottom: 4px; }
+
+  /* Instrument-mapping reference table */
+  .map-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .map-table th {
+    text-align: left;
+    padding: 8px 14px 8px 0;
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 10px; letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted, #8a8378);
+    font-weight: 500;
+    border-bottom: 1px solid var(--line, #242322);
+  }
+  .map-table td {
+    padding: 9px 14px 9px 0;
+    border-bottom: 1px solid var(--line-soft, #1c1c1b);
+    vertical-align: middle;
+  }
+  .map-table td.key { font-family: "Geist Mono", monospace; color: var(--accent, #f4a233); font-size: 11px; letter-spacing: 0.04em; }
+  .map-table td.in  { color: var(--text-soft, #d9d2c1); font-family: "Geist Mono", monospace; font-size: 11px; }
+  .map-table td.thumb { width: 48px; }
+  .map-table td.thumb .duo3 { width: 36px; height: 36px; border-radius: 3px; }
+
+  /* Sticky-header-row demo */
+  .header-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    background: var(--paper, #161616);
+    border-radius: 6px;
+    border: 1px solid var(--line, #242322);
+  }
+  .header-row .duo3 { width: 32px; height: 32px; border-radius: 4px; }
+  .header-row .h-nm { font-size: 13px; font-weight: 600; color: var(--text); letter-spacing: -0.005em; }
+  .header-row .h-meta { font-size: 11px; color: var(--muted); margin-left: auto; font-family: "Geist Mono", monospace; letter-spacing: 0.03em; }
+
+  /* v5 demo: align monogram sizes to production contexts where the demo
+     isn't using the production class hierarchy. */
+  .all .duo3 .duo3-mark-ini,
+  .disambig .duo3 .duo3-mark-ini,
+  .demo-era .duo3 .duo3-mark-ini { font-size: 21px; opacity: 0.72; }
+  .demo-mosaic .duo3 .duo3-mark-ini { font-size: 17px; opacity: 0.72; }
+  .demo-conn .duo3 .duo3-mark-ini,
+  .demo-header .duo3 .duo3-mark-ini { display: none; }
+  .map-table .duo3 .duo3-mark-ini { display: none; }
+</style>
+</head>
+<body>
+
+<header class="page-head">
+  <div class="eyebrow">JAZZLORE · musicians · no-photo treatment · pass 5 · production wiring + all instruments</div>
+  <h1>Editorial line · 14 instruments · wired into the production .duo3 primitive</h1>
+  <p>
+    Direction A is now in the production code path. <b>app/no-photo-figures.js</b> ships the figure
+    library + <code>NoPhotoMark</code> + <code>figKey()</code> mapper; <b>Duo3</b> in
+    <code>musicians3-shared.jsx</code> auto-activates the mark when an <code>inst</code> prop is
+    passed; <b>.duo3-mark</b> styles in <code>musicians3-styles.css</code> handle per-context
+    stroke weight + padding. Every screen that already uses <code>ConnRow / EraStrip / MosaicHeader</code>
+    picks it up for free.
+  </p>
+  <div class="strap">
+    <b>14 instruments</b> <span>piano · trumpet · trombone · sax · clarinet · flute · bass · violin · guitar · drums · vibes · organ · voice</span>
+    <span>+</span>
+    <b>1 fallback</b> <span>figure at rest (unknown)</span>
+  </div>
+</header>
+
+<!-- React + Babel mounting -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<div id="pane-dark"></div>
+<div id="pane-light"></div>
+
+<script type="text/babel">
+// ─── Sample data ───
+// 14 musicians covering the full instrument library + the unknown case.
+// Mix of well-known leaders, sidemen, and a sparse-data unknown.
+const ROSTER = [
+  { name:'Bobby Timmons',      inst:'Piano',         era:'Hard bop',   life:[1935,1974] },
+  { name:'Lee Morgan',         inst:'Trumpet',       era:'Hard bop',   life:[1938,1972] },
+  { name:'Curtis Fuller',      inst:'Trombone',      era:'Hard bop',   life:[1932,2021] },
+  { name:'Wayne Shorter',      inst:'Tenor sax',     era:'Post bop',   life:[1933,2023] },
+  { name:'Buddy DeFranco',     inst:'Clarinet',      era:'Bebop',      life:[1923,2014] },
+  { name:'Hubert Laws',        inst:'Flute',         era:'Post bop',   life:[1939,null] },
+  { name:'Sam Jones',          inst:'Bass',          era:'Hard bop',   life:[1924,1981] },
+  { name:'Stéphane Grappelli', inst:'Violin',        era:'Swing',      life:[1908,1997] },
+  { name:'Charlie Christian',  inst:'Guitar',        era:'Swing',      life:[1916,1942] },
+  { name:'Tony Williams',      inst:'Drums',         era:'Post bop',   life:[1945,1997] },
+  { name:'Milt Jackson',       inst:'Vibraphone',    era:'Bebop',      life:[1923,1999] },
+  { name:'Jimmy Smith',        inst:'Hammond organ', era:'Soul jazz',  life:[1928,2005] },
+  { name:'Carmen McRae',       inst:'Vocals',        era:'Bebop',      life:[1920,1994] },
+  { name:'Russell Tomlin',     inst:'—',             era:'Hard bop',   life:[1929,1981] },
+];
+
+// `duotoneFor` would normally come from production shared code; replicate
+// a simple hash → palette here so we can render outside the full app.
+const PALETTES = [
+  ['#4a2f15','#c87f1a'], // amber (default warm)
+  ['#5a261a','#c8541a'], // rust
+  ['#3a3018','#8c7028'], // ochre
+  ['#2a2a30','#6a7088'], // slate
+  ['#2f2840','#6a5b90'], // dusty plum
+  ['#3a2a1a','#9a7250'], // sepia
+  ['#1c3236','#557a78'], // teal
+  ['#332a1f','#7a6248'], // umber
+];
+function duotoneFor(name) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return PALETTES[h % PALETTES.length];
+}
+
+// Duo3 minimal local copy that uses the production NoPhotoMark.
+function Duo3({ name, inst, initials = true, big, style, className = '' }) {
+  const [lo, hi] = duotoneFor(name);
+  const hasMark = inst !== undefined && inst !== null;
+  return (
+    <div className={'duo3 ' + className}
+         style={{ ['--duo-lo']: lo, ['--duo-hi']: hi, ...style }}>
+      {hasMark
+        ? <window.NoPhotoMark inst={inst} name={name}/>
+        : initials && (
+          <span className="duo3-initials" style={big ? { fontSize: '48px' } : undefined}>
+            {name.split(/\s+/).map(s => s[0]).join('').slice(0,2).toUpperCase()}
+          </span>
+        )
+      }
+    </div>
+  );
+}
+
+// Mock production ConnRow row
+function ConnDemo({ c }) {
+  return (
+    <div className="conn" style={{ background: 'var(--paper)', borderRadius: 4, padding: '14px', marginBottom: 6, gridTemplateColumns:'64px 1fr auto', display:'grid', gap: 14, alignItems:'center', border:'1px solid var(--line-soft)' }}>
+      <Duo3 name={c.name} inst={c.inst}/>
+      <div>
+        <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', letterSpacing:'-0.005em' }}>{c.name}</div>
+        <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2, letterSpacing:'0.02em' }}>{c.role}</div>
+        <div style={{ fontSize: 11.5, fontFamily: '"Newsreader", serif', fontStyle:'italic', color: 'var(--text-soft)', marginTop: 5, lineHeight: 1.4 }}>{c.why}</div>
+      </div>
+      <div style={{ fontFamily:'"Geist Mono", monospace', fontSize: 10, color: 'var(--accent)', letterSpacing:'0.05em' }}>PLAY ›</div>
+    </div>
+  );
+}
+
+// Mock EraStrip card
+function EraCard({ m, hint }) {
+  return (
+    <div style={{ flex:'0 0 140px', background:'var(--card)', borderRadius: 4, overflow:'hidden', border:'1px solid var(--line-soft)' }}>
+      <Duo3 name={m.name} inst={m.inst} style={{ width:140, height:140, borderRadius: 0 }} />
+      <div style={{ padding: '8px 10px 10px' }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', letterSpacing:'-0.005em', lineHeight: 1.2 }}>{m.name}</div>
+        <div style={{ fontSize: 10.5, color:'var(--muted)', marginTop: 4, lineHeight: 1.4 }}>{m.inst === '—' ? 'Instrument unknown' : m.inst} · {hint}</div>
+      </div>
+    </div>
+  );
+}
+
+// Mosaic mini-grid
+function MosaicMini({ list, className = '' }) {
+  return (
+    <div className={className} style={{
+      display:'grid', gridTemplateColumns: 'repeat(6, 1fr)', gridAutoRows: 64,
+      gap: 4, padding: 10, background:'var(--paper)', borderRadius: 4,
+    }}>
+      {list.map((m, i) => (
+        <div key={m.name+i} style={{
+          gridColumn: i === 0 ? 'span 2' : 'span 1',
+          gridRow: i === 0 ? 'span 2' : 'span 1',
+        }}>
+          <Duo3 name={m.name} inst={m.inst} style={{ width:'100%', height:'100%', borderRadius: 2 }}/>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function HeaderRow({ m }) {
+  return (
+    <div className="header-row">
+      <Duo3 name={m.name} inst={m.inst}/>
+      <div className="h-nm">{m.name}</div>
+      <div className="h-meta">{m.inst === '—' ? '— · ' + m.era.toUpperCase() : m.inst.toUpperCase() + ' · ' + m.era.toUpperCase()}</div>
+    </div>
+  );
+}
+
+function HeroBlock({ m }) {
+  return (
+    <div className="hero-row">
+      <Duo3 name={m.name} inst={m.inst} style={{ width:320, height:400, borderRadius: 6 }} className="hero hero-tile"/>
+      <div className="hero-info">
+        <h2>{m.name}</h2>
+        <div className="role">{m.inst === '—' ? 'Primary instrument unknown' : m.inst} · {m.era}{m.life[1] ? ` · ${m.life[0]} – ${String(m.life[1]).slice(2)}` : ` · ${m.life[0]} – `}</div>
+        <p>
+          Photo-less, instrument-{m.inst === '—' ? '<b>unknown</b>' : 'known'}. The .duo3 primitive renders the
+          editorial-line "no-photo" mark automatically once an <code>inst</code> prop is passed.
+          No other layout change required.
+        </p>
+        <dl className="meta-grid">
+          <dt>Figure key</dt>           <dd>{window.figKey(m.inst)}</dd>
+          <dt>Serial</dt>               <dd>JL · {window.serialFor(m.name)}</dd>
+          <dt>Source string</dt>        <dd>"{m.inst}"</dd>
+        </dl>
+      </div>
+    </div>
+  );
+}
+
+// Mapping reference table — shows how various instrument strings resolve
+const MAPPINGS = [
+  ['piano',     ['Piano','Electric piano','Rhodes','Wurlitzer','Keyboard']],
+  ['trumpet',   ['Trumpet','Cornet','Flugelhorn','French horn']],
+  ['trombone',  ['Trombone','Bass trombone']],
+  ['sax',       ['Tenor sax','Alto sax','Soprano sax','Baritone sax','Saxophone']],
+  ['clarinet',  ['Clarinet','Bass clarinet','Oboe','Bassoon']],
+  ['flute',     ['Flute','Piccolo']],
+  ['bass',      ['Bass','Double bass','Upright bass','Contrabass','Cello']],
+  ['violin',    ['Violin','Fiddle','Viola','Harp']],
+  ['guitar',    ['Guitar','Electric guitar','Banjo','Mandolin','Ukulele']],
+  ['drums',     ['Drums','Percussion','Cymbals']],
+  ['vibes',     ['Vibraphone','Vibes','Marimba','Xylophone']],
+  ['organ',     ['Organ','Hammond','Hammond B3']],
+  ['voice',     ['Vocals','Voice','Singer','Scat']],
+  ['rest',      ['(empty)','—','null','Unknown','any unrecognized string']],
+];
+
+function MappingTable() {
+  return (
+    <table className="map-table">
+      <thead>
+        <tr>
+          <th style={{width:48}}></th>
+          <th style={{width:120}}>Figure key</th>
+          <th>Resolves from any of these input strings (case-insensitive, substring match)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {MAPPINGS.map(([key, inputs]) => (
+          <tr key={key}>
+            <td className="thumb">
+              <Duo3 name={key + '-sample'} inst={inputs[0] === '(empty)' ? '' : inputs[0]}/>
+            </td>
+            <td className="key">{key}</td>
+            <td className="in">{inputs.join(' · ')}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function AllInstruments() {
+  return (
+    <div className="all">
+      {ROSTER.map(m => (
+        <div key={m.name} className={'cell ' + (m.inst === '—' ? 'unknown' : '')}>
+          <Duo3 name={m.name} inst={m.inst}/>
+          <div className="nm">{m.name}</div>
+          <div className="meta">{m.inst === '—' ? 'Instrument unknown' : m.inst}</div>
+          <div className="key">figKey: {window.figKey(m.inst)}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Disambiguation demo — 3 musicians per shared instrument, same figure,
+// different monogram. Stress-test that the corner mark does its job.
+const DISAMBIG = [
+  ['Piano',     [['Bobby Timmons','1935–74'], ['Wynton Kelly','1931–71'], ['Sonny Clark','1931–63']]],
+  ['Trumpet',   [['Lee Morgan','1938–72'],    ['Clifford Brown','1930–56'], ['Booker Little','1938–61']]],
+  ['Tenor sax', [['Wayne Shorter','1933–2023'],['Hank Mobley','1930–86'],   ['Joe Henderson','1937–2001']]],
+  ['Drums',     [['Tony Williams','1945–97'], ['Philly Joe Jones','1923–85'],['Roy Haynes','1925–2024']]],
+];
+
+function DisambigGrid() {
+  return (
+    <div className="disambig" style={{ display:'flex', flexDirection:'column', gap: 22 }}>
+      {DISAMBIG.map(([inst, list]) => (
+        <div key={inst} style={{ display:'grid', gridTemplateColumns:'200px 1fr', gap: 24, alignItems:'center' }}>
+          <div className="ctx-lbl">
+            <b>{inst}</b>
+            Three musicians, same figure. The bottom-right monogram is the discriminator.
+          </div>
+          <div style={{ display:'flex', gap: 14 }}>
+            {list.map(([name, span]) => (
+              <div key={name} style={{ display:'flex', flexDirection:'column', gap: 6, flex:'0 0 140px' }}>
+                <Duo3 name={name} inst={inst} style={{ width:140, height:140 }}/>
+                <div style={{ fontSize: 12, fontWeight: 500, color:'var(--text-soft)', letterSpacing:'-0.005em', lineHeight: 1.2 }}>{name}</div>
+                <div style={{ fontFamily:'"Geist Mono", monospace', fontSize: 9.5, color:'var(--muted)', letterSpacing:'0.03em', textTransform:'uppercase' }}>{span}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Pane({ theme }) {
+  // ConnRow data — Bobby Timmons collaborators including unknown
+  const connData = [
+    { name:'Lee Morgan',         inst:'Trumpet',      role:'Trumpet · Messengers frontline',  why:'"Moanin\'", 1958 · 7 shared sessions' },
+    { name:'Curtis Fuller',      inst:'Trombone',     role:'Trombone · Messengers brass',     why:'"Mosaic", 1961 · 2 shared sessions' },
+    { name:'Wayne Shorter',      inst:'Tenor sax',    role:'Tenor sax · Messengers frontline',why:'"A Night in Tunisia", 1960 · 3 shared' },
+    { name:'Jimmy Smith',        inst:'Hammond organ',role:'Organ · Soul-jazz date',          why:'"Open House", 1960 · 1 shared session' },
+    { name:'Russell Tomlin',     inst:'—',            role:'Instrument unknown',              why:'Listed on personnel of one ONJ date, c.1989' },
+  ];
+
+  return (
+    <section className="pane mu3" data-theme={theme} style={{ minHeight: 200 }}>
+      <div className="pane-head">
+        <div className="lbl">Theme · <b>{theme === 'dark' ? 'Dark' : 'Light'}</b></div>
+        <div className="what">
+          {theme === 'dark'
+            ? 'stone + amber on #0a0a0a · text #f4eede · line #242322'
+            : 'stone + amber on #f4f1ea · text #1a1612 · line #e2ddd0'}
+        </div>
+      </div>
+
+      <div className="section">
+        <div className="section-head">
+          <span className="section-tag">01</span>
+          <span className="section-name">All 14 instruments at strip size</span>
+          <span className="section-note">
+            Every primary-instrument the database holds gets its own figure. <code>figKey()</code> resolves
+            free-form strings (cornet → trumpet, hammond → organ, viola → violin…). Russell Tomlin is the
+            unknown-instrument fallback.
+          </span>
+        </div>
+        <AllInstruments/>
+      </div>
+
+      <div className="section">
+        <div className="section-head">
+          <span className="section-tag">02</span>
+          <span className="section-name">Disambiguation · corner monogram</span>
+          <span className="section-note">
+            Three pianists, three drummers, three saxophonists — same figure, different monograms.
+            The monogram sits bottom-right, mono type, low-contrast — secondary to the figure,
+            sufficient as a discriminator.
+          </span>
+        </div>
+        <DisambigGrid/>
+      </div>
+
+      <div className="section">
+        <div className="section-head">
+          <span className="section-tag">03</span>
+          <span className="section-name">Detail-page hero · the mark at large scale</span>
+          <span className="section-note">
+            At 320 × 400 the figure becomes a substantial portrait stand-in. Duotone field carries warmth;
+            line drawing carries identity.
+          </span>
+        </div>
+        <HeroBlock m={ROSTER[2]}/>{/* Curtis Fuller — trombone, showcases the slide gesture */}
+      </div>
+
+      <div className="section">
+        <div className="section-head">
+          <span className="section-tag">04</span>
+          <span className="section-name">In context · production .mu3 classes</span>
+          <span className="section-note">
+            Same components that render musicians today. Photo-less musicians slot in without bespoke logic
+            once <code>inst</code> is in the data.
+          </span>
+        </div>
+
+        <div className="ctx-block">
+          <div className="ctx-title">A · <b>Era strip</b> — 140 px tiles · contemporaries rail</div>
+          <div className="ctx-row">
+            <div className="ctx-lbl">
+              <b>Era strip</b>
+              Bobby Timmons' contemporaries — pianists, brass, organ, and one unknown-instrument sideman.
+            </div>
+            <div className="demo-era" style={{ display:'flex', gap:10, overflow:'hidden' }}>
+              <EraCard m={ROSTER[0]}  hint="The Adderley piano chair, parallel"/>
+              <EraCard m={ROSTER[2]}  hint="Trombone frontline, Messengers"/>
+              <EraCard m={ROSTER[10]} hint="Vibes — counterpart on the MJQ axis"/>
+              <EraCard m={ROSTER[11]} hint="Soul-jazz contemporary"/>
+              <EraCard m={ROSTER[12]} hint="Vocal lineage — Bebop generation"/>
+              <EraCard m={ROSTER[13]} hint="Possible connection · data sparse"/>
+            </div>
+          </div>
+        </div>
+
+        <div className="ctx-block">
+          <div className="ctx-title">B · <b>Main rail · conn rows</b> — 64 px thumbnail · the spine</div>
+          <div className="ctx-row">
+            <div className="ctx-lbl">
+              <b>Main rail</b>
+              Ranked collaborators on Bobby Timmons' detail page. Mix of instruments + one unknown.
+            </div>
+            <div className="demo-conn">
+              {connData.map((c, i) => <ConnDemo c={c} key={i}/>)}
+            </div>
+          </div>
+        </div>
+
+        <div className="ctx-block">
+          <div className="ctx-title">C · <b>Image-only mosaic</b> — mixed sizes · no text</div>
+          <div className="ctx-row">
+            <div className="ctx-lbl">
+              <b>Mosaic legend</b>
+              Sizes encode collaboration depth. Mosaic tiles are pure silhouette — no typography.
+            </div>
+            <MosaicMini className="demo-mosaic" list={[ROSTER[1],ROSTER[0],ROSTER[6],ROSTER[3],ROSTER[2],ROSTER[9],ROSTER[10],ROSTER[11],ROSTER[12],ROSTER[13]]}/>
+          </div>
+        </div>
+
+        <div className="ctx-block">
+          <div className="ctx-title">D · <b>Sticky header row</b> — 32 px · the smallest the system goes</div>
+          <div className="ctx-row">
+            <div className="ctx-lbl">
+              <b>Header / dense row</b>
+              Figure occupies the whole tile, no typography. The silhouette still reads — you can spot
+              a horn from a guitar at thumbnail.
+            </div>
+            <div className="demo-header" style={{ display:'flex', flexDirection:'column', gap: 4 }}>
+              <HeaderRow m={ROSTER[2]}/>
+              <HeaderRow m={ROSTER[11]}/>
+              <HeaderRow m={ROSTER[10]}/>
+              <HeaderRow m={ROSTER[12]}/>
+              <HeaderRow m={ROSTER[13]}/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="section">
+        <div className="section-head">
+          <span className="section-tag">05</span>
+          <span className="section-name">Instrument-string → figure mapping</span>
+          <span className="section-note">
+            <code>figKey(inst)</code> is forgiving — case-insensitive substring match. Unknown strings fall
+            through to <code>rest</code> (the figure-at-rest mark). New instrument keys can be added in one place
+            without touching anything else.
+          </span>
+        </div>
+        <MappingTable/>
+      </div>
+    </section>
+  );
+}
+
+const root = (id) => ReactDOM.createRoot(document.getElementById(id));
+root('pane-dark').render(<Pane theme="dark"/>);
+root('pane-light').render(<Pane theme="light"/>);
+</script>
+
+</body>
+</html>
