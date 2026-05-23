@@ -37,15 +37,21 @@ type Props = {
   /** Eager-load the <img> (first home row / the detail hero, so LCP is not
    * harmed by lazy-loading the above-the-fold portrait). Default lazy. */
   eager?: boolean
-  /** Wave 2a — when supplied AND no photo is available, render the editorial
+  /** Wave 2a — when supplied AND `photo === false`, render the editorial
    * `<NoPhotoMark>` (instrument figure + corner monogram) inside the tile
    * instead of the corner-initials fallback. Pass the musician's primary
    * instrument string (`Collaborator.instrument`, `EraItem.instrument`,
    * `SearchCorpusEntry.primaryInstrument`, or the curated card's
    * `subtitle`, which the BFF already populates from `primary_instruments[0]`).
    * The photo path is unchanged — when a real portrait renders, the figure
-   * does not show. Omit (record covers, places that should keep today's
-   * monogram fallback) for byte-identical behaviour. */
+   * does not show. Omit (places that should keep today's monogram fallback)
+   * for byte-identical behaviour.
+   *
+   * **DO NOT pass for record covers.** Record-cover call-sites (e.g.
+   * `AttribAlbum`) render with `initials={false}` and never represent a
+   * musician — surfacing an instrument figure on an album tile would be a
+   * semantic regression. Only call-sites that render a MUSICIAN should
+   * pass `inst`. */
   inst?: string | null
   className?: string
   style?: CSSProperties
