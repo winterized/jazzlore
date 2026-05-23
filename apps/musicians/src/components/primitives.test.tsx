@@ -428,3 +428,159 @@ describe('AttribPhoto / AttribAlbum', () => {
     expect(screen.getByText(/F\. Wolff/)).toBeInTheDocument()
   })
 })
+
+// ── Wave 2a — no-photo editorial figure (NoPhotoMark inside Duo3) ─────
+// The fallback for photoless musicians changes from "corner initials" to
+// "instrument figure + corner monogram" when an `inst` string is supplied.
+// Record covers (initials={false}, no inst) stay untouched; portrait
+// callers (photo present) stay untouched.
+describe('Wave 2a · no-photo figure rendering', () => {
+  it('Duo3: inst + no photo → figure renders with the resolved figure key', () => {
+    const { container } = render(
+      <Duo3
+        name="Bobby Timmons"
+        photo={false}
+        inst="piano"
+        data-testid="duo"
+      />,
+    )
+    const mark = container.querySelector('.duo3-mark')
+    expect(mark).not.toBeNull()
+    expect(mark?.getAttribute('data-no-photo-key')).toBe('piano')
+    // Corner-initials fallback is suppressed when the figure takes over.
+    expect(screen.queryByText('BT', { selector: '.duo3-initials' })).toBeNull()
+    // The figure's own monogram still renders (different DOM node).
+    expect(
+      container.querySelector('.duo3-mark-ini')?.textContent,
+    ).toBe('BT')
+  })
+
+  it('Duo3: unknown instrument → "rest" figure (discreet question-mark)', () => {
+    const { container } = render(
+      <Duo3 name="Sideman X" photo={false} inst="washboard" />,
+    )
+    expect(
+      container
+        .querySelector('.duo3-mark')
+        ?.getAttribute('data-no-photo-key'),
+    ).toBe('rest')
+  })
+
+  it('Duo3: portrait present overrides inst — figure does NOT render', () => {
+    const { container } = render(
+      <Duo3
+        name="Miles Davis"
+        portrait={{ url: 'https://commons.example/miles.jpg' }}
+        inst="trumpet"
+      />,
+    )
+    expect(container.querySelector('.duo3-mark')).toBeNull()
+    expect(
+      screen.getByRole('img', { name: 'Miles Davis' }),
+    ).toBeInTheDocument()
+  })
+
+  it('Duo3: no inst → existing initials fallback unchanged (record covers, etc.)', () => {
+    const { container } = render(
+      <Duo3 name="Antoine Hervé" photo={false} />,
+    )
+    expect(container.querySelector('.duo3-mark')).toBeNull()
+    // Existing initials span continues to render.
+    expect(screen.getByText('AH')).toBeInTheDocument()
+  })
+
+  it('MosaicV4: photoless tile with instrument renders figure AND drops the duplicate external mtile-init', () => {
+    const { container } = render(
+      <MosaicV4
+        collabs={[
+          collab({
+            id: 'sideman-1',
+            name: 'Photoless Pianist',
+            instrument: 'piano',
+            photo: false,
+          }),
+        ]}
+      />,
+    )
+    const tile = container.querySelector('a.mtile.no-photo')
+    expect(tile).not.toBeNull()
+    expect(tile?.querySelector('.duo3-mark')).not.toBeNull()
+    // The external .mtile-init span is suppressed when the figure shows
+    // (it would otherwise duplicate the figure's own corner monogram).
+    expect(tile?.querySelector('.mtile-init')).toBeNull()
+  })
+
+  it('MosaicV4: photoless tile WITHOUT instrument keeps the external mtile-init fallback', () => {
+    const { container } = render(
+      <MosaicV4
+        collabs={[
+          collab({
+            id: 'sideman-2',
+            name: 'Unknown Player',
+            instrument: undefined,
+            photo: false,
+          }),
+        ]}
+      />,
+    )
+    expect(container.querySelector('.duo3-mark')).toBeNull()
+    expect(container.querySelector('.mtile-init')?.textContent).toBe('UP')
+  })
+
+  it('MosaicV4: photoed tile is unaffected (real <img>, no figure)', () => {
+    const { container } = render(
+      <MosaicV4
+        collabs={[
+          collab({ id: 'top', name: 'John Coltrane', photo: true }),
+        ]}
+        portraits={{
+          top: {
+            id: 'top',
+            name: 'John Coltrane',
+            photo: true,
+            portrait: { url: 'https://x/coltrane.jpg' },
+          },
+        }}
+      />,
+    )
+    expect(container.querySelector('.duo3-mark')).toBeNull()
+    expect(
+      screen.getByRole('img', { name: 'John Coltrane' }),
+    ).toBeInTheDocument()
+  })
+
+  it('ConnRow: photoless collaborator with instrument renders figure', () => {
+    const { container } = render(
+      <ConnRow
+        c={collab({ instrument: 'tenor saxophone', photo: false })}
+      />,
+    )
+    const mark = container.querySelector('.duo3-mark')
+    expect(mark).not.toBeNull()
+    expect(mark?.getAttribute('data-no-photo-key')).toBe('sax')
+  })
+
+  it('EraStrip: photoless peer with instrument renders the figure for that instrument', () => {
+    const items: EraItem[] = [
+      {
+        id: 'p1',
+        name: 'Unknown Bassist',
+        instrument: 'double bass',
+        photo: false,
+      },
+    ]
+    const { container } = render(<EraStrip items={items} />)
+    const mark = container.querySelector('.duo3-mark')
+    expect(mark).not.toBeNull()
+    expect(mark?.getAttribute('data-no-photo-key')).toBe('bass')
+  })
+
+  it('AttribAlbum: record covers stay clean (no inst flows in, no figure renders)', () => {
+    const { container } = render(
+      <AttribAlbum
+        rec={record({ cover: { url: '', license: '', attribution: '' } })}
+      />,
+    )
+    expect(container.querySelector('.duo3-mark')).toBeNull()
+  })
+})

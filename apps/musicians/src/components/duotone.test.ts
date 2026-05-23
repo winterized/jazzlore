@@ -98,4 +98,37 @@ describe('initialsOf', () => {
     // astral letters is identity, so the result is the two astral letters.
     expect(result).toBe('𝒜𝐁')
   })
+
+  // Wave 2a — no-photo handoff merges in a particle-skip set so the corner
+  // monogram on the no-photo figure doesn't absorb low-information words
+  // ("van", "de", "la", "the", "of", …) as initials. The set is purely
+  // additive over the Wave 1 filter — every assertion above continues to
+  // pass under the merged function.
+
+  it('skips middle particles (van / der) keeping first + meaningful last', () => {
+    expect(initialsOf('Ludwig van Beethoven')).toBe('LB')
+    expect(initialsOf('Ludwig Mies van der Rohe')).toBe('LR')
+    expect(initialsOf('Mies van der Rohe')).toBe('MR')
+  })
+
+  it('skips Latin particles in any position', () => {
+    expect(initialsOf('Robert de Niro')).toBe('RN')
+    expect(initialsOf('Antoine de la Vega')).toBe('AV')
+    expect(initialsOf('Charles of the Hill')).toBe('CH')
+  })
+
+  it('keeps non-particle two-word names unchanged (additive merge proof)', () => {
+    expect(initialsOf('Carmen McRae')).toBe('CM')
+    expect(initialsOf('Bobby Timmons')).toBe('BT')
+  })
+
+  it('doubles when every remaining token is a particle except one', () => {
+    // "de la Cruz": "de" + "la" skipped, "Cruz" alone → doubles to "CC".
+    expect(initialsOf('de la Cruz')).toBe('CC')
+  })
+
+  it('returns empty when every token is a skipped particle', () => {
+    expect(initialsOf('de la')).toBe('')
+    expect(initialsOf('of the')).toBe('')
+  })
 })

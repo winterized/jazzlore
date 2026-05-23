@@ -41,6 +41,30 @@ export function duotoneFor(key: string): readonly [string, string] {
   return DUOTONES[Math.abs(h) % DUOTONES.length] ?? FALLBACK_DUOTONE
 }
 
+/** Lowercased common particles skipped during initial extraction so
+ * "Ludwig Mies van der Rohe" → "MR" not "Mv", "Carmen de la Cruz" → "CC"
+ * etc. Merged in from the 2026-05-23 no-photo handoff (Wave 2a) — additive
+ * over the Wave 1 non-letter-token filter, so all earlier assertions
+ * remain green. Lowercase membership; tokens are matched after the
+ * letter-first filter. */
+const PARTICLES = new Set([
+  'van',
+  'von',
+  'de',
+  'del',
+  'della',
+  'di',
+  'da',
+  'du',
+  'la',
+  'le',
+  'of',
+  'the',
+  'and',
+  'y',
+  'el',
+])
+
 /** First + last word initials, uppercased ("Bobby Timmons" → "BT"). A single
  * word doubles ("Madonna" → "MM"); empty input → "". Tokens whose first code
  * point is not a Unicode letter are skipped — without that filter, raw upstream
@@ -49,11 +73,15 @@ export function duotoneFor(key: string): readonly [string, string] {
  * other non-ASCII names working. The first-character extraction uses
  * code-point iteration (`[...token][0]`) so astral-plane letters (e.g. a
  * stylized stage name with mathematical alphanumerics) yield a single
- * scalar, not a lone UTF-16 surrogate. */
+ * scalar, not a lone UTF-16 surrogate. Common particles (van / de / la /
+ * the / …) are skipped (Wave 2a) so "Ludwig van Beethoven" → "LB" rather
+ * than absorbing "van" as an initial. Punctuation is NOT stripped from
+ * tokens — "'Round About Midnight" continues to filter the apostrophe-led
+ * token and yield "AM" (Wave 1 regression-guarded). */
 export function initialsOf(name: string): string {
   const parts = String(name ?? '')
     .split(/\s+/)
-    .filter((p) => /^\p{L}/u.test(p))
+    .filter((p) => /^\p{L}/u.test(p) && !PARTICLES.has(p.toLowerCase()))
   if (parts.length === 0) return ''
   const firstCp = (s: string | undefined): string => [...(s ?? '')][0] ?? ''
   const first = firstCp(parts[0])

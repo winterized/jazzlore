@@ -104,10 +104,18 @@ export function MosaicV4({
               initials={false}
               photo={resolvedPhoto}
               portrait={portrait?.portrait}
+              inst={c.instrument}
             />
-            <span className="mtile-init" aria-hidden="true">
-              {initialsOf(c.name)}
-            </span>
+            {/* When the no-photo figure takes over the tile the external
+             * mtile-init monogram would duplicate the figure's own corner
+             * monogram. Drop the external span in that branch; keep it for
+             * the existing photoless-without-instrument fallback so dense
+             * mosaic rows still carry a discriminator. */}
+            {!(noPhoto && c.instrument) && (
+              <span className="mtile-init" aria-hidden="true">
+                {initialsOf(c.name)}
+              </span>
+            )}
             {count > 1 && !noPhoto && (
               <span className="mtile-num" aria-hidden="true">
                 ×{count}
