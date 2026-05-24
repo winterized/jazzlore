@@ -65,12 +65,23 @@ export const GRAPH_CSS = `
   stroke-width: 2.5;
   opacity: 1;
 }
+/* Labels render in the DOM for every node, but peripheral names + sub-
+ * instrument text are hidden by default and revealed on :hover and
+ * :focus-visible — that's the keyboard-parity affordance, not optional.
+ * The central node (.mu-gnode-focus) always shows its name + instrument:
+ * it's the anchor, we must always see whose graph this is. The hide is
+ * via opacity (not display: none) so the layout box stays stable and
+ * screen readers still encounter the text. pointer-events: none keeps
+ * the text from intercepting node hit-tests when it's invisible. */
 .mu-gnode-label {
   font-family: var(--font-sans);
   font-weight: 600;
   font-size: 11px;
   fill: var(--text);
   letter-spacing: -0.005em;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
 }
 .mu-gnode-sub {
   font-family: var(--font-mono);
@@ -78,6 +89,17 @@ export const GRAPH_CSS = `
   fill: var(--muted);
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+.mu-gnode:hover .mu-gnode-label,
+.mu-gnode:hover .mu-gnode-sub,
+.mu-gnode:focus-visible .mu-gnode-label,
+.mu-gnode:focus-visible .mu-gnode-sub,
+.mu-gnode-focus .mu-gnode-label,
+.mu-gnode-focus .mu-gnode-sub {
+  opacity: 1;
 }
 .mu-gnode-initials {
   font-family: var(--font-mono);
@@ -88,6 +110,49 @@ export const GRAPH_CSS = `
 }
 .mu-gnode-focus .mu-gnode-label { font-size: 14px; font-weight: 700; }
 .mu-gnode-focus .mu-gnode-initials { fill: var(--accent-fg); opacity: 0.9; }
+
+/* ─── Family-fill colour vars (graph-only) ────────────────────────────
+ * Six families + unknown. Scoped to .mu-graph so the rest of the app
+ * (tiles, rails, cards, mosaic, Duo3, era strip) keeps its existing
+ * duotone treatment unchanged. Hues echo the existing palette.ts
+ * duotone pairs so the graph reads as the same colour-world; iterate
+ * from screenshots if any family fails AA contrast on the in-circle
+ * monogram (fill: var(--text), opacity: 0.78).
+ *
+ * Dark theme defaults; .mu3[data-theme="light"] overrides match the
+ * palette table in the plan. */
+.mu-graph {
+  --family-brass: #c89c4a;
+  --family-reeds: #6a9075;
+  --family-strings: #6f8caa;
+  --family-keys: #a89880;
+  --family-percussion: #a06b6b;
+  --family-voice: #8a72a8;
+  --family-unknown: #5a5550;
+}
+.mu3[data-theme='light'] .mu-graph {
+  --family-brass: #a07a2e;
+  --family-reeds: #4f7559;
+  --family-strings: #4d6a8a;
+  --family-keys: #80715a;
+  --family-percussion: #7a4848;
+  --family-voice: #6a5288;
+  --family-unknown: #aaa39a;
+}
+.mu-gnode.mu-family-brass .mu-gnode-fill { fill: var(--family-brass); }
+.mu-gnode.mu-family-reeds .mu-gnode-fill { fill: var(--family-reeds); }
+.mu-gnode.mu-family-strings .mu-gnode-fill { fill: var(--family-strings); }
+.mu-gnode.mu-family-keys .mu-gnode-fill { fill: var(--family-keys); }
+.mu-gnode.mu-family-percussion .mu-gnode-fill { fill: var(--family-percussion); }
+.mu-gnode.mu-family-voice .mu-gnode-fill { fill: var(--family-voice); }
+.mu-gnode.mu-family-unknown .mu-gnode-fill { fill: var(--family-unknown); }
+
+@media (prefers-reduced-motion: reduce) {
+  .mu-gnode-label,
+  .mu-gnode-sub {
+    transition: none;
+  }
+}
 .mu-gedge {
   stroke: var(--line);
   stroke-linecap: round;

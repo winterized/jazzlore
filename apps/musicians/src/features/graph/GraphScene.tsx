@@ -6,7 +6,8 @@
 import type { KeyboardEvent } from 'react'
 import type { LayoutEdge } from './layout'
 import type { FrameNode, GraphFrame } from './useRecentre'
-import { duotoneFor, initialsOf } from './palette'
+import { initialsOf } from './palette'
+import { familyClass } from './instrumentFamilies'
 
 interface GraphSceneProps {
   frame: GraphFrame
@@ -55,13 +56,17 @@ export default function GraphScene({
         })}
       </g>
       {frame.nodes.map((n: FrameNode) => {
-        const [lo, hi] = duotoneFor(n.id)
         const label = n.instrument ? `${n.name}, ${n.instrument}` : n.name
         const isSelected = n.id === selectedId
+        // Peripheral nodes attach a mu-family-<key> class so the CSS layer
+        // picks the family fill via `--family-*` vars. The central node
+        // (`mu-gnode-focus`) keeps the `--accent` treatment — the family
+        // colour is for grouping the orbit, not the anchor.
+        const familyCls = n.focus ? '' : ` ${familyClass(n.instrument)}`
         return (
           <g
             key={n.id}
-            className={`mu-gnode${n.focus ? ' mu-gnode-focus' : ''}`}
+            className={`mu-gnode${n.focus ? ' mu-gnode-focus' : ''}${familyCls}`}
             transform={`translate(${n.x},${n.y})`}
             opacity={n.fade}
             role="button"
@@ -84,8 +89,12 @@ export default function GraphScene({
               </>
             ) : (
               <>
-                <circle r={n.radius} fill={lo} />
-                <circle r={n.radius} fill={hi} opacity={0.55} />
+                {/* Single family-coloured fill — CSS picks the colour from
+                 *  the `mu-family-<key>` class on the parent `<g>`. The
+                 *  stroke ring stays a separate `circle` so the existing
+                 *  `:focus-visible > circle:last-of-type` rule still
+                 *  targets it. */}
+                <circle r={n.radius} className="mu-gnode-fill" />
                 <circle
                   r={n.radius}
                   fill="none"
