@@ -48,3 +48,11 @@ baselines/
 # Only the directory marker + README is tracked; the captures are regenerable.
 apps/musicians/docs/baseline/joint-fix/**
 !apps/musicians/docs/baseline/joint-fix/.gitkeep
+
+# oh-my-claudecode agent session state — transient runtime artifacts the
+# plugin writes per session (replay logs, checkpoints, mission/tracking
+# JSON). Never relevant in git; were leaking into PR diffs via `git add -A`.
+# Scoped narrowly: `.omc/notepads/`, `.omc/sessions/`, and any other
+# deliberately-curated content under `.omc/` stay trackable. Issue #51.
+**/.omc/state/
+**/.omc/checkpoints/
