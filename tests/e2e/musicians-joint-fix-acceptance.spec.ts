@@ -803,16 +803,22 @@ test.describe('Issue #47 — living musicians sameEra is populated', () => {
       `${PREVIEW_BASE}/api/musicians/${encodeURIComponent(HERBIE_ID)}`,
     )
     expect(res.ok()).toBe(true)
+    // MusicianDetail's year fields are `?: number` (optional), not nullable.
+    // The mapper's `num()` coerces both NULL and the populator's literal
+    // "present" to `undefined`, and `JSON.stringify` drops `undefined`
+    // keys — so after the HTTP round-trip the field is ABSENT from `body`,
+    // not present-as-null. (`jq` prints missing keys as `null` which is
+    // misleading; the wire shape is genuine absence.)
     const body = (await res.json()) as {
-      yearsActiveStart: number | null
-      yearsActiveEnd: number | null
+      yearsActiveStart?: number
+      yearsActiveEnd?: number
       sameEra: unknown[]
     }
-    expect(body.yearsActiveStart, 'Herbie has a known start year').not.toBeNull()
+    expect(body.yearsActiveStart, 'Herbie has a known start year').toBeDefined()
     expect(
       body.yearsActiveEnd,
-      'Herbie still maps to JSON null (mapper drops the populator "present" string)',
-    ).toBeNull()
+      'Herbie has no end-year on the wire — mapper drops both NULL and "present" to undefined',
+    ).toBeUndefined()
     expect(
       body.sameEra.length,
       'living-musician era rail must not be empty after #47',
@@ -827,11 +833,11 @@ test.describe('Issue #47 — living musicians sameEra is populated', () => {
     )
     expect(res.ok()).toBe(true)
     const body = (await res.json()) as {
-      yearsActiveStart: number | null
-      yearsActiveEnd: number | null
+      yearsActiveStart?: number
+      yearsActiveEnd?: number
       sameEra: unknown[]
     }
-    expect(body.yearsActiveEnd).toBeNull()
+    expect(body.yearsActiveEnd).toBeUndefined()
     expect(
       body.sameEra.length,
       'living-musician era rail must not be empty after #47',
