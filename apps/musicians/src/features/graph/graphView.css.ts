@@ -130,7 +130,10 @@ export const GRAPH_CSS = `
   --family-voice: #8a72a8;
   --family-unknown: #5a5550;
 }
-.mu3[data-theme='light'] .mu-graph {
+/* data-theme lives on <html> (music-core applyTheme); the design's
+   prototype .mu3[data-theme=...] keying was retired in the token
+   layer (see index.css line 236). Mirror that selector here. */
+html[data-theme='light'] .mu-graph {
   --family-brass: #a07a2e;
   --family-reeds: #4f7559;
   --family-strings: #4d6a8a;
