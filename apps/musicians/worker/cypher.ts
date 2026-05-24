@@ -66,33 +66,41 @@ export function searchIndexCypher(): string {
  * focus musician is also excluded by id. Returns peers ranked by genre
  * overlap, then earliest active year for determinism. Ridden on the detail
  * response as a `sameEra` SIBLING (the frozen `MusicianDetail` contract is
- * intentionally agnostic of era taxonomy — see lib/types.ts). */
+ * intentionally agnostic of era taxonomy — see lib/types.ts).
+ *
+ * Living-musician handling (issue #47, 2026-05-23): a `years_active_end`
+ * of NULL OR the literal string "present" (populator data-quality artifact
+ * for still-active musicians like Herbie Hancock, Sonny Rollins) is treated
+ * as "still active" and coalesced to `$currentYear` for the window math.
+ * `toInteger("present")` returns NULL, and `toInteger(null)` returns NULL,
+ * so a single `coalesce(toInteger(...), $currentYear)` handles both shapes.
+ * Anchor still requires `years_active_start IS NOT NULL` (Antoine-style
+ * total NULLs stay excluded — see the existing self-hide path in EraStrip);
+ * peers with NULL start are likewise still excluded, since false-positive
+ * risk on entirely-unrecorded peers outweighs the small false-negative tail. */
 export function peersByEraCypher(): string {
   return assertReadOnly(
     `MATCH (m:Musician {id: $id})
-     // NULL gate: a focus musician with no recorded active window gives the
-     // year-filter nothing to anchor on (coalesce defaults would otherwise
-     // open the window to all eras). Return zero peers — EraStrip self-hides
-     // on []. Diagnosed 2026-05-20: Antoine (years_active_* both NULL) was
-     // paired with Benny Goodman / Sinatra under the open-window behavior.
+     // Anchor needs a recorded start year so the ±10y window has an
+     // anchor. A NULL/"present" end year is OK — it just means "still
+     // active" and the window upper bound coalesces to $currentYear.
      WHERE m.years_active_start IS NOT NULL
-       AND m.years_active_end   IS NOT NULL
      WITH m,
           coalesce(m.genres, []) AS genres,
           m.years_active_start AS yas,
-          m.years_active_end   AS yae
+          // toInteger() returns NULL for both NULL and non-numeric strings
+          // ("present"), so this one expression handles both populator
+          // shapes for living musicians.
+          coalesce(toInteger(m.years_active_end), $currentYear) AS yae
      MATCH (p:Musician)
      WHERE p.id <> m.id
        AND any(g IN coalesce(p.genres, []) WHERE g IN genres)
-       // coalesce defaults: missing years_active_* → peer is EXCLUDED.
-       // "Still active" (end = NULL) gets 0 >= yas - 10, which is false for
-       // any focus with yas > 10. This is intentional: the false-positive risk
-       // of silently including peers with no recorded active window outweighs
-       // the false-negative of excluding sparse records. To relax to half-open
-       // intervals (e.g. still-active peers included), swap the defaults to
-       // coalesce(p.years_active_start, yas - 10) / coalesce(yae, 9999).
-       AND coalesce(p.years_active_start, 9999) <= coalesce(yae, 9999) + 10
-       AND coalesce(p.years_active_end,    0)    >= coalesce(yas, 0)    - 10
+       // Peer-side: missing years_active_start still EXCLUDES (false-positive
+       // risk too high for entirely-unrecorded peers). A NULL/"present" end
+       // year, however, is treated as still-active so a living peer can
+       // match a living anchor — issue #47.
+       AND coalesce(p.years_active_start, 9999) <= yae + 10
+       AND coalesce(toInteger(p.years_active_end), $currentYear) >= yas - 10
        AND NOT EXISTS {
              MATCH (m)-[:PLAYED_ON]->(:Record)<-[:PLAYED_ON]-(p)
            }

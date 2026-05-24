@@ -45,9 +45,12 @@ describe('Cypher builders are parameterized + read-only', () => {
 
   it('peersByEra is parameterized, read-only, and excludes collaborators', () => {
     const q = peersByEraCypher()
-    // Parameterized on $id + $limit (never string-interpolated).
+    // Parameterized on $id + $limit + $currentYear (never string-interpolated).
+    // $currentYear was added in #47 as the "still active" upper-bound for
+    // the year window when years_active_end is NULL or "present".
     expect(q).toContain('$id')
     expect(q).toContain('$limit')
+    expect(q).toContain('$currentYear')
     expect(q).not.toMatch(/\{id:\s*['"]/)
     // Excludes the focus musician.
     expect(q).toMatch(/p\.id\s*<>\s*m\.id/)
@@ -64,16 +67,37 @@ describe('Cypher builders are parameterized + read-only', () => {
     expect(q).not.toMatch(/\b(CREATE|MERGE|SET|DELETE|REMOVE)\b/)
   })
 
-  it('peersByEra NULL-gates the focus musician on both years_active fields', () => {
-    // C-bff item 1: when the focus's years_active_start or years_active_end
-    // is NULL, the query must return zero peers (rather than opening the
-    // year-window to all eras via the coalesce defaults). The gate is an
-    // early WHERE on `m`, before the genre/year filtering on peers. This
-    // assertion is regex-loose enough that whitespace/comment changes don't
-    // brittle it; tight enough that "gated on both fields" is the contract.
+  it('peersByEra NULL-gates only on years_active_start (issue #47 fix)', () => {
+    // Pre-#47: the focus musician was NULL-gated on BOTH years_active_start
+    // AND years_active_end — which broke for living musicians (Herbie
+    // Hancock, Sonny Rollins) whose end-year is NULL or the populator's
+    // literal "present" string. Post-#47: only start is gated; end is
+    // coalesced via toInteger() → $currentYear (still-active treatment).
+    // Anchor-with-no-start-year (Antoine-style total NULL) stays excluded.
     const q = peersByEraCypher()
     expect(q).toMatch(
-      /MATCH \(m:Musician \{id: \$id\}\)[\s\S]*?WHERE[\s\S]*?m\.years_active_start IS NOT NULL[\s\S]*?m\.years_active_end\s+IS NOT NULL[\s\S]*?WITH m/,
+      /MATCH \(m:Musician \{id: \$id\}\)[\s\S]*?WHERE[\s\S]*?m\.years_active_start IS NOT NULL[\s\S]*?WITH m/,
+    )
+    // The pre-#47 dual NULL gate must NOT be present: regression-guard
+    // against "WHERE m.years_active_start IS NOT NULL AND m.years_active_end
+    // IS NOT NULL" sneaking back in.
+    expect(q).not.toMatch(
+      /m\.years_active_start IS NOT NULL\s+AND\s+m\.years_active_end\s+IS NOT NULL/,
+    )
+  })
+
+  it('peersByEra coalesces NULL / "present" end-year to $currentYear on both anchor and peer (issue #47)', () => {
+    // toInteger("present") and toInteger(NULL) both return NULL in Cypher,
+    // so this single expression handles both populator shapes (raw NULL or
+    // the literal string "present") for still-active musicians. Anchor
+    // and peer both get the same treatment so a living anchor can match
+    // a living peer.
+    const q = peersByEraCypher()
+    expect(q).toMatch(
+      /coalesce\(toInteger\(m\.years_active_end\),\s*\$currentYear\)\s+AS\s+yae/,
+    )
+    expect(q).toMatch(
+      /coalesce\(toInteger\(p\.years_active_end\),\s*\$currentYear\)\s+>=\s+yas\s*-\s*10/,
     )
   })
 
