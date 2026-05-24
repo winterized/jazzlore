@@ -86,19 +86,22 @@ describe('Cypher builders are parameterized + read-only', () => {
     )
   })
 
-  it('peersByEra coalesces NULL / "present" end-year to $currentYear on both anchor and peer (issue #47)', () => {
-    // toInteger("present") and toInteger(NULL) both return NULL in Cypher,
-    // so this single expression handles both populator shapes (raw NULL or
-    // the literal string "present") for still-active musicians. Anchor
-    // and peer both get the same treatment so a living anchor can match
-    // a living peer.
+  it('peersByEra coalesces NULL end-year to $currentYear on both anchor and peer (issue #47)', () => {
+    // After populator issue #75 closed (2026-05-24), years_active_end is
+    // guaranteed Integer-or-NULL — never the literal string "present". The
+    // defensive toInteger() wrapper that protected against "present" is
+    // unwound; anchor and peer both coalesce NULL to $currentYear directly.
     const q = peersByEraCypher()
     expect(q).toMatch(
-      /coalesce\(toInteger\(m\.years_active_end\),\s*\$currentYear\)\s+AS\s+yae/,
+      /coalesce\(m\.years_active_end,\s*\$currentYear\)\s+AS\s+yae/,
     )
     expect(q).toMatch(
-      /coalesce\(toInteger\(p\.years_active_end\),\s*\$currentYear\)\s+>=\s+yas\s*-\s*10/,
+      /coalesce\(p\.years_active_end,\s*\$currentYear\)\s+>=\s+yas\s*-\s*10/,
     )
+    // The toInteger() wrappers must be gone — regression guard against the
+    // defensive shim sneaking back in once the populator contract is clean.
+    expect(q).not.toMatch(/toInteger\(m\.years_active_end\)/)
+    expect(q).not.toMatch(/toInteger\(p\.years_active_end\)/)
   })
 
   it('assertReadOnly rejects write clauses', () => {
