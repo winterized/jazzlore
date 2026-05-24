@@ -53,12 +53,17 @@ test.describe('Graph polish · live prod (desktop)', () => {
   }
 
   async function setTheme(page: Page, theme: 'dark' | 'light'): Promise<void> {
-    await page.evaluate((t) => localStorage.setItem('mu3-theme', t), theme)
-    await page.reload({ waitUntil: 'load' })
-    await page.waitForSelector('.mu-graph svg, svg.mu-graph-svg', {
-      timeout: 30_000,
-    })
-    await page.waitForTimeout(800)
+    // The musicians app reads the theme from localStorage key 'theme:v1'
+    // (@jazzlore/music-core `applyTheme`) and sets `data-theme` on <html>.
+    // Apply BOTH the storage write AND the attribute directly so the
+    // light theme actually takes effect — relying on the reload alone
+    // produced byte-identical dark/light screenshots in an earlier run.
+    await page.evaluate((t) => {
+      localStorage.setItem('theme:v1', t)
+      document.documentElement.setAttribute('data-theme', t)
+    }, theme)
+    // Give the CSS layer one frame to repaint with the new var values.
+    await page.waitForTimeout(200)
   }
 
   // ── Assertions ───────────────────────────────────────────────────
