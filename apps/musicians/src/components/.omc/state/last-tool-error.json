@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"grep -o '\\\\.desk-graph\\\\{[^}]*\\\\}' /tmp/prod.css\"}",
-  "error": "Exit code 2\nugrep: error: error at position 18\n(?m)\\.desk-graph\\{[^}]*\\}\ninvalid repeat___/",
-  "timestamp": "2026-05-19T20:02:38.454Z",
-  "retry_count": 1
-}
