@@ -777,3 +777,84 @@ test.describe('Wave 1 / PR3a — home-grid columns equal at each breakpoint', ()
     })
   }
 })
+
+/* ─────────────── Issue #47 — living musicians' EraStrip ───────────────
+ * Pre-fix: the focus musician's `years_active_end IS NULL` (or the literal
+ * string "present" from the populator) made `peersByEraCypher` return zero
+ * peers, so still-active musicians (Herbie Hancock, Sonny Rollins) hit a
+ * dead EraStrip on their detail pages. Post-fix: end-year is coalesced to
+ * `$currentYear` via `toInteger(...) ?? $currentYear` for both anchor and
+ * peer, so a living anchor matches a living peer.
+ *
+ * Antoine (Q586360) stays an empty-`sameEra` case (years_active_start
+ * still NULL → still gated). Existing Phase B3 + Item 1 assertions above
+ * cover that side. */
+
+const HERBIE_ID = 'wikidata:Q105875'
+const ROLLINS_ID = 'wikidata:Q299208'
+
+test.describe('Issue #47 — living musicians sameEra is populated', () => {
+  test.skip(!ENABLED, 'PREVIEW_BASE not set — joint-fix acceptance suite is no-op')
+
+  test('Herbie Hancock (years_active_end NULL / "present") has a populated era rail', async ({
+    request,
+  }) => {
+    const res = await request.get(
+      `${PREVIEW_BASE}/api/musicians/${encodeURIComponent(HERBIE_ID)}`,
+    )
+    expect(res.ok()).toBe(true)
+    // MusicianDetail's year fields are `?: number` (optional), not nullable.
+    // The mapper's `num()` coerces both NULL and the populator's literal
+    // "present" to `undefined`, and `JSON.stringify` drops `undefined`
+    // keys — so after the HTTP round-trip the field is ABSENT from `body`,
+    // not present-as-null. (`jq` prints missing keys as `null` which is
+    // misleading; the wire shape is genuine absence.)
+    const body = (await res.json()) as {
+      yearsActiveStart?: number
+      yearsActiveEnd?: number
+      sameEra: unknown[]
+    }
+    expect(body.yearsActiveStart, 'Herbie has a known start year').toBeDefined()
+    expect(
+      body.yearsActiveEnd,
+      'Herbie has no end-year on the wire — mapper drops both NULL and "present" to undefined',
+    ).toBeUndefined()
+    expect(
+      body.sameEra.length,
+      'living-musician era rail must not be empty after #47',
+    ).toBeGreaterThanOrEqual(1)
+  })
+
+  test('Sonny Rollins (years_active_end NULL / "present") has a populated era rail', async ({
+    request,
+  }) => {
+    const res = await request.get(
+      `${PREVIEW_BASE}/api/musicians/${encodeURIComponent(ROLLINS_ID)}`,
+    )
+    expect(res.ok()).toBe(true)
+    const body = (await res.json()) as {
+      yearsActiveStart?: number
+      yearsActiveEnd?: number
+      sameEra: unknown[]
+    }
+    expect(body.yearsActiveEnd).toBeUndefined()
+    expect(
+      body.sameEra.length,
+      'living-musician era rail must not be empty after #47',
+    ).toBeGreaterThanOrEqual(1)
+  })
+
+  test('regression guard — Antoine (NULL years_active_start) sameEra stays empty', async ({
+    request,
+  }) => {
+    // Antoine's case is anchor-side START null, NOT end-side. The #47 fix
+    // only relaxes the END-side gate, so Antoine MUST still hit the empty
+    // case — otherwise the start gate has been accidentally widened too.
+    const res = await request.get(
+      `${PREVIEW_BASE}/api/musicians/${encodeURIComponent(ANTOINE_ID)}`,
+    )
+    expect(res.ok()).toBe(true)
+    const body = (await res.json()) as { sameEra: unknown[] }
+    expect(body.sameEra).toEqual([])
+  })
+})

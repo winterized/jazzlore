@@ -171,9 +171,15 @@ export function handleDetail(env: Env, id: string): Promise<Response> {
     // cold Aura is NOT soft: the AuraWakingError must propagate so `guard`
     // returns the frozen 503 — partial-page-while-Aura-cold would be worse
     // than the calm waking screen.
+    // currentYear is the "still active" upper bound for the year-window
+    // math when a musician's `years_active_end` is NULL or the literal
+    // string "present" (populator data-quality artifact — issue #47).
+    // Computed at request time so the rail keeps including living peers
+    // as years roll over, without a redeploy.
     const sameEra: PeerEraItem[] = await auraQuery(c, peersByEraCypher(), {
       id,
       limit: SAME_ERA_LIMIT,
+      currentYear: new Date().getUTCFullYear(),
     })
       .then(reshapePeerEra)
       .catch((err: unknown) => {
