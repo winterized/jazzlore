@@ -24,6 +24,7 @@ import { test, expect, type Page } from '@playwright/test'
 import { promises as fs } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { setMusiciansTheme } from './helpers/setTheme'
 
 const PREVIEW_BASE = process.env['PREVIEW_BASE']
 // Repo-root relative; screenshots committed alongside the spec.
@@ -48,14 +49,10 @@ test.describe('Wave 2a · no-photo figures · live prod', () => {
     })
   }
 
-  async function setTheme(page: Page, theme: 'dark' | 'light'): Promise<void> {
-    // The musicians theme is set on <html data-theme="…">; toggle by writing
-    // localStorage + reloading so the page renders in the picked theme from
-    // the first paint (no flash). The token layer + duotone palette react
-    // to the data-theme attribute on first render.
-    await page.evaluate((t) => localStorage.setItem('mu3-theme', t), theme)
-    await page.reload({ waitUntil: 'networkidle' })
-  }
+  // Theme flip uses the shared `helpers/setTheme.ts` to match the on-disk
+  // shape of `@jazzlore/music-core`'s storage seam — see that file for the
+  // background on why the inlined `'mu3-theme' → bare string` write (the
+  // original here) was a silent no-op (issue #79).
 
   // ── Assertions ─────────────────────────────────────────────────────
   test('detail page surfaces no-photo figures on photoless sidemen (Miles Davis)', async ({
@@ -123,7 +120,7 @@ test.describe('Wave 2a · no-photo figures · live prod', () => {
       }) => {
         await page.setViewportSize({ width: viewport.width, height: viewport.height })
         await page.goto(`${PREVIEW_BASE}/musicians`)
-        await setTheme(page, theme)
+        await setMusiciansTheme(page, theme)
         await page.waitForSelector('.home-grid', { timeout: 30_000 })
         await page.waitForTimeout(800) // settle img decode / figure paint
         await page.screenshot({
@@ -140,7 +137,7 @@ test.describe('Wave 2a · no-photo figures · live prod', () => {
       }) => {
         await page.setViewportSize({ width: viewport.width, height: viewport.height })
         await gotoMusician(page, MILES)
-        await setTheme(page, theme)
+        await setMusiciansTheme(page, theme)
         await page.waitForTimeout(1500)
         await page.screenshot({
           path: join(SHOTS, `miles-${viewport.name}-${theme}.png`),
@@ -153,7 +150,7 @@ test.describe('Wave 2a · no-photo figures · live prod', () => {
       }) => {
         await page.setViewportSize({ width: viewport.width, height: viewport.height })
         await gotoMusician(page, MILES)
-        await setTheme(page, theme)
+        await setMusiciansTheme(page, theme)
         // Scroll the era strip into view (it lives below the rail).
         await page
           .locator('.era, [aria-label="From the same era"]')

@@ -25,6 +25,7 @@ import { test, expect, type Page } from '@playwright/test'
 import { promises as fs } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { setMusiciansTheme } from './helpers/setTheme'
 
 const PREVIEW_BASE = process.env['PREVIEW_BASE']
 const HERE = dirname(fileURLToPath(import.meta.url))
@@ -52,19 +53,11 @@ test.describe('Graph polish · live prod (desktop)', () => {
     await page.waitForTimeout(800)
   }
 
-  async function setTheme(page: Page, theme: 'dark' | 'light'): Promise<void> {
-    // The musicians app reads the theme from localStorage key 'theme:v1'
-    // (@jazzlore/music-core `applyTheme`) and sets `data-theme` on <html>.
-    // Apply BOTH the storage write AND the attribute directly so the
-    // light theme actually takes effect — relying on the reload alone
-    // produced byte-identical dark/light screenshots in an earlier run.
-    await page.evaluate((t) => {
-      localStorage.setItem('theme:v1', t)
-      document.documentElement.setAttribute('data-theme', t)
-    }, theme)
-    // Give the CSS layer one frame to repaint with the new var values.
-    await page.waitForTimeout(200)
-  }
+  // Theme flip uses the shared `helpers/setTheme.ts`. The previous inlined
+  // write keyed off bare `theme:v1` — the storage seam actually persists at
+  // `jazzlore:theme:v1` with a JSON-stringified value, so the localStorage
+  // half was a silent no-op. Screenshots only differed because the direct
+  // `data-theme` attribute set side-stepped that path. See issue #79.
 
   // ── Assertions ───────────────────────────────────────────────────
   test('graph renders at desktop viewport', async ({ page }) => {
@@ -113,7 +106,7 @@ test.describe('Graph polish · live prod (desktop)', () => {
   for (const theme of ['dark', 'light'] as const) {
     test(`screenshot · Miles graph · ${theme}`, async ({ page }) => {
       await gotoMiles(page)
-      await setTheme(page, theme)
+      await setMusiciansTheme(page, theme)
       // Screenshot the whole .mu-graph panel rather than the page so the
       // crop is consistent across themes.
       const panel = page.locator('.mu-graph').first()
@@ -126,7 +119,7 @@ test.describe('Graph polish · live prod (desktop)', () => {
       page,
     }) => {
       await gotoMiles(page)
-      await setTheme(page, theme)
+      await setMusiciansTheme(page, theme)
       // Best-effort focus a peripheral node to reveal its label/sub.
       // Playwright `focus()` on an SVG `<g role="button">` can be flaky;
       // if it doesn't fire, we still produce a screenshot — the
