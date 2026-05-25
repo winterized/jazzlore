@@ -944,7 +944,7 @@ test.describe('Wave 3 / Tier 1 — curated detail-page Listen deep-links', () =>
 // ── Issue #84 — detail-page alias resolution ─────────────────────────────
 // Stale-id arrivals (the populator's P0 duplicate-merge collapsed
 // musicbrainz: nodes into wikidata: survivors and recorded the old ids in
-// each survivor's `also_known_as_ids` per `data/curated.ts:14-20`) used to
+// each survivor's `also_known_as_ids` per `apps/musicians/src/data/curated.ts:14-20`) used to
 // hard-404 at the BFF because `detailCypher` matched on id only. The fix
 // widens the MATCH to `WHERE m.id = $id OR $id IN coalesce(
 // m.also_known_as_ids, [])` and the frontend `MusicianPage` does a
