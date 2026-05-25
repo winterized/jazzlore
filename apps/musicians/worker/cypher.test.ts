@@ -43,6 +43,14 @@ describe('Cypher builders are parameterized + read-only', () => {
     expect(detailCypher()).not.toMatch(/\{id:\s*['"]/)
   })
 
+  it('detailCypher resolves stale aliases via also_known_as_ids (issue #84)', () => {
+    const q = detailCypher()
+    // The alias clause must sit ALONGSIDE the canonical-id match (OR), not
+    // replace it — canonical visits stay exact-match and short-circuit.
+    expect(q).toMatch(/m\.id\s*=\s*\$id/)
+    expect(q).toMatch(/\$id\s+IN\s+coalesce\(m\.also_known_as_ids,\s*\[\]\)/)
+  })
+
   it('peersByEra is parameterized, read-only, and excludes collaborators', () => {
     const q = peersByEraCypher()
     // Parameterized on $id + $limit + $currentYear (never string-interpolated).
