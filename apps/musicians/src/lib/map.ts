@@ -202,6 +202,11 @@ export function mapMusicianDetail(result: RawDetailResult): MusicianDetail {
       wikidataId: str(m.wikidata_id),
       musicbrainzId: str(m.musicbrainz_id),
       discogsId: str(m.discogs_id),
+      // Tier-2 Listen fallback URLs. Absent when the populator's MB lookup
+      // didn't resolve a streaming-service relationship; the frontend
+      // resolver then drops to tier-3 (disambiguated search).
+      spotifyArtistUrl: str(m.spotify_artist_url),
+      appleArtistUrl: str(m.apple_artist_url),
     },
     // Faithful order, no dedup.
     collaborators: result.collaborators.map(mapCollaborator),

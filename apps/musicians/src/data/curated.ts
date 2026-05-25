@@ -212,3 +212,27 @@ export const CURATED: readonly CuratedPick[] = [
     },
   },
 ] as const
+
+/** Musicians that get a tier-1 hand-picked Listen track but are NOT on the
+ * home grid (`CURATED` stays at 12 by design). Combined with `CURATED` at
+ * the DetailIdentity Listen-resolver to produce the full tier-1 lookup
+ * map. Source: `JazzDBPopulator/data/streaming_overrides.jsonl`. */
+export interface ListenExtra {
+  id: string
+  listen: CuratedListenLink
+}
+
+export const LISTEN_EXTRAS: readonly ListenExtra[] = [
+  {
+    // John Lewis (wikidata:Q353943) — MJQ leader/composer. Tier-1 hand
+    // override; both Spotify + Apple were missing in MusicBrainz so the
+    // populator owner seeded these by hand post-Stage-1.
+    id: 'wikidata:Q353943',
+    listen: {
+      trackTitle: 'The Bad and the Beautiful',
+      sourceRecord: 'The Bad and the Beautiful (1956)',
+      spotify: 'https://open.spotify.com/track/4THfJ8Tx9uuFoTjPupXrqE',
+      apple: 'https://music.apple.com/us/song/the-bad-and-the-beautiful/310535006',
+    },
+  },
+] as const
