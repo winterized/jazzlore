@@ -119,8 +119,13 @@ test('home renders the curated grid; tapping a card opens the detail', async ({
   await expect(page.getByRole('region', { name: /biography/i })).toContainText(
     /influential figures in jazz/i,
   )
+  // Scope by the listen region. Miles is curated (Wave 3 / Tier 1) so the
+  // anchor's aria-label is now "Listen to So What on Spotify" — the
+  // /on spotify/i fragment is re-pick-safe (survives future track edits).
   await expect(
-    page.getByRole('link', { name: /listen on spotify/i }),
+    page
+      .getByRole('region', { name: /listen to miles davis/i })
+      .getByRole('link', { name: /on spotify/i }),
   ).toBeVisible()
 })
 
