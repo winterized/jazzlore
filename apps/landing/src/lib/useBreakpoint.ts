@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react'
 
-const QUERY = '(min-width: 768px)'
+/* Compound: BOTH wide AND tall qualify as "desktop". Landscape phone
+   (e.g. 844×390) matches the width arm but fails the height arm — it
+   stays "mobile" and gets the landscape-phone CSS lane (4-across).
+   Otherwise the desktop 720+stack layout would collapse the right
+   column at landscape phone width AND have no vertical room for the
+   3-tile stack anyway. */
+const QUERY = '(min-width: 768px) and (min-height: 600px)'
 
 export type Breakpoint = 'desktop' | 'mobile'
 

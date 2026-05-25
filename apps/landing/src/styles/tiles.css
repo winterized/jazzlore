@@ -50,7 +50,7 @@
   font-weight: 400;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 768px) and (min-height: 600px) {
   .landing .jzl-musicians-graph {
     padding: 20px 36px;
   }
@@ -118,7 +118,7 @@
   text-transform: uppercase;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 768px) and (min-height: 600px) {
   .landing .jzl-small-body {
     padding: 12px 18px 14px;
     gap: 8px;
@@ -160,7 +160,7 @@
   line-height: 1;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 768px) and (min-height: 600px) {
   .landing .jzl-scales-strip {
     min-height: 44px;
     padding: 6px 12px;
@@ -215,7 +215,7 @@
   align-items: center;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 768px) and (min-height: 600px) {
   .landing .jzl-chords-title-main {
     font-size: 30px;
     gap: 14px;
@@ -290,7 +290,7 @@
   animation: jzl-tick 1.2s steps(2, end) infinite;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 768px) and (min-height: 600px) {
   .landing .jzl-metro-reading {
     gap: 16px;
   }
