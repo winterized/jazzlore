@@ -163,7 +163,7 @@
    To fit Musicians + 3 stacked small tiles + explanation in ~390
    viewport height, every chrome row is tightened: header/footer
    paddings shrunk, explanation re-sized to a single small line. */
-@media (min-width: 600px) and (max-height: 500px) {
+@media (min-width: 600px) and (max-height: 599px) {
   .landing .jzl-header {
     padding: 8px 16px 0;
   }
