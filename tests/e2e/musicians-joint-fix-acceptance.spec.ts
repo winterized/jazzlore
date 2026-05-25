@@ -858,3 +858,85 @@ test.describe('Issue #47 — living musicians sameEra is populated', () => {
     expect(body.sameEra).toEqual([])
   })
 })
+
+/* ─────────────── Wave 3 / Tier 1 — curated Listen deep-links ───────────
+ * For the 12 curated musicians (data/curated.ts), the detail-page
+ * Spotify + Apple buttons deep-link to a hand-picked signature track
+ * instead of the platform's search page (audit Quality #3 / #10).
+ * Non-curated musicians keep the search-URL fallback — Tier 1 is an
+ * upgrade for the 12, not a regression for the long tail. */
+
+const COLTRANE_ID = 'wikidata:Q7346'
+const MONK_ID = 'wikidata:Q109612'
+
+test.describe('Wave 3 / Tier 1 — curated detail-page Listen deep-links', () => {
+  test.skip(!ENABLED, 'PREVIEW_BASE not set — joint-fix acceptance suite is no-op')
+
+  test('Miles Davis → Spotify + Apple anchors deep-link to "So What" (Kind of Blue)', async ({
+    page,
+  }) => {
+    await page.goto(`${PREVIEW_BASE}${MILES}`)
+    const listen = page.getByRole('region', { name: /listen to miles davis/i })
+    await expect(listen).toBeVisible()
+    const spotify = listen.getByRole('link', {
+      name: /listen to so what on spotify/i,
+    })
+    const apple = listen.getByRole('link', {
+      name: /listen to so what on apple music/i,
+    })
+    await expect(spotify).toHaveAttribute(
+      'href',
+      'https://open.spotify.com/track/7azylXFRsebfrIoAtwfjaB',
+    )
+    await expect(apple).toHaveAttribute(
+      'href',
+      'https://music.apple.com/us/song/so-what/300865220',
+    )
+    // Editorial provenance line is rendered.
+    const caption = page.locator('.listen-track')
+    await expect(caption).toContainText('So What')
+    await expect(caption).toContainText('Kind of Blue (1959)')
+  })
+
+  test('John Coltrane → Spotify anchor deep-links to "A Love Supreme, Pt. I"', async ({
+    page,
+  }) => {
+    await page.goto(`${PREVIEW_BASE}/musicians/${COLTRANE_ID}`)
+    const listen = page.getByRole('region', {
+      name: /listen to john coltrane/i,
+    })
+    const spotify = listen.getByRole('link', {
+      name: /listen to a love supreme.*on spotify/i,
+    })
+    await expect(spotify).toHaveAttribute(
+      'href',
+      'https://open.spotify.com/track/1W1ELMoK1boorGsH40Ydgf',
+    )
+  })
+
+  test('Thelonious Monk → Spotify anchor href contains /track/ (re-pick-safe)', async ({
+    page,
+  }) => {
+    await page.goto(`${PREVIEW_BASE}/musicians/${MONK_ID}`)
+    const listen = page.getByRole('region', {
+      name: /listen to thelonious monk/i,
+    })
+    const spotify = listen.getByRole('link', { name: /on spotify/i })
+    const href = await spotify.getAttribute('href')
+    expect(href).toMatch(/^https:\/\/open\.spotify\.com\/track\//)
+  })
+
+  test('regression guard — Antoine Hervé (non-curated) keeps the search-URL Listen behaviour', async ({
+    page,
+  }) => {
+    await page.goto(`${PREVIEW_BASE}${ANTOINE}`)
+    const listen = page.getByRole('region', { name: /listen to antoine herv/i })
+    const spotify = listen.getByRole('link', {
+      name: /listen to antoine herv.* on spotify/i,
+    })
+    const href = await spotify.getAttribute('href')
+    expect(href).toMatch(/open\.spotify\.com\/search\//)
+    // No editorial track-title caption when non-curated.
+    await expect(page.locator('.listen-track')).toHaveCount(0)
+  })
+})

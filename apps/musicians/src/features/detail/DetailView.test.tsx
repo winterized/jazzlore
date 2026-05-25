@@ -34,15 +34,23 @@ describe('DetailView — identity / bio / listen', () => {
     expect(more).toHaveAttribute('href', '#about')
   })
 
-  it('renders Spotify + Apple deep-links from the frozen links builder', () => {
+  it('non-curated musician → Listen buttons fall back to search URLs (regression guard)', () => {
+    // MODERATE's id is `wikidata:Q379938` (pre-P0 Bobby fixture), NOT the
+    // canonical curated `wikidata:Q132341`. So this exercises the
+    // non-curated fallback path — the search URL from `lib/links`. The
+    // anchor's accessible name comes from its aria-label
+    // ("Listen to <name> on Spotify"); the visible text "Listen on
+    // Spotify" is overridden by the explicit aria-label.
     setup()
     const listen = screen.getByRole('region', {
       name: /listen to bobby timmons/i,
     })
     const spotify = within(listen).getByRole('link', {
-      name: /listen on spotify/i,
+      name: /listen to bobby timmons on spotify/i,
     })
-    const apple = within(listen).getByRole('link', { name: /apple music/i })
+    const apple = within(listen).getByRole('link', {
+      name: /listen to bobby timmons on apple music/i,
+    })
     expect(spotify).toHaveAttribute(
       'href',
       'https://open.spotify.com/search/Bobby%20Timmons',
@@ -50,6 +58,44 @@ describe('DetailView — identity / bio / listen', () => {
     expect(apple).toHaveAttribute(
       'href',
       'https://music.apple.com/search?term=Bobby%20Timmons',
+    )
+    // No editorial track-title caption when non-curated.
+    expect(document.querySelector('.listen-track')).toBeNull()
+  })
+
+  it('curated musician (Bobby Timmons @ wikidata:Q132341) → Listen buttons deep-link to the signature track', () => {
+    // Override only the id — name/bio stay from the MODERATE fixture so
+    // the rest of the page renders identically; the curated-12 lookup is
+    // by id, and Bobby's canonical curated id is wikidata:Q132341 with a
+    // hand-picked listen block (his own "Moanin'" on his Riverside debut,
+    // not the Blakey/Messengers version).
+    const { container } = setup({ ...MODERATE, id: 'wikidata:Q132341' })
+    const listen = screen.getByRole('region', {
+      name: /listen to bobby timmons/i,
+    })
+    const spotify = within(listen).getByRole('link', {
+      name: /listen to moanin' on spotify/i,
+    })
+    const apple = within(listen).getByRole('link', {
+      name: /listen to moanin' on apple music/i,
+    })
+    expect(spotify).toHaveAttribute(
+      'href',
+      'https://open.spotify.com/track/5U66z6J7VpEA9XV9BpePwh',
+    )
+    expect(apple).toHaveAttribute(
+      'href',
+      'https://music.apple.com/us/song/moanin/898527528',
+    )
+    // Editorial provenance line: track title (italic) · source record.
+    // Query by class — "Moanin'" also appears in the records strip
+    // (Bobby played on the Blakey/Messengers album of the same name),
+    // so a bare getByText would match two elements.
+    const trackCaption = container.querySelector('.listen-track')
+    expect(trackCaption).not.toBeNull()
+    expect(trackCaption?.textContent).toContain("Moanin'")
+    expect(trackCaption?.textContent).toContain(
+      'This Here Is Bobby Timmons (1960)',
     )
   })
 

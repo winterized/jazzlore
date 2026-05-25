@@ -381,6 +381,25 @@
   border-color: var(--line);
 }
 
+/* Wave 3 / Tier 1 — curated track-title caption that sits beneath the
+   two Listen buttons. Editorial provenance line in the same italic
+   Newsreader voice as `.bio`, so the focus page reads as one editorial
+   surface. Only renders when the musician is one of the curated 12. */
+.mu3 .listen-track {
+  padding: 0 14px 12px;
+  margin: -6px 0 0;
+  font-family: 'Newsreader', 'Source Serif 4', Georgia, serif;
+  font-style: italic;
+  font-size: 12.5px;
+  color: var(--muted);
+  letter-spacing: 0.005em;
+  text-wrap: pretty;
+}
+.mu3 .listen-track em {
+  font-style: italic;
+  color: var(--text-soft);
+}
+
 /* ─────────────────────── Mosaic header (image-only) ─────────────────── */
 .mu3 .mosaic-h {
   display: flex;
