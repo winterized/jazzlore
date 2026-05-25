@@ -40,6 +40,15 @@ export interface RawMusician {
   wikidata_id?: string
   musicbrainz_id?: string
   discogs_id?: string
+  /** Pre-P0 ids whose canonical survivor IS this node. The populator's
+   * P0 duplicate-merge collapsed `musicbrainz:` twins into `wikidata:`
+   * survivors and recorded the old ids here (every alias is the
+   * `musicbrainz:` form, never `wikidata:` → `wikidata:`). The BFF's
+   * `detailCypher` widens MATCH on this list so legacy / shared URLs
+   * still resolve to the survivor (`apps/musicians/worker/cypher.ts`
+   * detailCypher; closes issue #84). Source-of-truth alias map:
+   * `JazzDBPopulator/data/id_aliases.jsonl` (3,436 entries). */
+  also_known_as_ids?: string[]
   bio_summary?: string
   /** Spotify artist-page deep-link (tier-2 Listen fallback). Sourced from
    * MusicBrainz URL relationships by the populator (`streaming_ids.jsonl`).

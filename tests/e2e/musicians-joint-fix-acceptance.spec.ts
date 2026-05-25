@@ -1008,15 +1008,34 @@ test.describe('Issue #84 — detail-page alias resolution (stale id → canonica
     const href = await spotify.getAttribute('href')
     expect(href).toMatch(/^https:\/\/open\.spotify\.com\/track\//)
   })
+
+  test('BFF: /graph for a stale id returns the canonical focus-node id (issue #88)', async ({
+    request,
+  }) => {
+    // `handleGraph` reuses `detailCypher`, so alias resolution flows
+    // through automatically. This locks the property in so a future
+    // refactor (e.g., a graph-only Cypher that skips alias widening)
+    // can't silently regress.
+    const res = await request.get(
+      `${PREVIEW_BASE}/api/musicians/${encodeURIComponent(BOBBY_STALE_ID)}/graph`,
+    )
+    expect(res.status()).toBe(200)
+    const body = await res.json()
+    const nodes = body?.graph?.nodes ?? []
+    const focus = nodes.find((n: { focus?: boolean }) => n.focus === true)
+    expect(focus, 'graph response must mark a focus node').toBeDefined()
+    expect(focus.id).toBe(BOBBY_CANONICAL_ID)
+  })
 })
 
 // ── 3-tier Listen graceful degradation ─────────────────────────────────
 // Verifies the per-service Listen-button tier cascade on prod:
 //   Tier 1 — hand-picked TRACK URL (curated 12 + LISTEN_EXTRAS).
 //   Tier 2 — artist-page URL on `links.spotifyArtistUrl|appleArtistUrl`
-//            (populator-supplied via MB URL relationships). The tier-2
-//            test SKIPS when the populator hasn't loaded streaming_ids
-//            into Aura yet (we probe the BFF for the field first).
+//            (populator-supplied via MB URL relationships, loaded into
+//            Aura 2026-05-25; 339 Spotify / 159 Apple). The earlier
+//            test.skip-on-absent gate was sunset by PR #95 — tier 2 now
+//            fails fast in CI on a wire-shape regression.
 //   Tier 3 — disambiguated search URL (`<name> jazz`) — the namesake
 //            guard for common-name sidemen. George Lewis (Q1507760) is
 //            the canonical tier-3 case: he's in the populator's

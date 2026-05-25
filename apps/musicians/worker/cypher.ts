@@ -197,12 +197,45 @@ function toCollaboratorRow(v: unknown): RawCollaboratorRow {
 
 /** Reshape the single `detailCypher` row into the frozen `RawDetailResult`
  * the pure `mapMusicianDetail` / `mapGraphData` consume. Returns null when
- * the musician id is absent (→ 404). */
-export function reshapeDetail(result: AuraResult): RawDetailResult | null {
+ * the musician id is absent (→ 404).
+ *
+ * Multi-row observability (issue #89): under the alias-resolution widening
+ * (issue #84), `detailCypher` returns 0 or 1 row by design — but if the
+ * populator ever lists the same stale id in TWO survivors' `also_known_as_ids`,
+ * we'd see N > 1. First-row wins (faithful: BFF stays 200, never errors),
+ * AND we emit one structured `console.warn` so the populator owner sees the
+ * conflict in CF logs. Sibling pattern to `warnOnDuplicates`. */
+export function reshapeDetail(
+  result: AuraResult,
+  logger: Pick<Console, 'warn'> = console,
+): RawDetailResult | null {
   const row = result.values[0]
   if (row === undefined) return null
   const m = col(result, row, 'm')
   if (m === null || typeof m !== 'object') return null
+  // Multi-row warn fires AFTER the first-row well-formedness guard so the
+  // "first-row wins" promise in the log payload is actually true — a
+  // junk-first-row case would return 404 above and shouldn't emit a log
+  // line claiming we served the first row.
+  if (result.values.length > 1) {
+    const matchedIds = result.values
+      .map((r) => {
+        const node = col(result, r, 'm')
+        return node !== null && typeof node === 'object' && 'id' in node
+          ? (node as { id?: unknown }).id
+          : undefined
+      })
+      .filter((id): id is string => typeof id === 'string')
+    logger.warn(
+      JSON.stringify({
+        level: 'warn',
+        event: 'detail-multi-row',
+        rowCount: result.values.length,
+        matchedIds,
+        note: 'populator alias conflict suspected (same stale id in two survivors\' also_known_as_ids); first-row wins, response NOT filtered',
+      }),
+    )
+  }
   const records = col(result, row, 'records')
   const collaborators = col(result, row, 'collaborators')
   return {
