@@ -16,9 +16,13 @@
 // side-steps that for the immediate paint but leaves the override broken.
 import type { Page } from '@playwright/test'
 
-export type Theme = 'dark' | 'light'
-
-export async function setMusiciansTheme(page: Page, theme: Theme): Promise<void> {
+// Theme is intentionally inlined as `'dark' | 'light'` rather than
+// re-exported from `@jazzlore/music-core` — keeps the e2e helper
+// dependency-free and matches the literal already used at every callsite.
+export async function setMusiciansTheme(
+  page: Page,
+  theme: 'dark' | 'light',
+): Promise<void> {
   await page.evaluate((t) => {
     localStorage.setItem('jazzlore:theme:v1', JSON.stringify(t))
     document.documentElement.setAttribute('data-theme', t)
