@@ -5,8 +5,8 @@
 // mapped it upstream), and the calm error screen on a hard failure — both
 // with cached fallback names so the reader is never stranded.
 
-import { useCallback, useState } from 'react'
-import { useParams } from 'react-router'
+import { useCallback, useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router'
 import {
   defaultSource,
   useBffResource,
@@ -27,6 +27,7 @@ export default function MusicianPage({
   source?: DataSource
 }) {
   const { id = '' } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const [attempt, setAttempt] = useState(0)
   const retry = useCallback(() => setAttempt((a) => a + 1), [])
   const state = useBffResource(
@@ -39,6 +40,17 @@ export default function MusicianPage({
   // keeps the default; the hook restores the default on unmount.
   const name = state.kind === 'ready' ? state.data.name : null
   useTitle(name ? `${name} — Jazzlore` : null)
+
+  // Canonicalize the URL when the resolved id differs from the URL id —
+  // i.e. the user landed via a stale alias (issue #84). `replace: true` so
+  // the back button doesn't trap them on the stale URL. The follow-up
+  // refetch under the canonical id is a BFF cache hit on prod.
+  const canonicalId = state.kind === 'ready' ? state.data.id : null
+  useEffect(() => {
+    if (canonicalId !== null && canonicalId !== id) {
+      navigate(`/musicians/${canonicalId}`, { replace: true })
+    }
+  }, [canonicalId, id, navigate])
 
   if (state.kind === 'waking') {
     return (

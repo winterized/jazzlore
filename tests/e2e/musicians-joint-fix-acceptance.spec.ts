@@ -940,3 +940,65 @@ test.describe('Wave 3 / Tier 1 — curated detail-page Listen deep-links', () =>
     await expect(page.locator('.listen-track')).toHaveCount(0)
   })
 })
+
+// ── Issue #84 — detail-page alias resolution ─────────────────────────────
+// Stale-id arrivals (`wikidata:Q379938` is Bobby Timmons' pre-P0 duplicate;
+// the canonical survivor is `wikidata:Q132341`) used to hard-404 at the BFF
+// because `detailCypher` matched on id only. The fix widens the MATCH to
+// `WHERE m.id = $id OR $id IN coalesce(m.also_known_as_ids, [])` and the
+// frontend `MusicianPage` does a `useNavigate({replace: true})` when the
+// resolved id differs from the URL id — so legacy shared / saved URLs
+// resolve to the survivor AND the address bar lands on the canonical URL.
+const BOBBY_STALE_ID = 'wikidata:Q379938'
+const BOBBY_CANONICAL_ID = 'wikidata:Q132341'
+
+test.describe('Issue #84 — detail-page alias resolution (stale id → canonical)', () => {
+  test.skip(!ENABLED, 'PREVIEW_BASE not set — joint-fix acceptance suite is no-op')
+
+  test('BFF: stale Bobby id returns 200 with the canonical id in the body', async ({
+    request,
+  }) => {
+    const res = await request.get(
+      `${PREVIEW_BASE}/api/musicians/${encodeURIComponent(BOBBY_STALE_ID)}`,
+    )
+    expect(res.status()).toBe(200)
+    const body = await res.json()
+    expect(body.id).toBe(BOBBY_CANONICAL_ID)
+    expect(body.name).toBe('Bobby Timmons')
+  })
+
+  test('BFF: canonical Bobby id still resolves (control)', async ({
+    request,
+  }) => {
+    const res = await request.get(
+      `${PREVIEW_BASE}/api/musicians/${encodeURIComponent(BOBBY_CANONICAL_ID)}`,
+    )
+    expect(res.status()).toBe(200)
+    const body = await res.json()
+    expect(body.id).toBe(BOBBY_CANONICAL_ID)
+  })
+
+  test('frontend: visiting the stale URL replaces the address bar with the canonical URL', async ({
+    page,
+  }) => {
+    await page.goto(`${PREVIEW_BASE}/musicians/${BOBBY_STALE_ID}`)
+    await expect(page).toHaveURL(
+      `${PREVIEW_BASE}/musicians/${BOBBY_CANONICAL_ID}`,
+    )
+  })
+
+  test('frontend: stale-arrival Listen deep-link still resolves to "Moanin\'"', async ({
+    page,
+  }) => {
+    await page.goto(`${PREVIEW_BASE}/musicians/${BOBBY_STALE_ID}`)
+    await expect(page).toHaveURL(
+      `${PREVIEW_BASE}/musicians/${BOBBY_CANONICAL_ID}`,
+    )
+    const listen = page.getByRole('region', {
+      name: /listen to bobby timmons/i,
+    })
+    const spotify = listen.getByRole('link', { name: /on spotify/i })
+    const href = await spotify.getAttribute('href')
+    expect(href).toMatch(/^https:\/\/open\.spotify\.com\/track\//)
+  })
+})
