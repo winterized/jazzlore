@@ -942,14 +942,21 @@ test.describe('Wave 3 / Tier 1 — curated detail-page Listen deep-links', () =>
 })
 
 // ── Issue #84 — detail-page alias resolution ─────────────────────────────
-// Stale-id arrivals (`wikidata:Q379938` is Bobby Timmons' pre-P0 duplicate;
-// the canonical survivor is `wikidata:Q132341`) used to hard-404 at the BFF
-// because `detailCypher` matched on id only. The fix widens the MATCH to
-// `WHERE m.id = $id OR $id IN coalesce(m.also_known_as_ids, [])` and the
-// frontend `MusicianPage` does a `useNavigate({replace: true})` when the
-// resolved id differs from the URL id — so legacy shared / saved URLs
-// resolve to the survivor AND the address bar lands on the canonical URL.
-const BOBBY_STALE_ID = 'wikidata:Q379938'
+// Stale-id arrivals (the populator's P0 duplicate-merge collapsed
+// musicbrainz: nodes into wikidata: survivors and recorded the old ids in
+// each survivor's `also_known_as_ids` per `data/curated.ts:14-20`) used to
+// hard-404 at the BFF because `detailCypher` matched on id only. The fix
+// widens the MATCH to `WHERE m.id = $id OR $id IN coalesce(
+// m.also_known_as_ids, [])` and the frontend `MusicianPage` does a
+// `useNavigate({replace: true})` when the resolved id differs from the URL
+// id — so legacy shared / saved URLs resolve to the survivor AND the
+// address bar lands on the canonical URL.
+//
+// Fixture: Bobby Timmons' pre-P0 musicbrainz id (verified live 2026-05-25
+// in `JazzDBPopulator/data/id_aliases.jsonl`). All 12 curated musicians
+// have a paired old MB id; Bobby keeps the test narrative tied to the
+// curated-Listen deep-link gap PR #81 surfaced.
+const BOBBY_STALE_ID = 'musicbrainz:ef05197e-aacb-4dbf-9cc4-2a9abee82f03'
 const BOBBY_CANONICAL_ID = 'wikidata:Q132341'
 
 test.describe('Issue #84 — detail-page alias resolution (stale id → canonical)', () => {
