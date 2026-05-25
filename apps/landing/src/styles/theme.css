@@ -1,0 +1,47 @@
+/* Landing-scope design tokens. Light defaults are on .landing; dark
+   variants are gated on [data-theme='dark'] .landing.
+
+   Token names mirror the design handoff's nomenclature
+   (apps/landing/design_handoff_jazzlore_landing/README.md > Design
+   tokens). Per the plan, hex values come from Tailwind v4's built-in
+   stone + amber palettes — close enough to the handoff's hand-picked
+   warm-white / stone palette that a side-by-side viewer wouldn't
+   notice (<1% per channel drift on the bg/ink, exact match on the
+   amber accent). */
+
+.landing {
+  --bg: var(--color-stone-50);
+  --bg-alt: var(--color-stone-100);
+  --surface: white;
+  --ink: var(--color-stone-900);
+  --ink-soft: var(--color-stone-700);
+  --muted: var(--color-stone-500);
+  --faint: var(--color-stone-400);
+  --rule: var(--color-stone-200);
+  --accent: var(--color-amber-700);
+  --accent-soft: var(--color-amber-800);
+  --duo-bg: var(--color-amber-100);
+  --duo-fg: var(--color-stone-900);
+
+  --font-sans: 'Geist', 'Geist Fallback', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', sans-serif;
+  --font-mono: 'Geist Mono', 'Geist Mono Fallback', ui-monospace, Menlo,
+    monospace;
+  --font-serif: 'Newsreader', 'Newsreader Fallback', 'Iowan Old Style',
+    Georgia, serif;
+}
+
+[data-theme='dark'] .landing {
+  --bg: var(--color-stone-950);
+  --bg-alt: var(--color-stone-900);
+  --surface: var(--color-stone-900);
+  --ink: var(--color-stone-100);
+  --ink-soft: var(--color-stone-300);
+  --muted: var(--color-stone-400);
+  --faint: var(--color-stone-600);
+  --rule: var(--color-stone-800);
+  --accent: var(--color-amber-400);
+  --accent-soft: var(--color-amber-500);
+  --duo-bg: var(--color-stone-900);
+  --duo-fg: var(--color-amber-400);
+}
