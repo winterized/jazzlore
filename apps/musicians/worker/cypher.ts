@@ -211,6 +211,12 @@ export function reshapeDetail(
 ): RawDetailResult | null {
   const row = result.values[0]
   if (row === undefined) return null
+  const m = col(result, row, 'm')
+  if (m === null || typeof m !== 'object') return null
+  // Multi-row warn fires AFTER the first-row well-formedness guard so the
+  // "first-row wins" promise in the log payload is actually true — a
+  // junk-first-row case would return 404 above and shouldn't emit a log
+  // line claiming we served the first row.
   if (result.values.length > 1) {
     const matchedIds = result.values
       .map((r) => {
@@ -230,8 +236,6 @@ export function reshapeDetail(
       }),
     )
   }
-  const m = col(result, row, 'm')
-  if (m === null || typeof m !== 'object') return null
   const records = col(result, row, 'records')
   const collaborators = col(result, row, 'collaborators')
   return {
