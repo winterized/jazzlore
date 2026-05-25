@@ -176,8 +176,14 @@ export function handleDetail(env: Env, id: string): Promise<Response> {
     // string "present" (populator data-quality artifact — issue #47).
     // Computed at request time so the rail keeps including living peers
     // as years roll over, without a redeploy.
+    // Alias resolution (issue #84): use the CANONICAL id from the detail
+    // result (`raw.musician.id`) rather than the URL-supplied `id`, so a
+    // stale-id arrival hits the same era window as the canonical URL would.
+    // peersByEraCypher still uses `{id: $id}` exact-match — it doesn't need
+    // alias widening because we always feed it the canonical id here.
+    const canonicalId = String(raw.musician.id ?? id)
     const sameEra: PeerEraItem[] = await auraQuery(c, peersByEraCypher(), {
-      id,
+      id: canonicalId,
       limit: SAME_ERA_LIMIT,
       currentYear: new Date().getUTCFullYear(),
     })

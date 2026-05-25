@@ -127,10 +127,20 @@ export function peersByEraCypher(): string {
  * frozen mapper (`lib/map.ts`) preserves array order, so the cypher is
  * the source of truth for ranking. `count(DISTINCT sr)` matches the
  * mapper's `distinctRecordIds.size` dedup (counts distinct shared records,
- * not edge-tuples). Ties break alphabetically by name. */
+ * not edge-tuples). Ties break alphabetically by name.
+ *
+ * Alias resolution (issue #84, 2026-05-25): the MATCH widens to ALSO accept
+ * a stale id that lives in some survivor's `also_known_as_ids` (populator-
+ * managed; `data/curated.ts:14-20` documents the contract). Because RETURN
+ * projects from the matched node `m{.*}` rather than the parameter `$id`,
+ * the response carries the canonical id back automatically and every
+ * downstream consumer (frontend Listen lookup, search-ranker dedup,
+ * graph, era strip via `raw.musician.id`) hits the canonical id without
+ * further changes. Stale URLs that previously hard-404'd now resolve. */
 export function detailCypher(): string {
   return assertReadOnly(
-    `MATCH (m:Musician {id: $id})
+    `MATCH (m:Musician)
+     WHERE m.id = $id OR $id IN coalesce(m.also_known_as_ids, [])
      OPTIONAL MATCH (m)-[fe:PLAYED_ON]->(r:Record)
      WITH m, collect(DISTINCT {record: r{.*}, edge: properties(fe)}) AS records
      OPTIONAL MATCH (m)-[:PLAYED_ON]->(sr:Record)<-[ce:PLAYED_ON]-(c:Musician)
