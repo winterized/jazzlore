@@ -30,11 +30,20 @@ import { metaLine, firstSentence } from './detailIdentityMeta'
 // The two services resolve INDEPENDENTLY — a musician can land in tier 2
 // for Spotify (artist URL present) and tier 3 for Apple (no artist URL).
 // Tier 1, when present, covers both services together (same track, two
-// services). The visible button label stays "Listen on Spotify" / "Apple
-// Music" at every tier — honest at all three.
+// services); enforced at the type level by `CuratedListenLink` requiring
+// BOTH `spotify` AND `apple` (curated.ts:38-48) — there's no partial-tier-1
+// case to handle. The visible button label stays "Listen on Spotify" /
+// "Apple Music" at every tier — honest at all three.
+//
+// Tiebreak: if an id ever appears in BOTH CURATED and LISTEN_EXTRAS (the
+// home-grid 12 vs. the not-on-home-grid extras), `CURATED` wins. CURATED is
+// the editorial authority for the home grid; LISTEN_EXTRAS is for picks
+// outside that surface. Today there's zero overlap by design, but spreading
+// LISTEN_EXTRAS FIRST then CURATED keeps the intuitive precedence even if
+// someone later forgets and adds a duplicate id.
 const TIER1_LISTEN_BY_ID: ReadonlyMap<string, CuratedListenLink> = new Map([
-  ...CURATED.map((c) => [c.id, c.listen] as const),
   ...LISTEN_EXTRAS.map((e) => [e.id, e.listen] as const),
+  ...CURATED.map((c) => [c.id, c.listen] as const),
 ])
 
 export function DetailIdentity({
