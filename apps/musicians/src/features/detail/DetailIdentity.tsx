@@ -9,17 +9,33 @@ import type { MusicianDetail } from '../../lib/types'
 import { spotifyMusicianUrl, appleMusicMusicianUrl } from '../../lib/links'
 import { AttribPhoto } from '../../components/Attrib'
 import { SpotifyIcon, AppleIcon } from '../../components/icons'
-import { CURATED, type CuratedListenLink } from '../../data/curated'
+import {
+  CURATED,
+  LISTEN_EXTRAS,
+  type CuratedListenLink,
+} from '../../data/curated'
 import { metaLine, firstSentence } from './detailIdentityMeta'
 
-// Wave 3 / Tier 1 — for the 12 curated musicians, the Listen affordance
-// deep-links to a hand-picked signature track (data lives on each
-// `CuratedPick.listen`). Non-curated musicians fall back to the existing
-// search-URL behaviour from `lib/links`. Frontend-side join: no BFF
-// thread, no frozen-type change. The map is built once at module scope.
-const CURATED_LISTEN_BY_ID: ReadonlyMap<string, CuratedListenLink> = new Map(
-  CURATED.map((c) => [c.id, c.listen]),
-)
+// 3-tier Listen fallback. The button always renders; what it deep-links to
+// degrades through:
+//   Tier 1 — hand-picked TRACK URL (the 12 curated picks + LISTEN_EXTRAS
+//            like John Lewis). Aria-label names the track; an editorial
+//            caption shows beneath the buttons.
+//   Tier 2 — artist-page URL on the musician's `links` (Spotify ~50% /
+//            Apple <30% via MusicBrainz; populator-supplied). Aria-label
+//            stays generic on the musician name — we don't imply a track.
+//   Tier 3 — disambiguated search URL (`<name> jazz`) so the namesake
+//            hazard on common-name sidemen (Paul Chambers, George Lewis,
+//            Sam Jones) doesn't surface a non-jazz artist.
+// The two services resolve INDEPENDENTLY — a musician can land in tier 2
+// for Spotify (artist URL present) and tier 3 for Apple (no artist URL).
+// Tier 1, when present, covers both services together (same track, two
+// services). The visible button label stays "Listen on Spotify" / "Apple
+// Music" at every tier — honest at all three.
+const TIER1_LISTEN_BY_ID: ReadonlyMap<string, CuratedListenLink> = new Map([
+  ...CURATED.map((c) => [c.id, c.listen] as const),
+  ...LISTEN_EXTRAS.map((e) => [e.id, e.listen] as const),
+])
 
 export function DetailIdentity({
   d,
@@ -29,14 +45,15 @@ export function DetailIdentity({
   duplicate: boolean
 }) {
   const firstName = d.name.split(' ')[0] ?? d.name
-  // Wave 3 / Tier 1 — deep-link the Listen buttons to the hand-picked
-  // signature track when this musician is one of the curated 12. The
-  // visible button labels stay the same ("Listen on Spotify" / "Apple
-  // Music"); the swap is in `href` + aria-label, plus a small editorial
-  // caption underneath naming the track + source record.
-  const listen = CURATED_LISTEN_BY_ID.get(d.id)
-  const spotifyHref = listen?.spotify ?? spotifyMusicianUrl(d.name)
-  const appleHref = listen?.apple ?? appleMusicMusicianUrl(d.name)
+  // 3-tier Listen resolution. See module-level TIER1_LISTEN_BY_ID doc.
+  // `??` cascades the tiers per service; aria-labels only name a specific
+  // track on tier 1 (artist/search tiers stay generic so we never imply a
+  // track the user might tap into).
+  const listen = TIER1_LISTEN_BY_ID.get(d.id)
+  const spotifyHref =
+    listen?.spotify ?? d.links.spotifyArtistUrl ?? spotifyMusicianUrl(d.name)
+  const appleHref =
+    listen?.apple ?? d.links.appleArtistUrl ?? appleMusicMusicianUrl(d.name)
   const spotifyAria = listen
     ? `Listen to ${listen.trackTitle} on Spotify`
     : `Listen to ${d.name} on Spotify`
@@ -105,10 +122,12 @@ export function DetailIdentity({
           <AppleIcon /> Apple Music
         </a>
       </section>
-      {/* Wave 3 / Tier 1 — editorial provenance for the curated 12. Track
-       *  title + source record sit beneath the buttons so sighted users
-       *  see what they're about to play. aria-hidden because the track
-       *  title is already in each anchor's aria-label (no double-read). */}
+      {/* Editorial provenance line — only when both services land in
+       *  tier 1 (hand-picked track). Track title + source record sit
+       *  beneath the buttons so sighted users see what they're about to
+       *  play. aria-hidden because the track title is already in each
+       *  anchor's aria-label (no double-read). Tier 2 / 3 never show this
+       *  line — there's no specific track to name. */}
       {listen && (
         <p className="listen-track" aria-hidden="true">
           <em>{listen.trackTitle}</em> &middot; {listen.sourceRecord}

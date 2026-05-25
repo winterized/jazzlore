@@ -1009,3 +1009,93 @@ test.describe('Issue #84 — detail-page alias resolution (stale id → canonica
     expect(href).toMatch(/^https:\/\/open\.spotify\.com\/track\//)
   })
 })
+
+// ── 3-tier Listen graceful degradation ─────────────────────────────────
+// Verifies the per-service Listen-button tier cascade on prod:
+//   Tier 1 — hand-picked TRACK URL (curated 12 + LISTEN_EXTRAS).
+//   Tier 2 — artist-page URL on `links.spotifyArtistUrl|appleArtistUrl`
+//            (populator-supplied via MB URL relationships). The tier-2
+//            test SKIPS when the populator hasn't loaded streaming_ids
+//            into Aura yet (we probe the BFF for the field first).
+//   Tier 3 — disambiguated search URL (`<name> jazz`) — the namesake
+//            guard for common-name sidemen. George Lewis (Q1507760) is
+//            the canonical tier-3 case: he's in the populator's
+//            streaming_ids.jsonl with BOTH `spotify_resolved_via: "none"`
+//            AND `apple_resolved_via: "none"`, so he stays tier 3 for
+//            both services even after the populator loads.
+const JOHN_LEWIS_ID = 'wikidata:Q353943'
+const PAUL_CHAMBERS_ID = 'wikidata:Q541659' // tier-2 candidate (Spotify side)
+const GEORGE_LEWIS_ID = 'wikidata:Q1507760' // tier-3 (both _resolved_via: none)
+
+test.describe('Wave 3 / 3-tier Listen graceful degradation', () => {
+  test.skip(!ENABLED, 'PREVIEW_BASE not set — joint-fix acceptance suite is no-op')
+
+  test('tier 1 — John Lewis (LISTEN_EXTRAS) deep-links to "The Bad and the Beautiful"', async ({
+    page,
+  }) => {
+    await page.goto(`${PREVIEW_BASE}/musicians/${JOHN_LEWIS_ID}`)
+    const listen = page.getByRole('region', { name: /listen to john lewis/i })
+    await expect(listen).toBeVisible()
+    const spotify = listen.getByRole('link', {
+      name: /listen to the bad and the beautiful on spotify/i,
+    })
+    await expect(spotify).toHaveAttribute(
+      'href',
+      'https://open.spotify.com/track/4THfJ8Tx9uuFoTjPupXrqE',
+    )
+    // Editorial caption renders for tier 1.
+    await expect(page.locator('.listen-track')).toContainText(
+      'The Bad and the Beautiful',
+    )
+  })
+
+  test('tier 2 — Paul Chambers Spotify anchor deep-links to /artist/ (or skip until populator loads streaming_ids)', async ({
+    page,
+    request,
+  }) => {
+    // Probe the BFF first — tier 2 only activates once the populator loads
+    // `streaming_ids.jsonl` into Aura. Until then, both services for Paul
+    // land in tier 3 (search), which is correct fallback behaviour but not
+    // what THIS test asserts.
+    const res = await request.get(
+      `${PREVIEW_BASE}/api/musicians/${encodeURIComponent(PAUL_CHAMBERS_ID)}`,
+    )
+    const body = await res.json()
+    test.skip(
+      !body.links?.spotifyArtistUrl,
+      'populator has not loaded streaming_ids.jsonl into Aura yet — tier 2 dark; tier 1 + tier 3 still verified',
+    )
+    await page.goto(`${PREVIEW_BASE}/musicians/${PAUL_CHAMBERS_ID}`)
+    const listen = page.getByRole('region', { name: /listen to paul chambers/i })
+    const spotify = listen.getByRole('link', {
+      name: /listen to paul chambers on spotify/i,
+    })
+    const href = await spotify.getAttribute('href')
+    expect(href).toMatch(/^https:\/\/open\.spotify\.com\/artist\//)
+    // Tier 2 must NOT show the track caption (no specific track named).
+    await expect(page.locator('.listen-track')).toHaveCount(0)
+  })
+
+  test('tier 3 — George Lewis (no MB streaming URL on either service) lands on disambiguated `jazz` search', async ({
+    page,
+  }) => {
+    await page.goto(`${PREVIEW_BASE}/musicians/${GEORGE_LEWIS_ID}`)
+    const listen = page.getByRole('region', { name: /listen to george lewis/i })
+    const spotify = listen.getByRole('link', {
+      name: /listen to george lewis on spotify/i,
+    })
+    const apple = listen.getByRole('link', {
+      name: /listen to george lewis on apple music/i,
+    })
+    const spotifyHref = (await spotify.getAttribute('href')) ?? ''
+    const appleHref = (await apple.getAttribute('href')) ?? ''
+    // Both services land on a search URL with the `jazz` disambiguator —
+    // bare-name searches re-introduce the namesake hazard.
+    expect(spotifyHref).toMatch(/open\.spotify\.com\/search\//)
+    expect(spotifyHref).toContain('jazz')
+    expect(appleHref).toMatch(/music\.apple\.com\/search\?term=/)
+    expect(appleHref).toContain('jazz')
+    // Tier 3 also never shows the editorial caption.
+    await expect(page.locator('.listen-track')).toHaveCount(0)
+  })
+})

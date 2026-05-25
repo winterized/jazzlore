@@ -34,13 +34,13 @@ describe('DetailView — identity / bio / listen', () => {
     expect(more).toHaveAttribute('href', '#about')
   })
 
-  it('non-curated musician → Listen buttons fall back to search URLs (regression guard)', () => {
-    // MODERATE's id is `wikidata:Q379938` (pre-P0 Bobby fixture), NOT the
-    // canonical curated `wikidata:Q132341`. So this exercises the
-    // non-curated fallback path — the search URL from `lib/links`. The
-    // anchor's accessible name comes from its aria-label
-    // ("Listen to <name> on Spotify"); the visible text "Listen on
-    // Spotify" is overridden by the explicit aria-label.
+  it('tier 3 — no track + no artist URL → disambiguated search URL (`<name> jazz`)', () => {
+    // MODERATE's id is `wikidata:Q379938` (a non-curated fictional fixture
+    // id for unit purposes), and its `links` has no spotify/apple artist
+    // URLs. So both services land in tier 3 — the disambiguated search.
+    // The `jazz` suffix is the namesake guard for common-name sidemen
+    // (Paul Chambers, George Lewis, Sam Jones). The anchor's accessible
+    // name comes from its aria-label.
     setup()
     const listen = screen.getByRole('region', {
       name: /listen to bobby timmons/i,
@@ -53,17 +53,73 @@ describe('DetailView — identity / bio / listen', () => {
     })
     expect(spotify).toHaveAttribute(
       'href',
-      'https://open.spotify.com/search/Bobby%20Timmons',
+      'https://open.spotify.com/search/Bobby%20Timmons%20jazz',
     )
     expect(apple).toHaveAttribute(
       'href',
-      'https://music.apple.com/search?term=Bobby%20Timmons',
+      'https://music.apple.com/search?term=Bobby%20Timmons%20jazz',
     )
-    // No editorial track-title caption when non-curated.
+    // No editorial track-title caption when not tier 1.
     expect(document.querySelector('.listen-track')).toBeNull()
   })
 
-  it('curated musician (Bobby Timmons @ wikidata:Q132341) → Listen buttons deep-link to the signature track', () => {
+  it('tier 2 — artist URL on links → deep-link to artist page (no caption)', () => {
+    // Non-tier-1 fixture id; the musician has artist-page URLs on its
+    // `links` (populator-supplied via MB URL relationships in real data).
+    // Per-service tier resolution: Spotify has an artist URL → tier 2;
+    // Apple has none → tier 3 with the `jazz` disambiguator. Aria-labels
+    // stay generic at tier 2/3 — never imply a specific track.
+    const tier2 = {
+      ...MODERATE,
+      links: {
+        ...MODERATE.links,
+        spotifyArtistUrl: 'https://open.spotify.com/artist/0M1UOBJZ9tcKJbrbnVlHZG',
+      },
+    }
+    setup(tier2)
+    const listen = screen.getByRole('region', {
+      name: /listen to bobby timmons/i,
+    })
+    const spotify = within(listen).getByRole('link', {
+      name: /listen to bobby timmons on spotify/i,
+    })
+    const apple = within(listen).getByRole('link', {
+      name: /listen to bobby timmons on apple music/i,
+    })
+    expect(spotify).toHaveAttribute(
+      'href',
+      'https://open.spotify.com/artist/0M1UOBJZ9tcKJbrbnVlHZG',
+    )
+    // Apple has no artist URL on this fixture → drops to tier 3.
+    expect(apple).toHaveAttribute(
+      'href',
+      'https://music.apple.com/search?term=Bobby%20Timmons%20jazz',
+    )
+    expect(document.querySelector('.listen-track')).toBeNull()
+  })
+
+  it('tier 1 — LISTEN_EXTRAS hit (John Lewis @ wikidata:Q353943) → track deep-link', () => {
+    // John Lewis is the canonical tier-1 LISTEN_EXTRAS case — a hand-picked
+    // track URL but NOT one of the 12 home-grid curated picks. Verifies
+    // that the resolver merges CURATED + LISTEN_EXTRAS into one tier-1 map.
+    const { container } = setup({
+      ...MODERATE,
+      id: 'wikidata:Q353943',
+      name: 'John Lewis',
+    })
+    const listen = screen.getByRole('region', { name: /listen to john lewis/i })
+    const spotify = within(listen).getByRole('link', {
+      name: /listen to the bad and the beautiful on spotify/i,
+    })
+    expect(spotify).toHaveAttribute(
+      'href',
+      'https://open.spotify.com/track/4THfJ8Tx9uuFoTjPupXrqE',
+    )
+    const trackCaption = container.querySelector('.listen-track')
+    expect(trackCaption?.textContent).toContain('The Bad and the Beautiful')
+  })
+
+  it('tier 1 — curated musician (Bobby Timmons @ wikidata:Q132341) → Listen buttons deep-link to the signature track', () => {
     // Override only the id — name/bio stay from the MODERATE fixture so
     // the rest of the page renders identically; the curated-12 lookup is
     // by id, and Bobby's canonical curated id is wikidata:Q132341 with a

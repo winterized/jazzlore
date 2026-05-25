@@ -41,6 +41,15 @@ export interface RawMusician {
   musicbrainz_id?: string
   discogs_id?: string
   bio_summary?: string
+  /** Spotify artist-page deep-link (tier-2 Listen fallback). Sourced from
+   * MusicBrainz URL relationships by the populator (`streaming_ids.jsonl`).
+   * Absent on the long-tail; absent when the populator's MB lookup yielded
+   * nothing. */
+  spotify_artist_url?: string
+  /** Apple Music artist-page deep-link (tier-2 Listen fallback). Same shape +
+   * provenance as `spotify_artist_url`; Apple coverage from MB is lower
+   * (~30% vs Spotify's ~50% per the populator's resolver stats). */
+  apple_artist_url?: string
 }
 
 export type RecordType =
@@ -176,6 +185,13 @@ export interface MusicianDetail {
     wikidataId?: string
     musicbrainzId?: string
     discogsId?: string
+    /** Spotify artist-page deep-link (tier-2 Listen fallback). Sourced from
+     * MB URL relationships by the populator. Absent on the long-tail and
+     * any musician the populator's MB lookup didn't resolve. */
+    spotifyArtistUrl?: string
+    /** Apple Music artist-page deep-link (tier-2 Listen fallback). Same
+     * shape + provenance as `spotifyArtistUrl`. */
+    appleArtistUrl?: string
   }
   /** Ranked collaborators (BFF aggregates + orders; the mapper preserves the
    * order it is given — no client/mapper dedup, landmine 11). */
