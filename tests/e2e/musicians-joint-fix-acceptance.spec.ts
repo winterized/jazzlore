@@ -1049,22 +1049,16 @@ test.describe('Wave 3 / 3-tier Listen graceful degradation', () => {
     )
   })
 
-  test('tier 2 — Paul Chambers Spotify anchor deep-links to /artist/ (or skip until populator loads streaming_ids)', async ({
+  test('tier 2 — Paul Chambers Spotify anchor deep-links to /artist/ (no caption)', async ({
     page,
-    request,
   }) => {
-    // Probe the BFF first — tier 2 only activates once the populator loads
-    // `streaming_ids.jsonl` into Aura. Until then, both services for Paul
-    // land in tier 3 (search), which is correct fallback behaviour but not
-    // what THIS test asserts.
-    const res = await request.get(
-      `${PREVIEW_BASE}/api/musicians/${encodeURIComponent(PAUL_CHAMBERS_ID)}`,
-    )
-    const body = await res.json()
-    test.skip(
-      !body.links?.spotifyArtistUrl,
-      'populator has not loaded streaming_ids.jsonl into Aura yet — tier 2 dark; tier 1 + tier 3 still verified',
-    )
+    // Populator loaded streaming_ids.jsonl on 2026-05-25 (339 musicians
+    // with spotify_artist_url, 159 with apple_artist_url). Paul Chambers
+    // is one of them on Spotify; Apple side is populator `_resolved_via:
+    // "none"` so Apple drops to tier 3 — but this test only asserts the
+    // Spotify side. The previous BFF-probe + test.skip is removed (#94)
+    // so a future regression that drops the field fails fast in CI
+    // instead of silently skipping.
     await page.goto(`${PREVIEW_BASE}/musicians/${PAUL_CHAMBERS_ID}`)
     const listen = page.getByRole('region', { name: /listen to paul chambers/i })
     const spotify = listen.getByRole('link', {
