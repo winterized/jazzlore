@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   assertReadOnly,
   byIdsCypher,
@@ -151,6 +151,29 @@ describe('reshapeDetail → frozen RawDetailResult', () => {
 
   it('returns null when the musician id is absent (→ 404)', () => {
     expect(reshapeDetail(toResult(DETAIL_NOT_FOUND))).toBeNull()
+  })
+
+  it('warns + first-row-wins on multi-row result (issue #89 observability)', () => {
+    // Simulate a populator alias conflict: same stale id projected onto
+    // TWO survivors' also_known_as_ids. reshapeDetail must NOT filter the
+    // response (faithful) but MUST emit one structured `warn` so the
+    // populator owner sees the conflict in CF logs. Logger injection
+    // mirrors `warnOnDuplicates`'s testability pattern.
+    const base = toResult(DETAIL_MILES)
+    const dup = { ...base, values: [...base.values, ...base.values] }
+    const logger = { warn: vi.fn() }
+    const raw = reshapeDetail(dup, logger)
+    expect(raw).not.toBeNull()
+    expect(raw!.musician.id).toBe('wikidata:Q93341') // first row wins
+    expect(logger.warn).toHaveBeenCalledTimes(1)
+    const payload = JSON.parse(logger.warn.mock.calls[0]![0] as string) as {
+      event: string
+      rowCount: number
+      matchedIds: string[]
+    }
+    expect(payload.event).toBe('detail-multi-row')
+    expect(payload.rowCount).toBe(2)
+    expect(payload.matchedIds).toContain('wikidata:Q93341')
   })
 })
 
