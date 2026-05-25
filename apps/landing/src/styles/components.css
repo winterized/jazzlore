@@ -1,0 +1,425 @@
+/* Layout chrome — header, footer, about overlay, tile chrome, grid.
+   All rules scoped under .landing per the boundary rule. Mobile-first
+   sizes default; desktop overrides via @media (min-width: 768px) since
+   we never want to ship the desktop sizes to a phone. */
+
+.landing {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Visually-hidden helper for the accessibility-only h1. Standard
+   sr-only pattern — element occupies a 1×1 box clipped off-screen. */
+.landing .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* <main> wraps explanation + grid so axe's landmark-one-main / region
+   rules pass (every text node lives in a landmark). Layout-neutral —
+   it's a passthrough flex column. */
+.landing .jzl-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* ── Header ────────────────────────────────────────────── */
+
+.landing .jzl-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 20px 0;
+}
+.landing .jzl-wordmark {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--font-serif);
+  color: var(--ink);
+  letter-spacing: -0.012em;
+}
+.landing .jzl-wordmark-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: inline-block;
+  align-self: center;
+}
+.landing .jzl-wordmark-name {
+  font-size: 18px;
+  font-weight: 500;
+}
+.landing .jzl-wordmark-tag {
+  /* Text uses --muted not --faint to clear WCAG AA 4.5:1 (stone-500 on
+     stone-50 = 4.65:1). --faint stays reserved for decorative non-text. */
+  margin-left: 6px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.landing .jzl-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.landing .jzl-about-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.landing .jzl-about-btn:hover {
+  color: var(--ink);
+}
+
+@media (min-width: 768px) {
+  .landing .jzl-header {
+    padding: 28px 56px 0;
+  }
+  .landing .jzl-wordmark-dot {
+    width: 10px;
+    height: 10px;
+  }
+  .landing .jzl-wordmark-name {
+    font-size: 22px;
+  }
+  .landing .jzl-wordmark-tag {
+    margin-left: 12px;
+    font-size: 10px;
+  }
+  .landing .jzl-header-right {
+    gap: 28px;
+  }
+  .landing .jzl-about-btn {
+    font-size: 11px;
+  }
+}
+
+/* ── Utilitarian explanation line ──────────────────────── */
+
+.landing .jzl-explain {
+  padding: 10px 20px 14px;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  color: var(--muted);
+  line-height: 1.45;
+  letter-spacing: -0.005em;
+}
+
+@media (min-width: 768px) {
+  .landing .jzl-explain {
+    padding: 14px 56px 18px;
+    font-size: 15.5px;
+    max-width: 800px;
+  }
+}
+
+/* ── Grid ──────────────────────────────────────────────── */
+
+.landing .jzl-grid {
+  flex: 1;
+  padding: 0 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+.landing .jzl-grid-small {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (min-width: 768px) {
+  .landing .jzl-grid {
+    padding: 0 56px 28px;
+    display: grid;
+    grid-template-columns: minmax(0, 720px) minmax(0, 1fr);
+    gap: 16px;
+  }
+  .landing .jzl-grid-small {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+
+/* ── Footer ────────────────────────────────────────────── */
+
+.landing .jzl-footer {
+  /* AA-compliant: --muted not --faint (see .jzl-wordmark-tag note). */
+  padding: 0 20px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.landing .jzl-footer-right {
+  display: flex;
+  gap: 16px;
+}
+.landing .jzl-footer-link {
+  /* Shared style for <a> Source + <button> Colophon. Both are mono small
+     caps, same color, no native chrome. */
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: var(--muted);
+  text-decoration: none;
+  cursor: pointer;
+}
+.landing .jzl-footer-link:hover {
+  color: var(--ink-soft);
+}
+.landing .jzl-footer-link-disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.landing .jzl-footer-link-disabled:hover {
+  color: var(--muted);
+}
+
+@media (min-width: 768px) {
+  .landing .jzl-footer {
+    padding: 0 56px 18px;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+  }
+  .landing .jzl-footer-right {
+    gap: 22px;
+  }
+}
+
+/* ── About overlay ─────────────────────────────────────── */
+
+.landing .jzl-about-fixed {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.landing .jzl-about-backdrop {
+  /* Real <button> wearing a backdrop disguise — fills the viewport
+     behind the panel. Reset all native button chrome. The dialog panel
+     sits at a higher z-index than the backdrop within .jzl-about-fixed. */
+  position: absolute;
+  inset: 0;
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: rgba(10, 8, 6, 0.55);
+  backdrop-filter: blur(2px);
+  cursor: pointer;
+}
+.landing .jzl-about-panel {
+  position: relative;
+  z-index: 1;
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  padding: 32px 24px 28px;
+  width: 100%;
+  max-width: 640px;
+  cursor: default;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
+}
+.landing .jzl-about-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 22px;
+  line-height: 1;
+}
+.landing .jzl-about-close:hover {
+  color: var(--ink);
+}
+.landing .jzl-about-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--muted);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.landing .jzl-about-eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.landing .jzl-about-body {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--ink);
+  margin: 0;
+  letter-spacing: -0.005em;
+}
+.landing .jzl-about-emphasis {
+  font-style: italic;
+  color: var(--accent);
+  font-family: var(--font-serif);
+}
+.landing .jzl-about-coda {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--muted);
+  margin: 14px 0 0;
+}
+
+@media (min-width: 768px) {
+  .landing .jzl-about-fixed {
+    align-items: center;
+  }
+  .landing .jzl-about-panel {
+    padding: 52px 56px 44px;
+    width: 60%;
+  }
+  .landing .jzl-about-close {
+    top: 18px;
+    right: 18px;
+  }
+  .landing .jzl-about-eyebrow {
+    margin-bottom: 24px;
+  }
+  .landing .jzl-about-body {
+    font-size: 22px;
+  }
+  .landing .jzl-about-coda {
+    font-size: 18px;
+    margin-top: 20px;
+  }
+}
+
+/* ── Tile chrome (shared by all 4 tiles) ───────────────── */
+
+.landing .jzl-tile {
+  display: block;
+  text-decoration: none;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  position: relative;
+  overflow: hidden;
+}
+[data-theme='dark'] .landing .jzl-tile {
+  background: var(--bg-alt);
+}
+.landing .jzl-tile-chrome {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--rule);
+}
+.landing .jzl-tile-chrome-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.landing .jzl-tile-chrome-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: jzl-pulse-soft 2.4s ease-in-out infinite;
+}
+.landing .jzl-tile-chrome-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--ink);
+  text-transform: uppercase;
+}
+.landing .jzl-tile-chrome-sub {
+  /* AA-compliant: --muted not --faint (see .jzl-wordmark-tag note). */
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+@media (min-width: 768px) {
+  .landing .jzl-tile-chrome {
+    padding: 14px 18px;
+  }
+  .landing .jzl-tile-chrome-title {
+    font-size: 11px;
+  }
+  .landing .jzl-tile-chrome-sub {
+    font-size: 10px;
+  }
+}
+
+/* ── OpenCta ───────────────────────────────────────────── */
+
+.landing .jzl-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+  text-transform: uppercase;
+  position: relative;
+}
+.landing .jzl-cta-underline {
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  height: 1px;
+  width: 18px;
+  background: var(--accent);
+}
+@media (min-width: 768px) {
+  .landing .jzl-cta {
+    font-size: 11px;
+  }
+}

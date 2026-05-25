@@ -1,0 +1,62 @@
+/* CSS-spec rule: every @import statement MUST precede every other rule.
+   The metronome app already hit this exact gotcha with Google Fonts —
+   here all imports are local, but the rule still applies: keep them at
+   the top, before @custom-variant / @source / @layer.
+
+   Order matters within the imports too:
+   1. Tailwind (registers base + utilities)
+   2. fonts.css (@font-face — must precede any rule that uses the family)
+   3. theme.css (vars — defined after fonts so font-family vars can name them)
+   4. animations.css (keyframes — defined after vars they reference)
+*/
+@import 'tailwindcss';
+@import './styles/fonts.css';
+@import './styles/theme.css';
+@import './styles/animations.css';
+@import './styles/components.css';
+@import './styles/tiles.css';
+
+/* Tailwind-specific directives — variant follows the same data-theme
+   convention as every other Jazzlore app, source-scan pulls in @jazzlore/ui
+   for ThemeToggle's utility classes. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+@source "../../../packages/ui/src";
+
+@layer base {
+  /* Box-sizing default per the design handoff (every tile width includes
+     padding). Applies inside .landing only — keeps the rule from bleeding
+     into any other app that might share <html> in the future. */
+  .landing *,
+  .landing *::before,
+  .landing *::after {
+    box-sizing: border-box;
+  }
+
+  /* DELIBERATE: unscoped <html> background tied to data-theme, NOT to
+     .landing. The first paint happens before React mounts the .landing
+     class on the root <div>; setting bg on <html data-theme> matches the
+     theme immediately and prevents the white-flash FOUC. Same pattern as
+     scales / chords / metronome — DO NOT scope this to .landing without
+     also reordering main.tsx to apply the class to <html> directly.
+     Future PWA / multi-app concern: benign as long as each app owns its
+     subdomain (current state). Revisit if we ever serve two apps from
+     the same <html>. */
+  html {
+    background-color: var(--color-stone-50);
+    color: var(--color-stone-900);
+  }
+  html[data-theme='dark'] {
+    background-color: var(--color-stone-950);
+    color: var(--color-stone-100);
+  }
+  body {
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  .landing {
+    background-color: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+  }
+}

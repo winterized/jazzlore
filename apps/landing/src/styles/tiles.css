@@ -1,0 +1,320 @@
+/* Per-tile internals — Musicians (hero), Scales/Chords/Metronome
+   (small). Mirror the design handoff dimensions; small tiles share
+   .jzl-tile-small + .jzl-small-body, then tile-specific overrides. */
+
+/* ── Musicians (hero) ─────────────────────────────────── */
+
+.landing .jzl-tile-musicians {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.landing .jzl-musicians-graph {
+  flex: 1 1 auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 16px;
+  min-height: 200px;
+}
+.landing .jzl-musicians-bottom {
+  padding: 12px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+.landing .jzl-musicians-h {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: -0.022em;
+  margin: 0;
+  color: var(--ink);
+}
+.landing .jzl-musicians-stats {
+  margin-top: 6px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.landing .jzl-musicians-stats strong {
+  color: var(--ink);
+  font-weight: 400;
+}
+
+@media (min-width: 768px) {
+  .landing .jzl-musicians-graph {
+    padding: 20px 36px;
+  }
+  .landing .jzl-musicians-bottom {
+    padding: 18px;
+  }
+  .landing .jzl-musicians-h {
+    font-size: 44px;
+  }
+  .landing .jzl-musicians-stats {
+    margin-top: 10px;
+    gap: 22px;
+    font-size: 11px;
+  }
+}
+
+/* ── Small tiles (scales / chords / metronome) ───────── */
+
+.landing .jzl-tile-small {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.landing .jzl-small-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 8px 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.landing .jzl-small-title {
+  /* Per-tile typography lives on the more specific selectors below. */
+}
+.landing .jzl-small-title-main {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-style: italic;
+  font-size: 15px;
+  line-height: 1;
+  letter-spacing: -0.018em;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.landing .jzl-small-title-sub {
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.landing .jzl-small-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.landing .jzl-small-caption {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+@media (min-width: 768px) {
+  .landing .jzl-small-body {
+    padding: 12px 18px 14px;
+    gap: 8px;
+  }
+  .landing .jzl-small-title-main {
+    font-size: 24px;
+  }
+}
+
+/* ── Scales tile internals ────────────────────────────── */
+
+.landing .jzl-scales-strip {
+  flex: 1 1 auto;
+  min-height: 28px;
+  background: var(--duo-bg);
+  position: relative;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+}
+.landing .jzl-scales-play {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: jzl-pulse-soft 1.6s ease-in-out infinite;
+}
+.landing .jzl-scales-play-arrow {
+  color: var(--bg);
+  font-size: 6px;
+  margin-left: 1px;
+  line-height: 1;
+}
+
+@media (min-width: 768px) {
+  .landing .jzl-scales-strip {
+    min-height: 44px;
+    padding: 6px 12px;
+  }
+  .landing .jzl-scales-play {
+    right: 12px;
+    width: 18px;
+    height: 18px;
+  }
+  .landing .jzl-scales-play-arrow {
+    font-size: 9px;
+  }
+}
+
+/* ── Chords tile internals ────────────────────────────── */
+
+.landing .jzl-chords-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+.landing .jzl-chords-title-main {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-style: normal;
+  font-size: 19px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.landing .jzl-chords-m {
+  color: var(--accent);
+}
+.landing .jzl-chords-flat5 {
+  font-size: 0.7em;
+}
+.landing .jzl-chords-sub {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--muted);
+  white-space: nowrap;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.landing .jzl-chords-strip {
+  flex: 1 1 auto;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .landing .jzl-chords-title-main {
+    font-size: 30px;
+    gap: 14px;
+  }
+  .landing .jzl-chords-strip {
+    min-height: 48px;
+  }
+}
+
+/* ── Metronome tile internals ─────────────────────────── */
+
+.landing .jzl-metro-reading {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.landing .jzl-metro-reading-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.landing .jzl-metro-bpm {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  line-height: 0.9;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+}
+.landing .jzl-metro-bpm-num {
+  font-size: 32px;
+}
+.landing .jzl-metro-bpm-unit {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.landing .jzl-metro-meter {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+  text-transform: uppercase;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.landing .jzl-metro-meter-sep {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--faint);
+}
+.landing .jzl-metro-pendulum {
+  margin-left: auto;
+}
+.landing .jzl-metro-beats {
+  display: flex;
+  gap: 5px;
+}
+.landing .jzl-metro-beat-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--duo-fg);
+  animation: jzl-tick 1.2s steps(2, end) infinite;
+}
+
+@media (min-width: 768px) {
+  .landing .jzl-metro-reading {
+    gap: 16px;
+  }
+  .landing .jzl-metro-reading-text {
+    gap: 6px;
+  }
+  .landing .jzl-metro-bpm-num {
+    font-size: 56px;
+  }
+  .landing .jzl-metro-bpm-unit {
+    font-size: 11px;
+  }
+  .landing .jzl-metro-meter {
+    font-size: 11px;
+    gap: 12px;
+  }
+  .landing .jzl-metro-beats {
+    gap: 8px;
+  }
+  .landing .jzl-metro-beat-dot {
+    width: 9px;
+    height: 9px;
+  }
+  .landing .jzl-small-body {
+    padding: 10px 18px 12px;
+  }
+}

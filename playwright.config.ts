@@ -22,6 +22,12 @@ export default defineConfig({
   ],
   webServer: [
     {
+      command: 'pnpm -F @jazzlore/landing dev',
+      url: 'http://localhost:5177',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+    },
+    {
       command: 'pnpm -F @jazzlore/scales dev',
       url: 'http://localhost:5173',
       reuseExistingServer: !process.env.CI,
