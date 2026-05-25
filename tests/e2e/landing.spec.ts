@@ -1,10 +1,22 @@
 import { test, expect, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 
-const BASE = 'http://localhost:5177'
+/** Default localhost; override with PREVIEW_BASE for prod / preview runs.
+ *  Mirrors the musicians-joint-fix-acceptance convention.
+ *  Examples:
+ *    pnpm test:e2e landing                                 → localhost:5177
+ *    PREVIEW_BASE=https://jazzlore.com pnpm test:e2e landing → prod
+ */
+const BASE = process.env.PREVIEW_BASE ?? 'http://localhost:5177'
 
 const VIEWPORTS = [
   { name: 'mobile', width: 390, height: 844 },
+  /* Landscape phone — wide-but-short. Regression guard for the bug
+     where useBreakpoint(width-only) reported 'desktop' and the
+     720+small-stack CSS collapsed the right column. Both 844×390
+     (iPhone-ish) and 932×430 (Pro Max) live in the same media query
+     lane (max-height: 500px AND min-width: 600px). */
+  { name: 'mobile-landscape', width: 844, height: 390 },
   { name: 'desktop', width: 1280, height: 800 },
 ] as const
 
@@ -43,19 +55,25 @@ test.describe('landing — idle render', () => {
           page.getByText(/A jazz musician's workbench — explore who played/),
         ).toBeVisible()
 
-        // All 4 tile titles render
-        await expect(
-          page.locator('.jzl-tile-chrome-title', { hasText: /^Musicians$/i }),
-        ).toBeVisible()
-        await expect(
-          page.locator('.jzl-tile-chrome-title', { hasText: /^Scales$/i }),
-        ).toBeVisible()
-        await expect(
-          page.locator('.jzl-tile-chrome-title', { hasText: /^Chords$/i }),
-        ).toBeVisible()
-        await expect(
-          page.locator('.jzl-tile-chrome-title', { hasText: /^Metronome$/i }),
-        ).toBeVisible()
+        // All 4 tile titles render AND are in the viewport (no scroll
+        // needed to reach them — the core page promise).
+        for (const title of ['Musicians', 'Scales', 'Chords', 'Metronome']) {
+          await expect(
+            page.locator('.jzl-tile-chrome-title', {
+              hasText: new RegExp(`^${title}$`, 'i'),
+            }),
+          ).toBeInViewport()
+        }
+
+        // Scales tile must actually render its staff notation, not an
+        // empty amber strip. The mark is an inline SVG with 7 noteheads
+        // (ellipses) + 5 staff lines — assert both. Regression guard
+        // for the viewBox-tied-to-width bug where mobile widths clipped
+        // every notehead off-canvas.
+        const scalesSvg = page.locator('.jzl-scales-strip svg').first()
+        await expect(scalesSvg).toBeVisible()
+        await expect(scalesSvg.locator('ellipse')).toHaveCount(7)
+        await expect(scalesSvg.locator('line')).toHaveCount(5)
 
         // The hero h2
         await expect(

@@ -1,7 +1,10 @@
 /* Layout chrome — header, footer, about overlay, tile chrome, grid.
    All rules scoped under .landing per the boundary rule. Mobile-first
-   sizes default; desktop overrides via @media (min-width: 768px) since
-   we never want to ship the desktop sizes to a phone. */
+   sizes default; desktop overrides via
+   @media (min-width: 768px) and (min-height: 600px) — the height arm
+   keeps landscape phones (e.g. 844×390, wide but short) out of the
+   desktop lane and routed to the dedicated landscape-phone 4-across
+   grid lower in this file. */
 
 .landing {
   display: flex;
@@ -92,7 +95,7 @@
   color: var(--ink);
 }
 
-@media (min-width: 768px) {
+@media (min-width: 768px) and (min-height: 600px) {
   .landing .jzl-header {
     padding: 28px 56px 0;
   }
@@ -126,7 +129,7 @@
   letter-spacing: -0.005em;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 768px) and (min-height: 600px) {
   .landing .jzl-explain {
     padding: 14px 56px 18px;
     font-size: 15.5px;
@@ -136,6 +139,8 @@
 
 /* ── Grid ──────────────────────────────────────────────── */
 
+/* Default = portrait phone — vertical stack. Musicians on top,
+   3-across small-tile row below. */
 .landing .jzl-grid {
   flex: 1;
   padding: 0 20px 16px;
@@ -150,7 +155,33 @@
   gap: 8px;
 }
 
-@media (min-width: 768px) {
+/* Landscape phone — wide enough for 4-across, too short for the
+   portrait stack (Musicians ~420 tall + 3 small + chrome can't fit in
+   ~390 viewport height). The 3 small tiles flatten into the parent
+   grid via display: contents, so all 4 tiles share one horizontal row.
+   useBreakpoint also returns 'mobile' at this size, so each tile uses
+   its mobile JSX variant (no subdomain text on small tiles, condensed
+   labels). */
+@media (min-width: 600px) and (max-height: 500px) {
+  .landing .jzl-grid {
+    padding: 0 16px 12px;
+    display: grid;
+    grid-template-columns:
+      minmax(0, 1.5fr)
+      minmax(0, 1fr)
+      minmax(0, 1fr)
+      minmax(0, 1fr);
+    grid-template-rows: 1fr;
+    gap: 8px;
+  }
+  .landing .jzl-grid-small {
+    display: contents;
+  }
+}
+
+/* Desktop — requires BOTH wide AND tall (landscape phone fails the
+   height arm and falls into the 4-across grid above instead). */
+@media (min-width: 768px) and (min-height: 600px) {
   .landing .jzl-grid {
     padding: 0 56px 28px;
     display: grid;
@@ -209,7 +240,7 @@
   color: var(--muted);
 }
 
-@media (min-width: 768px) {
+@media (min-width: 768px) and (min-height: 600px) {
   .landing .jzl-footer {
     padding: 0 56px 18px;
     font-size: 10px;
@@ -312,7 +343,7 @@
   margin: 14px 0 0;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 768px) and (min-height: 600px) {
   .landing .jzl-about-fixed {
     align-items: center;
   }
@@ -385,7 +416,7 @@
   text-transform: uppercase;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 768px) and (min-height: 600px) {
   .landing .jzl-tile-chrome {
     padding: 14px 18px;
   }
@@ -418,7 +449,7 @@
   width: 18px;
   background: var(--accent);
 }
-@media (min-width: 768px) {
+@media (min-width: 768px) and (min-height: 600px) {
   .landing .jzl-cta {
     font-size: 11px;
   }
