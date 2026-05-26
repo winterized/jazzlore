@@ -13,6 +13,9 @@ dist-ssr
 storybook-static
 *.local
 
+# Scratch output dir (icon-preview composites, ad-hoc renders, etc.).
+tmp/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

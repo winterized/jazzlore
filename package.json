@@ -22,6 +22,8 @@
     "test:e2e:install": "PLAYWRIGHT_BROWSERS_PATH=0 playwright install chromium webkit",
     "lighthouse:audit": "node tests/lighthouse-audit.mjs",
     "bundle:budget": "node tests/musicians-bundle-budget.mjs",
+    "icons": "node scripts/generate-icons.mjs",
+    "icons:preview": "node scripts/preview-icons.mjs",
     "storybook": "pnpm -F @jazzlore/ui storybook",
     "build-storybook": "pnpm -F @jazzlore/ui build-storybook",
     "lint": "eslint .",
@@ -43,6 +45,7 @@
     "lighthouse": "^13.3.0",
     "prettier": "^3.8.3",
     "prettier-plugin-tailwindcss": "^0.8.0",
+    "sharp": "^0.34.5",
     "typescript-eslint": "^8.58.2"
   }
 }

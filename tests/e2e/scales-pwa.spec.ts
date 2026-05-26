@@ -65,6 +65,7 @@ test.describe('scales PWA — service worker + manifest', () => {
     const json = await res.json()
     expect(json.name).toBe('Jazzlore Scales')
     expect(json.display).toBe('standalone')
-    expect(json.icons).toHaveLength(2)
+    // 4 entries: 192/512 with purpose "any" + 192/512 with purpose "maskable".
+    expect(json.icons).toHaveLength(4)
   })
 })

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Chords PWA master.
+       2 amber satellite dots (above + below) flanking the voice-purple
+       brand dot — evokes a 3-note chord stacked vertically. Per user
+       direction: no staff lines, no connecting lines, just 3 dots. -->
+  <rect width="512" height="512" rx="72" fill="#0a0a0a"/>
+
+  <!-- Top amber satellite dot -->
+  <circle cx="256" cy="92" r="32" fill="#f4a233"/>
+
+  <!-- Brand dot (voice purple), the chord's middle note -->
+  <circle cx="256" cy="256" r="112" fill="#8a72a8"/>
+
+  <!-- Bottom amber satellite dot -->
+  <circle cx="256" cy="420" r="32" fill="#f4a233"/>
+</svg>

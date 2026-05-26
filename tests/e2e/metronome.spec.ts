@@ -142,7 +142,8 @@ test.describe('metronome — PWA manifest', () => {
     expect(body.short_name).toBe('Metronome')
     expect(body.display).toBe('standalone')
     expect(body.start_url).toBe('/')
-    expect(body.icons).toHaveLength(2)
+    // 4 entries since the icon-set refresh split "any" + "maskable" purposes.
+    expect(body.icons).toHaveLength(4)
     expect(body.icons[0].sizes).toBe('192x192')
     expect(body.icons[1].sizes).toBe('512x512')
   })
@@ -169,7 +170,7 @@ test.describe('metronome — PWA manifest', () => {
     )
     await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute(
       'href',
-      '/icons/icon-192.png',
+      '/icons/apple-touch-icon.png',
     )
   })
 })

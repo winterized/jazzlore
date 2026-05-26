@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Jazzlore PWA master.
+       The brand dot IS the mark for Jazzlore — no additional motif. The
+       favicon and PWA masters are visually identical; only the generated
+       PNG sizes differ. -->
+  <rect width="512" height="512" rx="72" fill="#0a0a0a"/>
+  <circle cx="256" cy="256" r="112" fill="#f4a233"/>
+</svg>
