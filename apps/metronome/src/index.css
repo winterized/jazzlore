@@ -3,6 +3,7 @@
    metrics-matched fallback faces + the actual @font-face URLs. Component
    tokens live in styles/theme.css under the .mt class. */
 @import 'tailwindcss';
+@source "../../../packages/ui/src";
 @import './styles/fonts.css';
 @import './styles/theme.css';
 
