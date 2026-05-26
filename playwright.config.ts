@@ -63,5 +63,13 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       timeout: 180_000,
     },
+    // chords PWA preview — chords-pwa.spec.ts hardcodes :5184.
+    {
+      command:
+        'pnpm -F @jazzlore/chords build && pnpm -F @jazzlore/chords preview --port 5184 --strictPort',
+      url: 'http://localhost:5184',
+      reuseExistingServer: !process.env.CI,
+      timeout: 180_000,
+    },
   ],
 })
