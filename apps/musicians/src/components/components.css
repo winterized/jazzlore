@@ -1909,6 +1909,20 @@
    * (proper a11y heading semantics) but the layout assumes margin: 0. */
   margin: 0;
 }
+/* MoreAboutSheet's drop-cap (`.mu3-sheet .more-body p:first-of-type::first-letter`,
+ * a 46px serif initial designed for bio paragraphs) leaks into this sheet via
+ * the shared `.mu3-sheet .more-body` ancestor. Cancel it for every <p> in the
+ * records sheet — the subheading "16 records" was rendering as a huge "1"
+ * with a tiny "6" next to it. */
+.mu3-records-sheet .records-body p:first-of-type::first-letter {
+  font-family: inherit;
+  font-weight: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  float: none;
+  padding: 0;
+}
 .mu3-records-sheet .records-body {
   padding: 14px 18px 20px;
 }
