@@ -1,7 +1,12 @@
 // useFocusTrap — trap Tab focus within a container while open, restore focus
-// to the previously-focused element on close. Used by the "More about"
-// bottom sheet (design "Bottom-sheet traps focus while open"). Pure DOM, no
-// deps; mirrors the proven RootSheet trap pattern in @jazzlore/ui.
+// to the previously-focused element on close. Pure DOM, no external deps.
+//
+// Used across the design system whenever a modal/sheet/popover opens (the
+// musicians "More about" sheet, the StickyHeader root-picker sheet, the
+// PWA install sheet). When the previously-focused element has been removed
+// from the DOM at cleanup time, `.focus()` on the detached node silently
+// drops focus to <body> — an a11y bug. The cleanup falls back to the page
+// <h1> (or <main>) so focus always lands on meaningful content.
 
 import { useEffect, type RefObject } from 'react'
 

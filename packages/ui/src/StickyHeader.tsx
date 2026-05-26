@@ -5,6 +5,7 @@ import RootCompactButton from './StickyHeader.rootCompactButton'
 import { usePrefersReducedMotion } from './StickyHeader.hooks'
 import ChipRow, { type ChipRowHandle } from './StickyHeader.chipRow'
 import SearchBox, { type SearchResult } from './StickyHeader.searchBox'
+import { PwaInstallButton } from './PwaInstallButton'
 
 // ─── Public types ──────────────────────────────────────────────────────────────
 
@@ -72,6 +73,13 @@ type Props = {
   onSearchSelect?: (id: string) => void
   searchLabel?: string
   searchPlaceholder?: string
+  /** Optional PWA install button props. When ALL three are provided the
+   * header renders a `<PwaInstallButton>` immediately before the theme
+   * toggle. When any is undefined the button is omitted. The accent is
+   * a hex literal — see PwaInstallButton for the rationale. */
+  installAppName?: string
+  installAppIconHref?: string
+  installAppAccent?: `#${string}`
 }
 
 export default function StickyHeader({
@@ -91,6 +99,9 @@ export default function StickyHeader({
   onSearchSelect = () => {},
   searchLabel = 'Search',
   searchPlaceholder,
+  installAppName,
+  installAppIconHref,
+  installAppAccent,
 }: Props) {
   const [scrolled, setScrolled] = useState(false)
   const prefersReduced = usePrefersReducedMotion()
@@ -248,6 +259,16 @@ export default function StickyHeader({
         >
           {utilLink.label}
         </LinkComponent>
+
+        {/* PWA install button — only rendered when the host app passes all
+            three install-* props. Hidden internally when standalone. */}
+        {installAppName && installAppIconHref && installAppAccent && (
+          <PwaInstallButton
+            appName={installAppName}
+            appIconHref={installAppIconHref}
+            appAccent={installAppAccent}
+          />
+        )}
 
         {/* Theme toggle */}
         <ThemeButton theme={theme} onThemeToggle={onThemeToggle} />

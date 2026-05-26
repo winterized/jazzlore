@@ -12,7 +12,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useFocusTrap } from '../../hooks/useFocusTrap'
+import { useFocusTrap } from '@jazzlore/ui'
 
 const SWIPE_DISMISS_PX = 80
 
