@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Placeholder favicon (amber dot on near-black). Borrowed from the
+       metronome assets while chords-specific iconography is designed —
+       tracked in issue #101. -->
+  <rect width="32" height="32" rx="6" fill="#0a0a0a"/>
+  <circle cx="16" cy="16" r="6" fill="#f4a233"/>
+</svg>
