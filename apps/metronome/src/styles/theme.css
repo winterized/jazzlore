@@ -106,6 +106,9 @@ html[data-theme='light'] .mt,
   align-items: center;
   gap: 10px;
   padding: 12px 16px;
+  /* Lift header content below the iOS standalone-mode status bar.
+     env() is 0px in regular browsers, so this is a no-op there. */
+  padding-top: calc(12px + env(safe-area-inset-top, 0px));
   background: color-mix(in srgb, var(--bg) 85%, transparent);
   backdrop-filter: blur(14px) saturate(140%);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
@@ -184,7 +187,8 @@ html[data-theme='light'] .mt,
 /* ─────────────────────────── WKWebView banner ───────────────────────── */
 .mt .wkwv-banner {
   position: sticky;
-  top: 56px; /* below the .hdr (56px tall on mobile) */
+  /* below the .hdr (56px tall on mobile, +safe-area-inset in standalone) */
+  top: calc(56px + env(safe-area-inset-top, 0px));
   z-index: 18;
   display: flex;
   align-items: center;
