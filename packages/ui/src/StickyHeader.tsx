@@ -150,6 +150,9 @@ export default function StickyHeader({
       data-scrolled={scrolled ? 'true' : 'false'}
       className={[
         'sticky top-0 z-50',
+        // Lift content below the iOS standalone-mode status bar.
+        // env() is 0 in non-standalone browsers, so this is a no-op there.
+        'pt-[env(safe-area-inset-top,0px)]',
         'bg-stone-100/78 dark:bg-stone-950/78',
         'backdrop-blur-[14px] backdrop-saturate-150',
         'border-b border-stone-200 dark:border-stone-800',
