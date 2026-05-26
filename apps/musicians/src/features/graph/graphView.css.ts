@@ -65,14 +65,14 @@ export const GRAPH_CSS = `
   stroke-width: 2.5;
   opacity: 1;
 }
-/* Labels render in the DOM for every node, but peripheral names + sub-
- * instrument text are hidden by default and revealed on :hover and
- * :focus-visible — that's the keyboard-parity affordance, not optional.
- * The central node (.mu-gnode-focus) always shows its name + instrument:
- * it's the anchor, we must always see whose graph this is. The hide is
- * via opacity (not display: none) so the layout box stays stable and
- * screen readers still encounter the text. pointer-events: none keeps
- * the text from intercepting node hit-tests when it's invisible. */
+/* Labels render in the DOM for every node, hidden by default at opacity
+ * 0 and revealed when their parent <g> in the .mu-gnode-labels second-
+ * pass group carries data-active=true (set by GraphScene React state
+ * for hover, focus, and the centre anchor). The centre anchor always
+ * shows its name + instrument: it's the anchor, we must always see
+ * whose graph this is. The hide is via opacity (not display: none) so
+ * the layout box stays stable. pointer-events: none keeps the text
+ * from intercepting node hit-tests when it's invisible. */
 .mu-gnode-label {
   font-family: var(--font-sans);
   font-weight: 600;

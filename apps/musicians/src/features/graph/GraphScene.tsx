@@ -3,7 +3,7 @@
 // theming via the frozen token CSS vars (`--accent`, `--card`, `--line`,
 // `--text`, `--muted`), dark/light automatic through `data-theme`.
 
-import { useState, type KeyboardEvent } from 'react'
+import { useMemo, useState, type KeyboardEvent } from 'react'
 import type { LayoutEdge } from './layout'
 import type { FrameNode, GraphFrame } from './useRecentre'
 import { initialsOf } from './palette'
@@ -25,7 +25,12 @@ export default function GraphScene({
   selectedId,
   onSelect,
 }: GraphSceneProps) {
-  const pos = new Map(frame.nodes.map((n) => [n.id, n]))
+  // Memoised so React's hover/focus re-renders don't rebuild the lookup
+  // table 60×/interaction (negligible at ~30 nodes but cheap to fix).
+  const pos = useMemo(
+    () => new Map(frame.nodes.map((n) => [n.id, n])),
+    [frame.nodes],
+  )
 
   // The labels now live in a SEPARATE second-pass group (so SVG paint
   // order lands them on top of every node circle), which breaks the

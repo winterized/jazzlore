@@ -127,10 +127,22 @@ test.describe('Graph polish · live prod (desktop)', () => {
       const peripheral = page
         .locator('.mu-gnode:not(.mu-gnode-focus)')
         .first()
+      let focusFired = false
       try {
         await peripheral.focus({ timeout: 2000 })
+        focusFired = true
       } catch {
         // ignore — best-effort
+      }
+      // When focus actually landed, also assert the data-active label
+      // marker propagated. The label group is the new visible path (PR
+      // #116 paint-order fix) — a regression where `data-active` never
+      // flips would silently screenshot-drift; explicit assertion fails
+      // loudly instead.
+      if (focusFired) {
+        await expect(
+          page.locator('.mu-gnode-labels g[data-active="true"]'),
+        ).toHaveCount(1, { timeout: 1000 })
       }
       await page.waitForTimeout(200)
       const panel = page.locator('.mu-graph').first()
