@@ -101,14 +101,20 @@ function detectPlatform(): PwaInstallPlatform {
     /MacIntel/.test(nav.platform)
   const isIOS = /iPad|iPhone|iPod/.test(ua) || isIPad
   if (isIOS) {
-    // Chrome (CriOS), Firefox (FxiOS), Edge (EdgiOS), Opera (OPiOS) on
-    // iOS can NOT install a PWA — Add to Home Screen is exclusively a
-    // Safari Share-menu action. Also: each iOS browser has isolated
-    // state, so even after the user installs via Safari, these
-    // browsers can't see the installed app. Hiding the button is the
-    // right move (showing Safari instructions would mislead users who
-    // can't follow them from their current browser).
-    if (/CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua)) return 'ios-non-safari'
+    // Chrome (CriOS), Firefox (FxiOS), Edge (EdgiOS), Opera (OPiOS),
+    // DuckDuckGo, Yandex (YaBrowser) on iOS can NOT install a PWA —
+    // Add to Home Screen is exclusively a Safari Share-menu action.
+    // Also: each iOS browser has isolated state, so even after the
+    // user installs via Safari, these browsers can't see the installed
+    // app. Hiding the button is the right move (showing Safari
+    // instructions would mislead users who can't follow them from their
+    // current browser). Brave iOS intentionally mimics Safari's UA for
+    // fingerprint resistance and is undetectable by UA — accepted gap.
+    // No feature-detection alternative exists for "this iOS browser
+    // can pin to Home Screen"; UA is the pragmatic best-available signal.
+    if (/CriOS|FxiOS|EdgiOS|OPiOS|DuckDuckGo|YaBrowser/i.test(ua)) {
+      return 'ios-non-safari'
+    }
     return 'ios'
   }
   const isAndroid = /Android/.test(ua)
