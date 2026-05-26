@@ -3,7 +3,7 @@
 // theming via the frozen token CSS vars (`--accent`, `--card`, `--line`,
 // `--text`, `--muted`), dark/light automatic through `data-theme`.
 
-import type { KeyboardEvent } from 'react'
+import { useMemo, useState, type KeyboardEvent } from 'react'
 import type { LayoutEdge } from './layout'
 import type { FrameNode, GraphFrame } from './useRecentre'
 import { initialsOf } from './palette'
@@ -25,7 +25,20 @@ export default function GraphScene({
   selectedId,
   onSelect,
 }: GraphSceneProps) {
-  const pos = new Map(frame.nodes.map((n) => [n.id, n]))
+  // Memoised so React's hover/focus re-renders don't rebuild the lookup
+  // table 60×/interaction (negligible at ~30 nodes but cheap to fix).
+  const pos = useMemo(
+    () => new Map(frame.nodes.map((n) => [n.id, n])),
+    [frame.nodes],
+  )
+
+  // The labels now live in a SEPARATE second-pass group (so SVG paint
+  // order lands them on top of every node circle), which breaks the
+  // CSS-descendant trigger `.mu-gnode:hover .mu-gnode-label`. Replicate
+  // the show/hide rule in React: a label is visible when its node is
+  // hovered OR focused OR is the central anchor.
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const [focusedId, setFocusedId] = useState<string | null>(null)
 
   const onKey = (id: string) => (ev: KeyboardEvent<SVGGElement>) => {
     if (ev.key === 'Enter' || ev.key === ' ' || ev.key === 'Spacebar') {
@@ -75,6 +88,10 @@ export default function GraphScene({
             aria-pressed={isSelected}
             onClick={() => onSelect(n.id)}
             onKeyDown={onKey(n.id)}
+            onMouseEnter={() => setHoveredId(n.id)}
+            onMouseLeave={() => setHoveredId((cur) => (cur === n.id ? null : cur))}
+            onFocus={() => setFocusedId(n.id)}
+            onBlur={() => setFocusedId((cur) => (cur === n.id ? null : cur))}
           >
             {n.focus ? (
               <>
@@ -112,6 +129,29 @@ export default function GraphScene({
             >
               {initialsOf(n.name)}
             </text>
+          </g>
+        )
+      })}
+      {/* Second pass: ALL node labels, rendered AFTER every node's circles
+       *  so SVG paint order lands the text on top of any neighbouring
+       *  circle that would otherwise overlap it (peripheral labels sit
+       *  BELOW their own circle and previously got covered by the next
+       *  peripheral's circle in DOM order). aria-hidden because each node
+       *  group above already carries the spoken `aria-label` — screen
+       *  readers don't need the visible text restated. */}
+      <g aria-hidden="true" className="mu-gnode-labels">
+        {frame.nodes.map((n: FrameNode) => (
+          <g
+            key={n.id}
+            transform={`translate(${n.x},${n.y})`}
+            opacity={n.fade}
+            data-active={
+              n.focus || n.id === hoveredId || n.id === focusedId
+                ? 'true'
+                : undefined
+            }
+            data-focus-node={n.focus ? 'true' : undefined}
+          >
             <text
               className="mu-gnode-label"
               textAnchor="middle"
@@ -129,8 +169,8 @@ export default function GraphScene({
               </text>
             ) : null}
           </g>
-        )
-      })}
+        ))}
+      </g>
     </>
   )
 }
