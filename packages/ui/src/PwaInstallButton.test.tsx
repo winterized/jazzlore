@@ -91,6 +91,28 @@ describe('PwaInstallButton', () => {
     expect(container).toBeEmptyDOMElement()
   })
 
+  it.each<{ ua: string; browser: string }>([
+    {
+      ua: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/124.0.6367.111 Mobile/15E148 Safari/604.1',
+      browser: 'Chrome',
+    },
+    {
+      ua: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) FxiOS/124.0 Mobile/15E148 Safari/605.1.15',
+      browser: 'Firefox',
+    },
+    {
+      ua: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 EdgiOS/124.0 Mobile/15E148 Safari/604.1',
+      browser: 'Edge',
+    },
+  ])(
+    'is hidden in iOS $browser (install requires Safari; non-Safari iOS browsers also cannot see Safari-installed PWAs)',
+    ({ ua }) => {
+      setNavigator(ua)
+      const { container } = render(<PwaInstallButton {...PROPS} />)
+      expect(container).toBeEmptyDOMElement()
+    },
+  )
+
   it('opens the install sheet on click and flips aria-expanded', async () => {
     setNavigator(DESKTOP_UA)
     const user = userEvent.setup()
