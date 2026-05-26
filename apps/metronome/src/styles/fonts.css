@@ -1,0 +1,120 @@
+/* Self-hosted Geist / Geist Mono / Newsreader — copied verbatim from
+   apps/musicians/public/fonts/ (the existing source of truth for the woff2
+   set). Metrics-matched fallbacks defined first so the pre-swap box matches
+   the web font's box, avoiding CLS on first paint. The size-adjust /
+   ascent-override / descent-override numbers come from musicians's
+   empirically-tuned values — DO NOT change without re-measuring against
+   live text. */
+
+@font-face {
+  /* Geist → Arial. size-adjust 102% = measured Geist/Arial rendered-width
+     ratio (100.6–103.3% across the 400/600 weights actually used). */
+  font-family: 'Geist Fallback';
+  font-weight: 100 900;
+  src: local('Arial'), local('Helvetica Neue'), local('Helvetica');
+  size-adjust: 102%;
+  ascent-override: 98.53%;
+  descent-override: 28.92%;
+  line-gap-override: 0%;
+}
+@font-face {
+  /* Geist Mono → Menlo. size-adjust 99.66% = measured ratio (both
+     monospace, advance width near-identical). */
+  font-family: 'Geist Mono Fallback';
+  font-weight: 100 900;
+  src: local('Menlo'), local('Consolas'), local('Courier New');
+  size-adjust: 99.66%;
+  ascent-override: 100.84%;
+  descent-override: 29.6%;
+  line-gap-override: 0%;
+}
+@font-face {
+  /* Newsreader → Times New Roman. size-adjust 104% = measured ratio 105.78%
+     pulled to 104. */
+  font-family: 'Newsreader Fallback';
+  font-weight: 100 900;
+  font-style: normal;
+  src: local('Times New Roman'), local('Times'), local('Georgia');
+  size-adjust: 104%;
+  ascent-override: 70.67%;
+  descent-override: 25.48%;
+  line-gap-override: 0%;
+}
+@font-face {
+  /* Newsreader italic → Times New Roman italic.
+     size-adjust 99% = measured ratio (98.86%). */
+  font-family: 'Newsreader Fallback';
+  font-weight: 100 900;
+  font-style: italic;
+  src: local('Times New Roman Italic'), local('Times Italic'), local('Georgia Italic');
+  size-adjust: 99%;
+  ascent-override: 74.24%;
+  descent-override: 26.77%;
+  line-gap-override: 0%;
+}
+
+/* Real web fonts — swap in once loaded. The fallback families above carry
+   the layout until then. */
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/geist-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/geist-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/geist-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/geist-700.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/geist-mono-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/geist-mono-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Newsreader';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/newsreader-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Newsreader';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/newsreader-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Newsreader';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/newsreader-400-italic.woff2') format('woff2');
+}
