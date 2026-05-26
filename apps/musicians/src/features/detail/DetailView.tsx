@@ -28,6 +28,7 @@ import { ThemeToggleButton } from '../../components/ThemeToggleButton'
 import { DetailIdentity } from './DetailIdentity'
 import { CollaboratorRail } from './CollaboratorRail'
 import { MoreAboutSheet } from './MoreAboutSheet'
+import { SharedRecordsSheet } from './SharedRecordsSheet'
 import { useMosaicScrollPulse } from '../../hooks/useMosaicScrollPulse'
 import { useIsDesktop } from '../../hooks/useIsDesktop'
 import { GraphPanelSlot } from '../graph/GraphPanelSlot'
@@ -73,6 +74,12 @@ export function DetailView({
   const railRef = useRef<HTMLDivElement>(null)
   const [pulseId, setPulseId] = useState<string | null>(null)
   const onMosaicTap = useMosaicScrollPulse(railRef, setPulseId)
+  // Holds the collab id whose "+N more" the user clicked, NULL when no
+  // sheet is open. Owned here (not inside CollaboratorRail/ConnRow) so the
+  // SharedRecordsSheet portals at the page level — same idiom as
+  // MoreAboutSheet's `#about` hash, minus the URL plumbing (the "+N more"
+  // sheet is an in-page disclosure, not deep-linkable).
+  const [sharedRecordsCollabId, setSharedRecordsCollabId] = useState<string | null>(null)
   // Desktop enrichment only: the graph (and its heavy lazy d3-force chunk)
   // is never even requested on phones — the mobile detail screen IS the
   // product (CLAUDE.md "desktop adds the graph panel").
@@ -187,6 +194,7 @@ export function DetailView({
           firstName={firstName}
           pulseId={pulseId}
           onActivate={goToMusician}
+          onShowSharedRecords={setSharedRecordsCollabId}
           railRef={railRef}
           portraits={collabPortraits}
         />
@@ -230,6 +238,18 @@ export function DetailView({
           paragraphs={paras}
           attribution="Bio · Jazzlore staff, drawn from Wikipedia & MusicBrainz."
           onClose={closeSheet}
+        />
+      )}
+      {sharedRecordsCollabId !== null && (
+        <SharedRecordsSheet
+          focusId={detail.id}
+          collabId={sharedRecordsCollabId}
+          collabName={
+            detail.collaborators.find((c) => c.id === sharedRecordsCollabId)
+              ?.name ?? ''
+          }
+          source={source}
+          onClose={() => setSharedRecordsCollabId(null)}
         />
       )}
     </Shell>

@@ -29,6 +29,11 @@ type Props = {
   pulse?: boolean
   /** Full-row activation (navigate to the collaborator's detail page). */
   onActivate?: (id: string) => void
+  /** Optional handler for the "+N more" affordance. When supplied, the
+   * "+N more" indicator becomes a `<button>` that opens the shared-records
+   * sheet. When omitted, it renders as a plain `<span>` (backward-compat
+   * for tests and fixtures that don't wire the sheet). */
+  onShowSharedRecords?: (collabId: string) => void
   /** Optional portrait from the batch byIds fetch. When provided, renders the
    * real photo via Duo3 instead of the monogram-only fallback. */
   portrait?: MusicianMinimal
@@ -45,7 +50,13 @@ function ariaLabel(c: Collaborator): string {
   return `${head} ${count}, ${top}`.trim()
 }
 
-export function ConnRow({ c, pulse, onActivate, portrait }: Props) {
+export function ConnRow({
+  c,
+  pulse,
+  onActivate,
+  onShowSharedRecords,
+  portrait,
+}: Props) {
   // Listen buttons must not bubble to the row's <a> (design "Listen buttons
   // stop propagation"). They are real links that open Spotify/Apple in a new
   // tab — cmd-click etc. still works on them since they're proper anchors.
@@ -102,9 +113,27 @@ export function ConnRow({ c, pulse, onActivate, portrait }: Props) {
                     ? ` '${String(c.topRecord.year).slice(-2)}`
                     : ''}
                 </span>
-                {c.sharedRecordCount > 1 && (
-                  <span className="ct">+{c.sharedRecordCount - 1} more</span>
-                )}
+                {c.sharedRecordCount > 1 &&
+                  (onShowSharedRecords ? (
+                    <button
+                      type="button"
+                      className="ct ct-btn"
+                      aria-label={`View all ${c.sharedRecordCount} records with ${c.name}`}
+                      onClick={(e) => {
+                        // Swallow the click before the row's <a> SPA-nav
+                        // observes it (same pattern as the Spotify/Apple
+                        // icons below). preventDefault keeps any default
+                        // anchor activation from running too.
+                        e.stopPropagation()
+                        e.preventDefault()
+                        onShowSharedRecords(c.id)
+                      }}
+                    >
+                      +{c.sharedRecordCount - 1} more
+                    </button>
+                  ) : (
+                    <span className="ct">+{c.sharedRecordCount - 1} more</span>
+                  ))}
               </>
             ) : (
               <span className="rel">

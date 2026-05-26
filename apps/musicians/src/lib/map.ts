@@ -278,3 +278,23 @@ export function mapGraphData(result: RawDetailResult): GraphData {
   }
   return { nodes, edges }
 }
+
+/** Map one row of the shared-records query (the focus + collab pair both
+ * play on `record`) into a `RecordRef`. Same leader-precedence rule as
+ * `primaryArtistForRecord` but specialised to a pair: if either side carries
+ * a LEADER role on the record, that side wins; otherwise fall back to the
+ * focus musician (the page the user is reading from). */
+export function mapSharedRecord(
+  raw: { record: RawRecord; focusEdge?: RawPlayedOn; collabEdge?: RawPlayedOn },
+  ctx: { focusName: string; collabName: string },
+): RecordRef {
+  const focusIsLeader =
+    raw.focusEdge?.role !== undefined && LEADER_ROLES.has(raw.focusEdge.role)
+  const collabIsLeader =
+    raw.collabEdge?.role !== undefined && LEADER_ROLES.has(raw.collabEdge.role)
+  // Focus wins when both are leaders OR neither is (the page-author bias —
+  // when ambiguous, the user's "you're on Miles's page" mental model holds).
+  const primaryArtist =
+    collabIsLeader && !focusIsLeader ? ctx.collabName : ctx.focusName
+  return mapRecordRef(raw.record, { primaryArtist })
+}

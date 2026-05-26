@@ -22,6 +22,9 @@ type Props = {
   firstName: string
   pulseId?: string | null
   onActivate?: (id: string) => void
+  /** Optional handler for the "+N more" chip on each ConnRow. When supplied,
+   * the chip becomes a button that opens the shared-records sheet. */
+  onShowSharedRecords?: (collabId: string) => void
   railRef?: Ref<HTMLDivElement>
   /** Optional portrait map from the batch byIds fetch, keyed by collaborator id. */
   portraits?: Record<string, MusicianMinimal>
@@ -41,6 +44,7 @@ export function CollaboratorRail({
   firstName,
   pulseId,
   onActivate,
+  onShowSharedRecords,
   railRef,
   portraits,
 }: Props) {
@@ -76,6 +80,7 @@ export function CollaboratorRail({
                   c={c}
                   pulse={pulseId === c.id}
                   onActivate={onActivate}
+                  onShowSharedRecords={onShowSharedRecords}
                   portrait={portraits?.[c.id]}
                 />
               </li>
@@ -97,6 +102,7 @@ export function CollaboratorRail({
                       c={c}
                       pulse={pulseId === c.id}
                       onActivate={onActivate}
+                      onShowSharedRecords={onShowSharedRecords}
                       portrait={portraits?.[c.id]}
                     />
                   </li>

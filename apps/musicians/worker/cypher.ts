@@ -420,3 +420,84 @@ export function reshapeByIds(result: AuraResult): ByIdsItem[] {
     return [item]
   })
 }
+
+// ─── /api/musicians/:focusId/collaborators/:collabId/records ───────────────
+//
+// Backs the "+N more" sheet on the detail page (ConnRow). Returns the records
+// the two musicians both played on, sorted most-recent first, capped at 100
+// rows. The response carries the TRUE total count alongside the capped slice
+// so the UI can render "100 of 147 records" rather than silently truncating
+// the densest, most-interesting pairs (Ron Carter et al.). Both ids resolve
+// through `also_known_as_ids` (mirrors `detailCypher`'s PR #87 widening).
+// `m.id <> c.id` guards against an aliased self-match.
+
+/** Defensive cap on the sliced records array (R1). */
+export const SHARED_RECORDS_CAP = 100
+
+export interface RawSharedRecordRow {
+  record: RawRecord
+  focusEdge: RawPlayedOn
+  collabEdge: RawPlayedOn
+}
+
+export interface RawSharedRecordsResult {
+  focusName: string
+  collabName: string
+  records: RawSharedRecordRow[]
+  totalCount: number
+}
+
+export function sharedRecordsCypher(): string {
+  return assertReadOnly(
+    `MATCH (m:Musician)
+     WHERE m.id = $focusId OR $focusId IN coalesce(m.also_known_as_ids, [])
+     MATCH (c:Musician)
+     WHERE c.id = $collabId OR $collabId IN coalesce(c.also_known_as_ids, [])
+     WITH m, c
+     WHERE m.id <> c.id
+     MATCH (m)-[fe:PLAYED_ON]->(r:Record)<-[ce:PLAYED_ON]-(c)
+     WITH m, c, r,
+          head(collect(DISTINCT properties(fe))) AS focusEdge,
+          head(collect(DISTINCT properties(ce))) AS collabEdge,
+          coalesce(r.release_year, r.recording_year) AS year
+     ORDER BY year IS NULL, year DESC, r.title ASC
+     WITH m, c,
+          collect({record: r{.*}, focusEdge: focusEdge, collabEdge: collabEdge}) AS allRecords
+     RETURN allRecords[0..${SHARED_RECORDS_CAP}] AS records,
+            size(allRecords) AS totalCount,
+            m.name AS focusName,
+            c.name AS collabName`,
+  )
+}
+
+/** Reshape `sharedRecordsCypher` rows into the raw shape consumed by the
+ * endpoint handler. Returns `null` when no row matched (one or both ids did
+ * not resolve, OR the two musicians never shared a record under the
+ * also-known-as-aware MATCH). The endpoint decides whether to surface that
+ * as 404 or empty 200. */
+export function reshapeSharedRecords(
+  result: AuraResult,
+): RawSharedRecordsResult | null {
+  const row = result.values[0]
+  if (row === undefined) return null
+  const focusName = col(result, row, 'focusName')
+  const collabName = col(result, row, 'collabName')
+  const totalCount = col(result, row, 'totalCount')
+  const records = col(result, row, 'records')
+  if (typeof focusName !== 'string' || typeof collabName !== 'string') {
+    return null
+  }
+  return {
+    focusName,
+    collabName,
+    records: (Array.isArray(records) ? records : []).map((v) => {
+      const o = asObject(v)
+      return {
+        record: toRawRecord(o.record),
+        focusEdge: toRawPlayedOn(o.focusEdge),
+        collabEdge: toRawPlayedOn(o.collabEdge),
+      }
+    }),
+    totalCount: typeof totalCount === 'number' ? totalCount : 0,
+  }
+}

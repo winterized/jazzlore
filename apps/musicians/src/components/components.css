@@ -675,6 +675,24 @@
   border-radius: 3px;
   letter-spacing: 0.02em;
 }
+/* Button variant of the +N more chip — strips browser button chrome so it
+ * looks identical to the span variant, but reads as interactive on hover
+ * and focus. */
+.mu3 .conn .why button.ct.ct-btn {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  font-family: var(--font-mono);
+  line-height: inherit;
+  display: inline;
+}
+.mu3 .conn .why button.ct.ct-btn:hover {
+  background: color-mix(in srgb, var(--accent-soft) 75%, var(--accent-strong) 12%);
+}
+.mu3 .conn .why button.ct.ct-btn:focus-visible {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 1px;
+}
 .mu3 .conn .why .rel {
   font-size: 10.5px;
   color: var(--muted);
@@ -1877,4 +1895,109 @@
   right: 7%;
   bottom: 6%;
   opacity: 0.72;
+}
+
+/* ═════════════════════ "+N more" shared-records sheet ════════════════
+ * Reuses the .mu3-sheet base (mobile bottom drawer). The records-specific
+ * class adds a desktop variant (centered modal) at the sm breakpoint, plus
+ * the per-row layout. The base `.mu3-sheet` rules already provide the
+ * drawer chrome (rounded top, slide-up transition); we only override the
+ * positioning at desktop sizes. */
+
+.mu3-records-sheet .more-head .ttl {
+  /* Reset default heading margins — `.ttl` is an <h2> in the records sheet
+   * (proper a11y heading semantics) but the layout assumes margin: 0. */
+  margin: 0;
+}
+.mu3-records-sheet .records-body {
+  padding: 14px 18px 20px;
+}
+
+.mu3-records-sheet .records-subheading {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0 0 10px;
+}
+
+.mu3-records-sheet .records-subheading[data-truncated='true'] {
+  color: var(--accent-strong);
+}
+
+.mu3-records-sheet .records-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.mu3-records-sheet .records-row {
+  padding: 10px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+}
+
+.mu3-records-sheet .records-row:last-child {
+  border-bottom: 0;
+}
+
+.mu3-records-sheet .records-row-title {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.25;
+}
+
+.mu3-records-sheet .records-row-sub {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--dim);
+  letter-spacing: 0.04em;
+  margin-top: 3px;
+}
+
+.mu3-records-sheet .records-loading,
+.mu3-records-sheet .records-error,
+.mu3-records-sheet .records-empty {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  padding: 24px 0;
+  text-align: center;
+}
+
+/* Desktop: centered modal, max width, fade in (no slide). The mobile
+ * .mu3-sheet uses translateY(100%) → 0; on desktop we override to keep
+ * it centered and opt out of the slide. */
+@media (min-width: 640px) {
+  .mu3-records-sheet.mu3-sheet {
+    position: fixed;
+    left: 50%;
+    bottom: auto;
+    top: 50%;
+    right: auto;
+    width: 28rem;
+    max-width: calc(100vw - 2rem);
+    max-height: 80vh;
+    border-radius: 14px;
+    border-top: 1px solid var(--line);
+    border-left: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.42);
+    transform: translate(-50%, -50%) scale(0.96);
+    opacity: 0;
+    transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .mu3-records-sheet.mu3-sheet.open {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  .mu3-records-sheet .more-handle {
+    display: none;
+  }
 }
