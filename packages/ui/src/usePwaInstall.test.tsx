@@ -18,6 +18,12 @@ import {
 
 const IOS_UA =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1'
+const IOS_CHROME_UA =
+  'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/124.0.6367.111 Mobile/15E148 Safari/604.1'
+const IOS_FIREFOX_UA =
+  'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) FxiOS/124.0 Mobile/15E148 Safari/605.1.15'
+const IOS_EDGE_UA =
+  'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 EdgiOS/124.0.2478.51 Mobile/15E148 Safari/604.1'
 const IPAD_UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15'
 const ANDROID_UA =
@@ -103,6 +109,9 @@ describe('usePwaInstall — platform detection', () => {
   it.each<{ ua: string; touch?: number; expected: PwaInstallPlatform }>([
     { ua: IOS_UA, expected: 'ios' },
     { ua: IPAD_UA, touch: 5, expected: 'ios' },
+    { ua: IOS_CHROME_UA, expected: 'ios-non-safari' },
+    { ua: IOS_FIREFOX_UA, expected: 'ios-non-safari' },
+    { ua: IOS_EDGE_UA, expected: 'ios-non-safari' },
     { ua: ANDROID_UA, expected: 'android-no-prompt' },
     { ua: DESKTOP_UA, expected: 'desktop-no-prompt' },
   ])('reports platform "$expected" for UA $ua', ({ ua, touch, expected }) => {

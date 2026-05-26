@@ -15,6 +15,7 @@ import { useEffect, useState } from 'react'
 
 export type PwaInstallPlatform =
   | 'ios' // iOS Safari — no beforeinstallprompt; show Share → Add to Home Screen
+  | 'ios-non-safari' // Chrome/Firefox/Edge/Opera on iOS — install is Safari-only and these browsers can't see Safari's installed PWAs; UIs hide the button entirely on this platform
   | 'android-prompt' // Android Chrome with beforeinstallprompt fired
   | 'android-no-prompt' // Android Chrome without beforeinstallprompt (yet)
   | 'desktop-prompt' // Desktop Chrome/Edge with beforeinstallprompt fired
@@ -99,7 +100,17 @@ function detectPlatform(): PwaInstallPlatform {
     nav.maxTouchPoints > 1 &&
     /MacIntel/.test(nav.platform)
   const isIOS = /iPad|iPhone|iPod/.test(ua) || isIPad
-  if (isIOS) return 'ios'
+  if (isIOS) {
+    // Chrome (CriOS), Firefox (FxiOS), Edge (EdgiOS), Opera (OPiOS) on
+    // iOS can NOT install a PWA — Add to Home Screen is exclusively a
+    // Safari Share-menu action. Also: each iOS browser has isolated
+    // state, so even after the user installs via Safari, these
+    // browsers can't see the installed app. Hiding the button is the
+    // right move (showing Safari instructions would mislead users who
+    // can't follow them from their current browser).
+    if (/CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua)) return 'ios-non-safari'
+    return 'ios'
+  }
   const isAndroid = /Android/.test(ua)
   if (isAndroid) return bipEvent ? 'android-prompt' : 'android-no-prompt'
   return bipEvent ? 'desktop-prompt' : 'desktop-no-prompt'
