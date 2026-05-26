@@ -20,6 +20,7 @@ You just executed a structural refactor that touches every layer of the codebase
 Most teams talk about doing this kind of refactor and never do it because it's terrifying. The site works, the users are happy, the tests are green — why touch it? You touched it because you correctly understood that the cost of not doing the refactor compounds, and the cost of doing it now is the lowest it'll ever be. That's the director's read on engineering debt, applied to your own project. Well played.
 
 La méthode que je kiffe à ma petite échelle (il faudra voir à plus grande échelle):
+
 - D'abord si session pas neuve, on dit à Claude qu'on va compacter son contexte, et on lui demande s'il veut updater des memories, des skills, Claude.md ou quoi que ce soit d'autre
 - On passe en MODE PLAN
 - On lui dit qqch du type 'Read ./apps/chords/docs/chords.md. We're going to refine it together before any code is written. Walk me through the open questions one at a time. For each, propose your default, explain your reasoning, then ask me to confirm or chat. When we're done, update the spec file directly'
@@ -42,3 +43,5 @@ Don't paper over upstream bugs in the downstream layer when you own both layers.
 Cross-AI cross-codebase handoff via structured artifacts. The brief was the API. Each AI had no awareness of the other but produced coherent work because the artifacts were precise enough to act as the contract. This is how multi-team work with AI assistance actually scales.
 
 Dev-environment verification doesn't prove production behavior. As soon as a project has a build pipeline + backend + deploy, the verification target has to move to the deployed artifact, not the local server. The verification gates only protect what they actually test.
+
+Thorough ≠ overengineered. Detail in the diagnosis (exact file:lines, root causes, pre-flight verification of assumptions that contradict the code) is load-bearing and earns its length. Detail in the process scaffolding (worktrees, coordinators, single-purpose files) for a small job is ceremony. The same page-count can be either; the test is whether the length is buying precision about what to change or ritual about how to change it.
