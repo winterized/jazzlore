@@ -46,13 +46,9 @@ export function PwaInstallButton({
   appIconHref,
   appAccent,
 }: Props) {
-  const { isStandalone, platform } = usePwaInstall()
+  const { isStandalone } = usePwaInstall()
   const [open, setOpen] = useState(false)
-  // Hide the button when there is no install path the user could
-  // follow from the current browser: already-installed OR on an iOS
-  // third-party browser (Chrome/Firefox/Edge/Opera) where install
-  // requires Safari and these browsers can't see Safari-installed apps.
-  if (isStandalone || platform === 'ios-non-safari') return null
+  if (isStandalone) return null
   return (
     <>
       <button
