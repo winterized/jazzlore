@@ -17,7 +17,7 @@ export function MusiciansTile({ variant }: Props) {
       data-variant={variant}
       rel="noopener"
     >
-      <TileChrome title="Musicians" sub="musicians.jazzlore.com" />
+      <TileChrome title="Musicians" sub="musicians.jazzlore.com" iconColor="#6a9075" />
       <div className="jzl-musicians-graph">
         <ConstellationLarge
           width={big ? 640 : 320}

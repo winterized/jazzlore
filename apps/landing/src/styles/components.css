@@ -404,12 +404,19 @@
   align-items: center;
   gap: 10px;
 }
-.landing .jzl-tile-chrome-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent);
+/* Chrome icon — inline copy of the home-screen / favicon master.
+   Dark rounded-square + per-app colored dot. The inner dot keeps the
+   subtle pulse the legacy 8px dot had so the tile chrome still feels
+   "alive." */
+.landing .jzl-tile-chrome-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  display: block;
+}
+.landing .jzl-tile-chrome-icon-dot {
   animation: jzl-pulse-soft 2.4s ease-in-out infinite;
+  transform-origin: center;
 }
 .landing .jzl-tile-chrome-title {
   font-family: var(--font-mono);

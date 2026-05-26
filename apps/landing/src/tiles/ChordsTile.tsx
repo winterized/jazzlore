@@ -20,6 +20,7 @@ export function ChordsTile({ variant }: Props) {
       <TileChrome
         title="Chords"
         sub={big ? 'chords.jazzlore.com' : null}
+        iconColor="#8a72a8"
       />
       <div className="jzl-small-body">
         <div className="jzl-small-title jzl-chords-title">

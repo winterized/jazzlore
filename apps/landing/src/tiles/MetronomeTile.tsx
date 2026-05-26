@@ -20,6 +20,7 @@ export function MetronomeTile({ variant }: Props) {
       <TileChrome
         title="Metronome"
         sub={big ? 'metronome.jazzlore.com' : null}
+        iconColor="#a06b6b"
       />
       <div className="jzl-small-body">
         <div className="jzl-metro-reading">
