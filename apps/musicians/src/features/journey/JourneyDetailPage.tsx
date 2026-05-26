@@ -60,9 +60,11 @@ export function JourneyDetailPage({
     // label entry). Without this reset, navigating from e.g. era/modal
     // to label/columbia would flash the modal-fetched portraits under
     // the columbia card layout for one paint before the new fetches
-    // resolve. Clearing first makes every navigation start from
-    // monogram and resolve up — same idiom + lint exemption as
-    // useBffResource's `setState({kind:'loading'})` reset.
+    // resolve. Clearing first makes every navigation start from monogram
+    // and resolve up — setState-in-effect is the documented legitimate
+    // exemption here (a route param changed, the prior render's data must
+    // not flash). The render-time reset pattern used in useBffResource
+    // is overkill here since portraits are non-load-bearing UX polish.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPortraits({})
     let live = true
