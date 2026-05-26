@@ -168,24 +168,6 @@ function DesktopNoPromptInstructions({
   )
 }
 
-function IOSNonSafariInstructions({
-  appName,
-}: {
-  appName: string
-}) {
-  // Defensive branch — the button hides on `ios-non-safari` so this
-  // body normally never renders. Kept so that any future direct mount
-  // of the sheet gets actionable copy instead of falling through to
-  // the desktop default.
-  return (
-    <p className="text-sm leading-relaxed text-stone-700 dark:text-stone-300">
-      To install {appName} on iPhone, open this page in <strong>Safari</strong>,
-      then tap the Share button and choose <strong>Add to Home Screen</strong>.
-      Other iOS browsers can&rsquo;t install web apps.
-    </p>
-  )
-}
-
 function PromptCta({
   appName,
   appAccent,
@@ -236,7 +218,6 @@ function platformHeading(
 ): string {
   switch (platform) {
     case 'ios':
-    case 'ios-non-safari':
       return `Install ${appName} on your iPhone`
     case 'android-prompt':
     case 'android-no-prompt':
@@ -358,9 +339,6 @@ export function PwaInstallSheet({
         </div>
         <div className="px-5 pb-6 pt-4">
           {platform === 'ios' && <IOSInstructions appName={appName} />}
-          {platform === 'ios-non-safari' && (
-            <IOSNonSafariInstructions appName={appName} />
-          )}
           {platform === 'android-no-prompt' && (
             <AndroidNoPromptInstructions appName={appName} />
           )}
