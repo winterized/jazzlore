@@ -232,6 +232,33 @@ describe('SharedRecordsSheet — dismiss paths', () => {
     expect(onClose).not.toHaveBeenCalled()
   })
 
+  it('scrolling inside the records list does NOT dismiss (touch started in .records-body)', async () => {
+    const onClose = vi.fn()
+    const source = makeSource({
+      records: [
+        makeRecord('r1', 'Record One', 1965, 'Miles Davis'),
+        makeRecord('r2', 'Record Two', 1964, 'Miles Davis'),
+      ],
+      totalCount: 2,
+    })
+    render(
+      <SharedRecordsSheet
+        {...PROPS_BASE}
+        source={source}
+        onClose={onClose}
+      />,
+    )
+    // Wait for records to render so the .records-body has content.
+    await screen.findByText('Record One')
+    // Fire touchstart on a record row (which lives INSIDE .records-body)
+    // and touchend 200px lower — same magnitude as a real list-scroll
+    // gesture. The gate must bail and onClose must NOT fire.
+    const recordRow = screen.getByText('Record One').closest('.records-row')!
+    fireEvent.touchStart(recordRow, { touches: [{ clientY: 100 }] })
+    fireEvent.touchEnd(recordRow, { changedTouches: [{ clientY: 300 }] })
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
   it('refetches when collabId changes (uses the useBffResource sync reset)', async () => {
     const source = makeSource({ records: [], totalCount: 0 })
     const { rerender } = render(

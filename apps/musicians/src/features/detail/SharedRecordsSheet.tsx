@@ -117,11 +117,19 @@ export function SharedRecordsSheet({
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  // Swipe-down dismiss for mobile — mirrors MoreAboutSheet's gesture so the
-  // two drawers feel identical. The move handler is a no-op; we measure
-  // start-vs-end so multi-finger or hesitant gestures still resolve once
-  // the user lifts. ≥80px downward → dismiss.
+  // Swipe-down dismiss for mobile, gated to gestures that begin on the
+  // sheet's chrome (handle + heading), NOT inside the scrollable list.
+  // Without the gate, scrolling a 100-record list past 80px would
+  // accidentally call onClose — `.records-body` is `overflow-y: auto` and
+  // touches inside it bubble to this handler. iOS does not consume touch
+  // events before they bubble. The standard mobile-drawer affordance is
+  // "drag the handle" anyway, so excluding the list isn't a UX cost.
   const onTouchStart = (e: TouchEvent): void => {
+    const target = e.target as HTMLElement
+    if (target.closest('.records-body')) {
+      touchStartY.current = null
+      return
+    }
     touchStartY.current = e.touches[0]?.clientY ?? null
   }
   const onTouchEnd = (e: TouchEvent): void => {
