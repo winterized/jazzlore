@@ -67,7 +67,7 @@ function dispatchBeforeInstallPrompt(prompt = vi.fn(async () => undefined)) {
 const PROPS = {
   appName: 'Chords',
   appIconHref: '/icons/icon-192.png',
-  appAccent: '#8a72a8',
+  appAccent: '#8a72a8' as `#${string}`,
   onClose: vi.fn(),
 }
 

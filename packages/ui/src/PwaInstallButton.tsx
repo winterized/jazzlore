@@ -14,9 +14,10 @@ type Props = {
    * preview at the top of the sheet so users see the icon they're about to
    * pin to their home screen. */
   appIconHref: string
-  /** Per-app accent color (hex). Tints the primary CTA in the sheet to match
-   * the home-screen icon's dot color. */
-  appAccent: string
+  /** Per-app accent color, as a hex literal (e.g. "#6f8caa"). The template
+   * literal type prevents a caller from accidentally passing arbitrary CSS
+   * into the inline `style.backgroundColor` of the install CTA. */
+  appAccent: `#${string}`
 }
 
 const InstallIcon = () => (

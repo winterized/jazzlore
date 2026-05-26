@@ -54,7 +54,7 @@ function setStandaloneDisplayMode(matches: boolean): void {
 const PROPS = {
   appName: 'Scales',
   appIconHref: '/icons/icon-192.png',
-  appAccent: '#6f8caa',
+  appAccent: '#6f8caa' as `#${string}`,
 }
 
 beforeEach(() => {

@@ -75,10 +75,11 @@ type Props = {
   searchPlaceholder?: string
   /** Optional PWA install button props. When ALL three are provided the
    * header renders a `<PwaInstallButton>` immediately before the theme
-   * toggle. When any is undefined the button is omitted. */
+   * toggle. When any is undefined the button is omitted. The accent is
+   * a hex literal — see PwaInstallButton for the rationale. */
   installAppName?: string
   installAppIconHref?: string
-  installAppAccent?: string
+  installAppAccent?: `#${string}`
 }
 
 export default function StickyHeader({

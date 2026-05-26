@@ -54,7 +54,16 @@ export function __resetPwaInstallForTests(): void {
   installed = false
 }
 
-if (typeof window !== 'undefined') {
+// Bootstrap-once guard: in Vite dev HMR, re-executing the module would
+// stack duplicate listeners on every save. A `globalThis` sentinel keeps
+// exactly one pair of listeners alive across hot updates.
+const BOOTSTRAP_KEY = '__jazzlorePwaInstallBootstrapped'
+type BootstrapGlobal = typeof globalThis & { [BOOTSTRAP_KEY]?: boolean }
+if (
+  typeof window !== 'undefined' &&
+  !(globalThis as BootstrapGlobal)[BOOTSTRAP_KEY]
+) {
+  ;(globalThis as BootstrapGlobal)[BOOTSTRAP_KEY] = true
   window.addEventListener('beforeinstallprompt', (e: Event) => {
     e.preventDefault()
     bipEvent = e as BeforeInstallPromptEvent

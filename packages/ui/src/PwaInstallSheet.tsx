@@ -22,7 +22,8 @@ import { usePwaInstall } from './usePwaInstall'
 type Props = {
   appName: string
   appIconHref: string
-  appAccent: string
+  /** Hex-literal accent color — see PwaInstallButton for rationale. */
+  appAccent: `#${string}`
   onClose: () => void
 }
 
@@ -173,7 +174,7 @@ function PromptCta({
   onInstalled,
 }: {
   appName: string
-  appAccent: string
+  appAccent: `#${string}`
   onInstalled: () => void
 }) {
   const { requestInstall } = usePwaInstall()
