@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Musicians PWA master.
+       Miles (brand dot, reeds sage, centered) + 4 quintet members
+       (amber satellites, bigger than v1) + amber connecting edges
+       (thicker than v1). Per user direction: keep the constellation
+       shape, but go amber + bigger nodes + fatter lines. -->
+  <rect width="512" height="512" rx="72" fill="#0a0a0a"/>
+
+  <!-- Edges from Miles to each quintet member, drawn behind the nodes -->
+  <g stroke="#f4a233" stroke-width="8">
+    <line x1="256" y1="256" x2="115" y2="115"/>
+    <line x1="256" y1="256" x2="397" y2="115"/>
+    <line x1="256" y1="256" x2="115" y2="397"/>
+    <line x1="256" y1="256" x2="397" y2="397"/>
+  </g>
+
+  <!-- 4 amber quintet satellite nodes -->
+  <g fill="#f4a233">
+    <circle cx="115" cy="115" r="32"/>
+    <circle cx="397" cy="115" r="32"/>
+    <circle cx="115" cy="397" r="32"/>
+    <circle cx="397" cy="397" r="32"/>
+  </g>
+
+  <!-- Miles — brand dot (reeds sage), drawn last so it sits over the edges -->
+  <circle cx="256" cy="256" r="112" fill="#6a9075"/>
+</svg>

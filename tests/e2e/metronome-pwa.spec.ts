@@ -65,6 +65,7 @@ test.describe('metronome PWA — service worker + manifest', () => {
     const json = await res.json()
     expect(json.name).toBe('Jazzlore Metronome')
     expect(json.display).toBe('standalone')
-    expect(json.icons).toHaveLength(2)
+    // 4 entries: 192/512 with purpose "any" + 192/512 with purpose "maskable".
+    expect(json.icons).toHaveLength(4)
   })
 })

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Metronome PWA master.
+       Single vertical amber line spanning the full icon height, drawn
+       BEHIND the percussion-mauve brand dot. Same stroke weight as the
+       scales staff lines so the family reads as related. Evokes a bar
+       line. -->
+  <rect width="512" height="512" rx="72" fill="#0a0a0a"/>
+
+  <!-- Vertical bar line (amber), full height -->
+  <line x1="256" y1="0" x2="256" y2="512" stroke="#f4a233" stroke-width="10" stroke-linecap="butt"/>
+
+  <!-- Brand dot (percussion mauve) drawn over the bar -->
+  <circle cx="256" cy="256" r="112" fill="#a06b6b"/>
+</svg>
