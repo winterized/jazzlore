@@ -49,7 +49,7 @@ apps/musicians/worker/   unified Cloudflare Worker (index, cypher, endpoints, er
 - **One page load = one BFF call.** Server-side aggregation; the 100k req/day CF free tier is shared across scales + chords + musicians. Autosuggest is **client-side over a cached search corpus** (`/api/musicians/search-index`) — no per-keystroke backend calls.
 - Cypher queries are **parameterized** (never string-interpolated) and **read-only** (`MATCH … RETURN …`; no `CREATE`/`MERGE`/`SET`/`DELETE`).
 - Aura via `fetch` + the HTTP Query API. `AbortController` ~9s → `503 {status:"waking", retryAfter}`; the frontend renders the designed "waking up" state. CI/e2e use fixtures, never live Aura.
-- Endpoints (Phase C): `/api/musicians/curated`, `/api/musicians/:id`, `/api/musicians/:id/graph`, `/api/musicians/search-index`, `/api/health`. Edge cache: curated 12h, detail 1–2h, search-index 6h, health no-store.
+- Endpoints: `/api/musicians/curated` (12h), `/api/musicians/:id` (1–2h, sibling `sameEra` shipped via `peersByEraCypher`), `/api/musicians/:id/graph` (1–2h, reuses `detailCypher`), `/api/musicians/by-ids?ids=…` (1–2h, caps at 20 ids), `/api/musicians/search-index` (6h), `/api/musicians/polished-ids` (6h, Random Jump pool), `/api/musicians/:focusId/collaborators/:collabId/records` (2h, lazy "+N more" — 100-row slice + true `totalCount`), `/api/health` (no-store).
 - Credentials (`NEO4J_URI/USERNAME/PASSWORD`) live only in Cloudflare env + local `.dev.vars` (gitignored) — never in the bundle or repo.
 
 ### Live-Aura-smoke rule (evergreen)
