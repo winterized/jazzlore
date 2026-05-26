@@ -63,6 +63,14 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       timeout: 180_000,
     },
+    // scales PWA preview — scales-pwa.spec.ts hardcodes :5183.
+    {
+      command:
+        'pnpm -F @jazzlore/scales build && pnpm -F @jazzlore/scales preview --port 5183 --strictPort',
+      url: 'http://localhost:5183',
+      reuseExistingServer: !process.env.CI,
+      timeout: 180_000,
+    },
     // chords PWA preview — chords-pwa.spec.ts hardcodes :5184.
     {
       command:
