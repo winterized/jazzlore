@@ -11,7 +11,7 @@
 // "N of M records · most recent first" so the user knows the slice is
 // partial (densest pairs are intentionally capped at 100 server-side, R1).
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type TouchEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { useFocusTrap } from '@jazzlore/ui'
 import type { RecordRef } from '../../lib/types'
@@ -20,6 +20,11 @@ import {
   type DataSource,
   type SharedRecordsResponse,
 } from '../../hooks/useMusicianData'
+
+/** Swipe-down threshold for dismissing the mobile drawer (px). Mirrors
+ * the MoreAboutSheet idiom (`apps/musicians/src/features/detail/MoreAboutSheet.tsx:17`)
+ * so both sheets feel identical on touch devices. */
+const SWIPE_DISMISS_PX = 80
 
 type Props = {
   /** Focus musician (the page the user is on). */
@@ -85,6 +90,7 @@ export function SharedRecordsSheet({
   onClose,
 }: Props) {
   const sheetRef = useRef<HTMLDivElement>(null)
+  const touchStartY = useRef<number | null>(null)
   const titleId = 'shared-records-title'
   const [entered, setEntered] = useState(false)
   const state = useBffResource<SharedRecordsResponse>(
@@ -111,6 +117,30 @@ export function SharedRecordsSheet({
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
 
+  // Swipe-down dismiss for mobile, gated to gestures that begin on the
+  // sheet's chrome (handle + heading), NOT inside the scrollable list.
+  // Without the gate, scrolling a 100-record list past 80px would
+  // accidentally call onClose — `.records-body` is `overflow-y: auto` and
+  // touches inside it bubble to this handler. iOS does not consume touch
+  // events before they bubble. The standard mobile-drawer affordance is
+  // "drag the handle" anyway, so excluding the list isn't a UX cost.
+  const onTouchStart = (e: TouchEvent): void => {
+    const target = e.target as HTMLElement
+    if (target.closest('.records-body')) {
+      touchStartY.current = null
+      return
+    }
+    touchStartY.current = e.touches[0]?.clientY ?? null
+  }
+  const onTouchEnd = (e: TouchEvent): void => {
+    const start = touchStartY.current
+    const end = e.changedTouches[0]?.clientY ?? null
+    touchStartY.current = null
+    if (start !== null && end !== null && end - start >= SWIPE_DISMISS_PX) {
+      onClose()
+    }
+  }
+
   return createPortal(
     <>
       <div
@@ -127,6 +157,8 @@ export function SharedRecordsSheet({
         aria-labelledby={titleId}
         tabIndex={-1}
         className={`mu3-sheet mu3-records-sheet${entered ? ' open' : ''}`}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
       >
         <div className="more-handle" aria-hidden="true" />
         <div className="more-head">
