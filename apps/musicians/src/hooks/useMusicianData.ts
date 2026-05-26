@@ -201,20 +201,37 @@ export type AsyncState<T> =
  * Generic loader. Runs `load`, maps the FROZEN waking shape via `isWaking`
  * into the `waking` state (D7), rejections into `error`. `deps` re-runs it
  * (e.g. detail id change, retry tick).
+ *
+ * `loading` reset happens SYNCHRONOUSLY during the render that first sees
+ * new deps — not inside the post-commit effect — so a stale `ready` value
+ * from the previous deps is never visible to consumers. This matters for
+ * MusicianPage's canonical-id `useEffect`: if it ran on a commit where
+ * `state.data.id` still belonged to the previous musician, it would call
+ * `navigate(replace, oldId)` and ricochet the URL back, so every
+ * collaborator / era-strip tap appeared broken. See React docs "Storing
+ * information from previous renders" — the in-render setState pattern is
+ * sanctioned and React re-runs the component synchronously before
+ * committing.
  */
 export function useBffResource<T>(
   load: () => Promise<T | { status: 'waking'; retryAfter: number }>,
   deps: ReadonlyArray<unknown>,
 ): AsyncState<T> {
   const [state, setState] = useState<AsyncState<T>>({ kind: 'loading' })
+  const [trackedDeps, setTrackedDeps] = useState<ReadonlyArray<unknown>>(deps)
+  // Intentionally element-wise (not array-identity): callers pass a fresh
+  // array literal every render (e.g. `[source, id, attempt]`), so identity
+  // would always read as "changed". `Object.is` matches React's own
+  // dependency-array comparison.
+  const depsChanged =
+    deps.length !== trackedDeps.length ||
+    deps.some((d, i) => !Object.is(d, trackedDeps[i]))
+  if (depsChanged) {
+    setTrackedDeps(deps)
+    setState({ kind: 'loading' })
+  }
   useEffect(() => {
     let live = true
-    // Resetting to `loading` when a dependency changes (a new id / a retry
-    // tick) is the documented legitimate use of setState-in-effect: a prior
-    // result must not flash while the next request is in flight. `live`
-    // guards against a stale resolve committing after unmount/dep-change.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setState({ kind: 'loading' })
     load()
       .then((r) => {
         if (!live) return
@@ -232,5 +249,5 @@ export function useBffResource<T>(
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps)
-  return state
+  return depsChanged ? { kind: 'loading' } : state
 }
