@@ -93,12 +93,15 @@ export const GRAPH_CSS = `
   pointer-events: none;
   transition: opacity 120ms ease;
 }
-.mu-gnode:hover .mu-gnode-label,
-.mu-gnode:hover .mu-gnode-sub,
-.mu-gnode:focus-visible .mu-gnode-label,
-.mu-gnode:focus-visible .mu-gnode-sub,
-.mu-gnode-focus .mu-gnode-label,
-.mu-gnode-focus .mu-gnode-sub {
+/* Labels live in a separate second-pass <g class="mu-gnode-labels"> so
+ * SVG paint order lands them above every node circle (peripheral labels
+ * sit BELOW their own circle and previously got covered by the next
+ * peripheral's circle in DOM order). The descendant-combinator triggers
+ * .mu-gnode:hover .mu-gnode-label therefore no longer apply, so React
+ * sets data-active=true on the label group whenever the node is hovered,
+ * focused, or is the centre anchor. */
+.mu-gnode-labels g[data-active='true'] .mu-gnode-label,
+.mu-gnode-labels g[data-active='true'] .mu-gnode-sub {
   opacity: 1;
 }
 .mu-gnode-initials {
@@ -108,7 +111,10 @@ export const GRAPH_CSS = `
   fill: var(--text);
   opacity: 0.78;
 }
-.mu-gnode-focus .mu-gnode-label { font-size: 14px; font-weight: 700; }
+.mu-gnode-labels g[data-focus-node='true'] .mu-gnode-label {
+  font-size: 14px;
+  font-weight: 700;
+}
 .mu-gnode-focus .mu-gnode-initials { fill: var(--accent-fg); opacity: 0.9; }
 
 /* ─── Family-fill colour vars (graph-only) ────────────────────────────

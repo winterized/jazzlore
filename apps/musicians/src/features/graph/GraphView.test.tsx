@@ -189,16 +189,19 @@ describe('GraphView — instrument family colour + on-demand labels', () => {
     )
     // The CSS lives in a <style>{GRAPH_CSS}</style> block inside GraphView;
     // jsdom evaluates style elements so getComputedStyle returns the
-    // cascaded value. Peripheral .mu-gnode-label rule = opacity 0; the
-    // .mu-gnode-focus .mu-gnode-label override = opacity 1.
+    // cascaded value. Labels now live in a separate second-pass
+    // `<g class="mu-gnode-labels">` group (paint-order fix) — peripherals
+    // have no data-active and inherit the default opacity 0; the centre
+    // node has `data-focus-node="true"` which sets data-active="true"
+    // and lifts opacity to 1.
     const peripheralLabel = container.querySelector(
-      '.mu-gnode:not(.mu-gnode-focus) .mu-gnode-label',
+      '.mu-gnode-labels > g:not([data-focus-node]) .mu-gnode-label',
     )
     expect(peripheralLabel).not.toBeNull()
     expect(window.getComputedStyle(peripheralLabel!).opacity).toBe('0')
 
     const centralLabel = container.querySelector(
-      '.mu-gnode-focus .mu-gnode-label',
+      '.mu-gnode-labels > g[data-focus-node="true"] .mu-gnode-label',
     )
     expect(centralLabel).not.toBeNull()
     expect(window.getComputedStyle(centralLabel!).opacity).toBe('1')
@@ -210,10 +213,32 @@ describe('GraphView — instrument family colour + on-demand labels', () => {
       <GraphView data={BOBBY_LIKE} focusId={BOBBY_LIKE.nodes[0]!.id} />,
     )
     const peripheralSub = container.querySelector(
-      '.mu-gnode:not(.mu-gnode-focus) .mu-gnode-sub',
+      '.mu-gnode-labels > g:not([data-focus-node]) .mu-gnode-sub',
     )
     expect(peripheralSub).not.toBeNull()
     expect(window.getComputedStyle(peripheralSub!).opacity).toBe('0')
+  })
+
+  it('labels group renders AFTER all node groups (SVG paint order — labels on top)', () => {
+    // Regression for the paint-order bug: when labels were nested inside
+    // each .mu-gnode, the next .mu-gnode's circle painted over the
+    // previous label. The fix moves all labels into a sibling
+    // .mu-gnode-labels group rendered AFTER every node — so SVG paint
+    // order puts them above every circle. Assert by index in the SVG.
+    stubReducedMotion(true)
+    const { container } = render(
+      <GraphView data={BOBBY_LIKE} focusId={BOBBY_LIKE.nodes[0]!.id} />,
+    )
+    const svg = container.querySelector('svg.mu-graph-svg')!
+    const children = Array.from(svg.children)
+    const labelsIdx = children.findIndex((c) =>
+      c.classList.contains('mu-gnode-labels'),
+    )
+    const lastNodeIdx = children.findLastIndex((c) =>
+      c.classList.contains('mu-gnode'),
+    )
+    expect(labelsIdx).toBeGreaterThan(lastNodeIdx)
+    expect(lastNodeIdx).toBeGreaterThan(-1)
   })
 
   it('a node without an instrument gets mu-family-unknown', () => {
