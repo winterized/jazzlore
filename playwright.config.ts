@@ -51,5 +51,17 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
     },
+    // PWA preview build — the dev server above has no service worker
+    // (`devOptions.enabled: false` in vite.config.ts), so the PWA tests
+    // run against a production build served by `vite preview` on its own
+    // port. metronome-pwa.spec.ts hardcodes http://localhost:5186 as its
+    // base URL.
+    {
+      command:
+        'pnpm -F @jazzlore/metronome build && pnpm -F @jazzlore/metronome preview --port 5186 --strictPort',
+      url: 'http://localhost:5186',
+      reuseExistingServer: !process.env.CI,
+      timeout: 180_000,
+    },
   ],
 })

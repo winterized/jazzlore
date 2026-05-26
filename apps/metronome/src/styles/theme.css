@@ -49,8 +49,15 @@
 
   background: var(--bg);
   color: var(--text);
-  font-family: 'Geist', -apple-system, system-ui, sans-serif;
-  font-feature-settings: 'ss01' on, 'cv11' on;
+  font-family:
+    'Geist',
+    'Geist Fallback',
+    -apple-system,
+    system-ui,
+    sans-serif;
+  font-feature-settings:
+    'ss01' on,
+    'cv11' on;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
 }
@@ -130,7 +137,7 @@ html[data-theme='light'] .mt,
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-family: 'Geist Mono', 'Geist Mono Fallback', ui-monospace, monospace;
   font-size: 9.5px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -185,7 +192,7 @@ html[data-theme='light'] .mt,
   padding: 10px 16px;
   background: var(--accent-soft);
   border-bottom: 1px solid var(--accent-line);
-  font-family: 'Geist', sans-serif;
+  font-family: 'Geist', 'Geist Fallback', sans-serif;
   font-size: 12.5px;
   color: var(--text);
   line-height: 1.4;
@@ -240,7 +247,7 @@ html[data-theme='light'] .mt,
   border-bottom: 1px solid var(--line);
 }
 .mt .bpm-hero .pre {
-  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-family: 'Geist Mono', 'Geist Mono Fallback', ui-monospace, monospace;
   font-size: 10px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -248,7 +255,7 @@ html[data-theme='light'] .mt,
   margin-bottom: 2px;
 }
 .mt .bpm-num {
-  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-family: 'Geist Mono', 'Geist Mono Fallback', ui-monospace, monospace;
   font-weight: 500;
   font-size: 136px;
   line-height: 0.92;
@@ -302,7 +309,7 @@ html[data-theme='light'] .mt,
   pointer-events: none;
 }
 .mt .bpm-hero .lab {
-  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-family: 'Geist Mono', 'Geist Mono Fallback', ui-monospace, monospace;
   font-size: 10.5px;
   letter-spacing: 0.28em;
   color: var(--muted);
@@ -312,7 +319,7 @@ html[data-theme='light'] .mt,
   color: var(--accent-text);
   font-weight: 500;
   font-style: italic;
-  font-family: 'Newsreader', serif;
+  font-family: 'Newsreader', 'Newsreader Fallback', serif;
   letter-spacing: 0;
   margin-left: 6px;
   font-size: 13px;
@@ -391,7 +398,7 @@ html[data-theme='light'] .mt,
   position: absolute;
   top: 100%;
   transform: translate(-50%, 4px);
-  font-family: 'Geist Mono', monospace;
+  font-family: 'Geist Mono', 'Geist Mono Fallback', monospace;
   font-size: 8.5px;
   color: var(--muted);
   letter-spacing: 0.04em;
@@ -429,7 +436,7 @@ html[data-theme='light'] .mt,
 .mt .slider-foot {
   display: flex;
   justify-content: space-between;
-  font-family: 'Geist Mono', monospace;
+  font-family: 'Geist Mono', 'Geist Mono Fallback', monospace;
   font-size: 9.5px;
   color: var(--muted);
   letter-spacing: 0.08em;
@@ -448,7 +455,7 @@ html[data-theme='light'] .mt,
   border: 1px solid var(--line);
   background: var(--card);
   color: var(--text-soft);
-  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-family: 'Geist Mono', 'Geist Mono Fallback', ui-monospace, monospace;
   font-size: 12px;
   font-weight: 500;
   letter-spacing: -0.01em;
@@ -476,7 +483,7 @@ html[data-theme='light'] .mt,
   position: absolute;
   top: 4px;
   right: 5px;
-  font-family: 'Geist Mono', monospace;
+  font-family: 'Geist Mono', 'Geist Mono Fallback', monospace;
   font-size: 7px;
   letter-spacing: 0.08em;
   color: var(--muted);
@@ -497,7 +504,7 @@ html[data-theme='light'] .mt,
   border: 1px dashed var(--line);
   background: transparent;
   color: var(--text);
-  font-family: 'Geist', sans-serif;
+  font-family: 'Geist', 'Geist Fallback', sans-serif;
   font-weight: 600;
   font-size: 12.5px;
   letter-spacing: 0.22em;
@@ -512,7 +519,7 @@ html[data-theme='light'] .mt,
     color 0.12s;
 }
 .mt .tap-big .hint {
-  font-family: 'Geist Mono', monospace;
+  font-family: 'Geist Mono', 'Geist Mono Fallback', monospace;
   font-size: 9px;
   letter-spacing: 0.12em;
   color: var(--muted);
@@ -547,7 +554,7 @@ html[data-theme='light'] .mt,
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  font-family: 'Geist Mono', monospace;
+  font-family: 'Geist Mono', 'Geist Mono Fallback', monospace;
   font-size: 9.5px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -556,7 +563,7 @@ html[data-theme='light'] .mt,
   margin-top: 2px;
 }
 .mt .sec-h .meta {
-  font-family: 'Newsreader', serif;
+  font-family: 'Newsreader', 'Newsreader Fallback', serif;
   font-style: italic;
   font-size: 12px;
   letter-spacing: 0.005em;
@@ -577,7 +584,7 @@ html[data-theme='light'] .mt,
   color: var(--text-soft);
   border-radius: 8px;
   cursor: pointer;
-  font-family: 'Geist Mono', monospace;
+  font-family: 'Geist Mono', 'Geist Mono Fallback', monospace;
   font-size: 15px;
   font-weight: 500;
   display: inline-flex;
@@ -620,7 +627,7 @@ html[data-theme='light'] .mt,
   margin-top: 10px;
 }
 .mt .pattern .lh {
-  font-family: 'Geist Mono', monospace;
+  font-family: 'Geist Mono', 'Geist Mono Fallback', monospace;
   font-size: 8.5px;
   letter-spacing: 0.18em;
   color: var(--muted);
@@ -710,7 +717,7 @@ html[data-theme='light'] .mt,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-family: 'Geist Mono', monospace;
+  font-family: 'Geist Mono', 'Geist Mono Fallback', monospace;
   font-size: 9.5px;
   color: var(--muted);
   letter-spacing: 0.08em;
@@ -811,14 +818,14 @@ html[data-theme='light'] .mt,
   height: 5px;
 }
 .mt .mode .lab {
-  font-family: 'Geist', sans-serif;
+  font-family: 'Geist', 'Geist Fallback', sans-serif;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: -0.005em;
   color: var(--text);
 }
 .mt .mode .sub {
-  font-family: 'Newsreader', serif;
+  font-family: 'Newsreader', 'Newsreader Fallback', serif;
   font-style: italic;
   font-size: 11.5px;
   color: var(--muted);
@@ -858,7 +865,7 @@ html[data-theme='light'] .mt,
   border: 1px solid var(--accent);
   background: var(--accent);
   color: var(--accent-fg);
-  font-family: 'Geist', sans-serif;
+  font-family: 'Geist', 'Geist Fallback', sans-serif;
   font-size: 17px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -882,7 +889,7 @@ html[data-theme='light'] .mt,
   text-transform: uppercase;
 }
 .mt .start .kbd-hint {
-  font-family: 'Geist Mono', monospace;
+  font-family: 'Geist Mono', 'Geist Mono Fallback', monospace;
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.06em;
@@ -908,7 +915,7 @@ html[data-theme='light'] .mt,
   display: flex;
   flex-wrap: wrap;
   gap: 6px 14px;
-  font-family: 'Geist Mono', monospace;
+  font-family: 'Geist Mono', 'Geist Mono Fallback', monospace;
   font-size: 9.5px;
   color: var(--muted);
   letter-spacing: 0.06em;
@@ -944,7 +951,7 @@ html[data-theme='light'] .mt,
   padding: 8px 28px 0;
 }
 .mt[data-layout='desktop'] .desk-side h4 {
-  font-family: 'Geist Mono', monospace;
+  font-family: 'Geist Mono', 'Geist Mono Fallback', monospace;
   font-size: 9.5px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -961,7 +968,7 @@ html[data-theme='light'] .mt,
   display: flex;
   align-items: baseline;
   gap: 10px;
-  font-family: 'Geist', sans-serif;
+  font-family: 'Geist', 'Geist Fallback', sans-serif;
   font-size: 12.5px;
   color: var(--text-soft);
   padding: 4px 0;
@@ -976,7 +983,7 @@ html[data-theme='light'] .mt,
   flex-shrink: 0;
 }
 .mt[data-layout='desktop'] .desk-side .kb-list .row kbd {
-  font-family: 'Geist Mono', monospace;
+  font-family: 'Geist Mono', 'Geist Mono Fallback', monospace;
   font-size: 10px;
   background: var(--kbd-bg);
   border: 1px solid var(--line);
@@ -994,7 +1001,7 @@ html[data-theme='light'] .mt,
 }
 .mt[data-layout='desktop'] .desk-side .signature {
   margin-top: 32px;
-  font-family: 'Newsreader', serif;
+  font-family: 'Newsreader', 'Newsreader Fallback', serif;
   font-style: italic;
   font-size: 13px;
   color: var(--muted);
@@ -1002,7 +1009,7 @@ html[data-theme='light'] .mt,
   text-wrap: pretty;
 }
 .mt[data-layout='desktop'] .desk-side .signature b {
-  font-family: 'Geist Mono', monospace;
+  font-family: 'Geist Mono', 'Geist Mono Fallback', monospace;
   font-style: normal;
   font-size: 9px;
   letter-spacing: 0.18em;
@@ -1025,4 +1032,3 @@ html[data-theme='light'] .mt,
 .mt[data-layout='desktop'] .kbd-hints {
   display: none;
 }
-

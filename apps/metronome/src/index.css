@@ -1,22 +1,15 @@
-/* CSS @import constraint — every @import statement MUST precede every other
-   statement. The Google Fonts @import has to live here (NOT in theme.css)
-   because PostCSS inlines theme.css after Tailwind's expansion, which lands
-   the @import roughly 300 lines deep in the final stylesheet — triggering
-   "@import must precede all other statements". Self-hosting these fonts the
-   way apps/musicians does (woff2 + @font-face under /fonts) is the proper
-   long-term fix; folded into the PWA work, not this CSS-order patch. */
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500&family=Newsreader:ital,wght@1,400;1,500&display=swap');
+/* All @import statements must precede every other statement (CSS spec).
+   Fonts are self-hosted under /public/fonts/ — see styles/fonts.css for the
+   metrics-matched fallback faces + the actual @font-face URLs. Component
+   tokens live in styles/theme.css under the .mt class. */
 @import 'tailwindcss';
+@import './styles/fonts.css';
+@import './styles/theme.css';
 
 /* Drive Tailwind v4 dark: variant from data-theme="dark", not prefers-color-scheme.
    Same pattern as apps/scales — the app's theme toggle sets data-theme on <html>
    via @jazzlore/music-core's applyTheme(), so the variant must follow it. */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
-
-/* Component-scoped tokens + design CSS live in styles/theme.css under the .mt
-   class, mirroring the handoff's scope discipline (so the metronome's tokens
-   never bleed into a sibling app or vice-versa). */
-@import './styles/theme.css';
 
 /* The root background needs to live on <html> so the sticky translucent header
    doesn't have the browser's default white canvas bleeding through. Mirrors
