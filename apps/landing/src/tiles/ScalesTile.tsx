@@ -20,6 +20,7 @@ export function ScalesTile({ variant }: Props) {
       <TileChrome
         title="Scales"
         sub={big ? 'scales.jazzlore.com' : null}
+        iconColor="#6f8caa"
       />
       <div className="jzl-small-body">
         <div className="jzl-small-title">
