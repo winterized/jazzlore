@@ -225,6 +225,48 @@ describe('ConnRow', () => {
     fireEvent.click(link, init)
     expect(rowClicks).toBe(0)
   })
+
+  // +N more affordance — when a handler is supplied, the chip becomes a
+  // button that opens the shared-records sheet. When no handler, it stays a
+  // plain span (backward-compat for tests/fixtures that don't wire it).
+  it('renders +N more as a span (not interactive) when no onShowSharedRecords is supplied', () => {
+    render(<ConnRow c={collab({ sharedRecordCount: 38 })} />)
+    expect(screen.getByText('+37 more').tagName).toBe('SPAN')
+    expect(
+      screen.queryByRole('button', { name: /view all 38 records/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('renders +N more as a button with an accessible name when onShowSharedRecords is supplied', () => {
+    render(
+      <ConnRow
+        c={collab({ sharedRecordCount: 38 })}
+        onShowSharedRecords={() => undefined}
+      />,
+    )
+    const btn = screen.getByRole('button', {
+      name: /view all 38 records with john coltrane/i,
+    })
+    expect(btn).toBeInTheDocument()
+    expect(btn.textContent).toBe('+37 more')
+  })
+
+  it('+N more button click invokes onShowSharedRecords and does NOT trigger row navigation', () => {
+    let rowClicks = 0
+    let sharedClicks: string[] = []
+    render(
+      <ConnRow
+        c={collab({ sharedRecordCount: 38 })}
+        onActivate={() => (rowClicks += 1)}
+        onShowSharedRecords={(id) => sharedClicks.push(id)}
+      />,
+    )
+    screen
+      .getByRole('button', { name: /view all 38 records/i })
+      .click()
+    expect(sharedClicks).toEqual(['wikidata:Q7346'])
+    expect(rowClicks).toBe(0)
+  })
 })
 
 describe('MosaicV4', () => {

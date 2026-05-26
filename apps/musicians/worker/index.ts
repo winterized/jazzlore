@@ -16,6 +16,7 @@ import {
   handleHealth,
   handlePolishedIds,
   handleSearchIndex,
+  handleSharedRecords,
 } from './endpoints'
 import { auraQuery, type AuraCreds } from './aura'
 import {
@@ -63,6 +64,16 @@ async function handleApi(env: Env, pathname: string, url: URL): Promise<Response
   }
   const graph = pathname.match(/^\/api\/musicians\/([^/]+)\/graph$/)
   if (graph && graph[1]) return handleGraph(env, decodeURIComponent(graph[1]))
+  const shared = pathname.match(
+    /^\/api\/musicians\/([^/]+)\/collaborators\/([^/]+)\/records$/,
+  )
+  if (shared && shared[1] && shared[2]) {
+    return handleSharedRecords(
+      env,
+      decodeURIComponent(shared[1]),
+      decodeURIComponent(shared[2]),
+    )
+  }
   const detail = pathname.match(/^\/api\/musicians\/([^/]+)$/)
   if (detail && detail[1]) {
     return handleDetail(env, decodeURIComponent(detail[1]))

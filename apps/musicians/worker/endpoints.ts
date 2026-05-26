@@ -11,12 +11,14 @@ import {
   mapGraphData,
   mapMusicianDetail,
   mapSearchCorpus,
+  mapSharedRecord,
 } from '../src/lib/map'
 import type {
   CuratedResponse,
   GraphResponse,
   HealthResponse,
   MusicianDetailResponse,
+  RecordRef,
   SearchIndexResponse,
 } from '../src/lib/types'
 import { CURATED } from '../src/data/curated'
@@ -34,7 +36,9 @@ import {
   reshapeMusicianRows,
   reshapePeerEra,
   reshapePolishedIds,
+  reshapeSharedRecords,
   searchIndexCypher,
+  sharedRecordsCypher,
   type ByIdsItem,
   type PeerEraItem,
 } from './cypher'
@@ -292,5 +296,44 @@ export function handleSearchIndex(env: Env): Promise<Response> {
     })
     const body: SearchIndexResponse = { corpus }
     return json(body, CACHE.searchIndex)
+  })
+}
+
+/** Response envelope for `/api/musicians/:focusId/collaborators/:collabId/records`.
+ * `totalCount` is the TRUE unbounded count from Cypher; `records` is the
+ * `most-recent-first` slice (capped at SHARED_RECORDS_CAP). The UI surfaces
+ * the cap explicitly when `totalCount > records.length` ("100 of 147"). */
+export interface SharedRecordsResponse {
+  records: RecordRef[]
+  totalCount: number
+}
+
+/** `GET /api/musicians/:focusId/collaborators/:collabId/records`
+ * Backs the ConnRow "+N more" sheet. Returns the records the two musicians
+ * both played on, sorted most-recent first, with the true total alongside.
+ * 404 when either id (after alias resolution) is unknown OR the two
+ * musicians share no records under the also-known-as-aware MATCH. */
+export function handleSharedRecords(
+  env: Env,
+  focusId: string,
+  collabId: string,
+): Promise<Response> {
+  return guard(env, async (c) => {
+    const result = await auraQuery(c, sharedRecordsCypher(), {
+      focusId,
+      collabId,
+    })
+    const raw = reshapeSharedRecords(result)
+    if (raw === null) {
+      return json({ status: 'error', error: 'not-found' }, 'no-store', 404)
+    }
+    const records = raw.records.map((r) =>
+      mapSharedRecord(r, {
+        focusName: raw.focusName,
+        collabName: raw.collabName,
+      }),
+    )
+    const body: SharedRecordsResponse = { records, totalCount: raw.totalCount }
+    return json(body, CACHE.detail)
   })
 }

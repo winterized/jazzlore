@@ -155,4 +155,15 @@ describe('httpSource — fetch-backed BFF seam', () => {
     if (isWaking(r)) throw new Error('unreachable')
     expect(r.items).toHaveLength(0)
   })
+
+  it('sharedRecords: encodes both ids into the per-pair endpoint URL', async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(jsonResponse({ records: [], totalCount: 0 }))
+    await httpSource.sharedRecords('wikidata:Q93341', 'wikidata:Q7346')
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/musicians/wikidata%3AQ93341/collaborators/wikidata%3AQ7346/records',
+      expect.objectContaining({ headers: { Accept: 'application/json' } }),
+    )
+  })
 })

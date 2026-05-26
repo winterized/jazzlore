@@ -266,6 +266,48 @@ export async function mockBff(page: Page): Promise<void> {
       })
       return route.fulfill({ json: { items } })
     }
+    // `/api/musicians/:focusId/collaborators/:collabId/records` — the
+    // "+N more" sheet's lazy fetch. Must be matched BEFORE the detail
+    // matchers below (which use `includes('/api/musicians/<id>')`, a
+    // strict substring of the shared-records URL).
+    {
+      const m = url.match(
+        /\/api\/musicians\/([^/]+)\/collaborators\/([^/]+)\/records/,
+      )
+      if (m && m[1] && m[2]) {
+        const focusId = m[1]
+        // Build a tiny stub: 38 records for Coltrane, 1 for everyone else.
+        // The truncated-count path is exercised by the unit tests; this
+        // mock is here so the e2e gets to the open-sheet state on prod-like
+        // data.
+        const records =
+          focusId === RICH_DETAIL.id
+            ? [
+                {
+                  id: 'musicbrainz:rg-1959-kob',
+                  title: 'Kind of Blue',
+                  primaryArtist: 'Miles Davis',
+                  type: 'album' as const,
+                  releaseYear: 1959,
+                  cover: {},
+                  links: {},
+                },
+                {
+                  id: 'musicbrainz:rg-1958-milestones',
+                  title: 'Milestones',
+                  primaryArtist: 'Miles Davis',
+                  type: 'album' as const,
+                  releaseYear: 1958,
+                  cover: {},
+                  links: {},
+                },
+              ]
+            : []
+        return route.fulfill({
+          json: { records, totalCount: records.length },
+        })
+      }
+    }
     if (url.includes(`/api/musicians/${RICH_DETAIL.id}/graph`)) {
       return route.fulfill({ json: graphFor(RICH_DETAIL) })
     }

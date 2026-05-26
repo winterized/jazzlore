@@ -30,6 +30,7 @@ function makeSource(): DataSource {
     searchIndex: vi.fn(),
     graph: vi.fn(),
     polishedIds: vi.fn(),
+    sharedRecords: vi.fn(async () => ({ records: [], totalCount: 0 })),
     // Echo the requested id back as the canonical id so the canonical-id
     // effect's normal "match → no-op" path holds whenever state is FRESH
     // for the current url-id. This isolates the regression: any

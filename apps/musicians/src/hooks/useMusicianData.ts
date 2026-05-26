@@ -13,6 +13,7 @@ import type {
   GraphResponse,
   ImageAttribution,
   MusicianDetailResponse,
+  RecordRef,
   SearchIndexResponse,
 } from '../lib/types'
 import { isWaking } from '../lib/types'
@@ -61,6 +62,17 @@ export interface PolishedIdsResponse {
   ids: string[]
 }
 
+/** Response envelope for
+ * `/api/musicians/:focusId/collaborators/:collabId/records`. `totalCount` is
+ * the TRUE unbounded count of shared records between the pair; `records` is
+ * the most-recent-first slice (capped at 100 server-side). When
+ * `totalCount > records.length`, the UI surfaces "100 of 147 records" so
+ * the user knows the slice is partial. */
+export interface SharedRecordsResponse {
+  records: RecordRef[]
+  totalCount: number
+}
+
 /** A BFF source: each method resolves the frozen envelope OR a WakingResponse
  * (the 503 cold-Aura shape). Errors reject so the hook can surface the calm
  * error state (D7). */
@@ -88,6 +100,14 @@ export interface DataSource {
   polishedIds(): Promise<
     PolishedIdsResponse | { status: 'waking'; retryAfter: number }
   >
+  /** Fetch the records the focus + collab pair both played on (sorted
+   * most-recent first, capped at 100). Backs the ConnRow "+N more" sheet.
+   * The response carries the true `totalCount` so the UI can surface
+   * "N of M records" when the slice is partial. */
+  sharedRecords(
+    focusId: string,
+    collabId: string,
+  ): Promise<SharedRecordsResponse | { status: 'waking'; retryAfter: number }>
 }
 
 /** Fixture-backed source (kept behind the seam for unit tests + the
@@ -135,6 +155,12 @@ export const fixtureSource: DataSource = {
     // Without this filter, ~10/12 CURATED entries are photo:false in
     // Phase-D fixtures and would silently violate the BFF contract.
     return { ids: CURATED.filter((c) => c.photo).map((c) => c.id) }
+  },
+  sharedRecords: async () => {
+    // Fixture corpus carries no record-edge data — return a tiny empty
+    // response so unit-tests can render the sheet's "empty" state. Tests
+    // that need richer data inject their own source.
+    return { records: [], totalCount: 0 }
   },
 }
 
@@ -185,6 +211,10 @@ export const httpSource: DataSource = {
       `/api/musicians/by-ids?ids=${ids.map(encodeURIComponent).join(',')}`,
     ),
   polishedIds: () => bffGet<PolishedIdsResponse>('/api/musicians/polished-ids'),
+  sharedRecords: (focusId, collabId) =>
+    bffGet<SharedRecordsResponse>(
+      `/api/musicians/${encodeURIComponent(focusId)}/collaborators/${encodeURIComponent(collabId)}/records`,
+    ),
 }
 
 /** The source the app uses by default (the H1 seam swap: real `fetch`,
