@@ -11,7 +11,7 @@
 // "N of M records · most recent first" so the user knows the slice is
 // partial (densest pairs are intentionally capped at 100 server-side, R1).
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type TouchEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { useFocusTrap } from '@jazzlore/ui'
 import type { RecordRef } from '../../lib/types'
@@ -20,6 +20,11 @@ import {
   type DataSource,
   type SharedRecordsResponse,
 } from '../../hooks/useMusicianData'
+
+/** Swipe-down threshold for dismissing the mobile drawer (px). Mirrors
+ * the MoreAboutSheet idiom (`apps/musicians/src/features/detail/MoreAboutSheet.tsx:17`)
+ * so both sheets feel identical on touch devices. */
+const SWIPE_DISMISS_PX = 80
 
 type Props = {
   /** Focus musician (the page the user is on). */
@@ -85,6 +90,7 @@ export function SharedRecordsSheet({
   onClose,
 }: Props) {
   const sheetRef = useRef<HTMLDivElement>(null)
+  const touchStartY = useRef<number | null>(null)
   const titleId = 'shared-records-title'
   const [entered, setEntered] = useState(false)
   const state = useBffResource<SharedRecordsResponse>(
@@ -111,6 +117,22 @@ export function SharedRecordsSheet({
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
 
+  // Swipe-down dismiss for mobile — mirrors MoreAboutSheet's gesture so the
+  // two drawers feel identical. The move handler is a no-op; we measure
+  // start-vs-end so multi-finger or hesitant gestures still resolve once
+  // the user lifts. ≥80px downward → dismiss.
+  const onTouchStart = (e: TouchEvent): void => {
+    touchStartY.current = e.touches[0]?.clientY ?? null
+  }
+  const onTouchEnd = (e: TouchEvent): void => {
+    const start = touchStartY.current
+    const end = e.changedTouches[0]?.clientY ?? null
+    touchStartY.current = null
+    if (start !== null && end !== null && end - start >= SWIPE_DISMISS_PX) {
+      onClose()
+    }
+  }
+
   return createPortal(
     <>
       <div
@@ -127,6 +149,8 @@ export function SharedRecordsSheet({
         aria-labelledby={titleId}
         tabIndex={-1}
         className={`mu3-sheet mu3-records-sheet${entered ? ' open' : ''}`}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
       >
         <div className="more-handle" aria-hidden="true" />
         <div className="more-head">
