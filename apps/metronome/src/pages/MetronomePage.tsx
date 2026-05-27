@@ -269,7 +269,12 @@ export default function MetronomePage() {
         mode={state.mode}
         onSelect={(mode) => dispatch({ type: 'SET_MODE', mode })}
       />
-      <StartStopButton status={state.status} onToggle={onToggleStartStop} />
+      {/* Mobile path renders StartStopButton in a sticky `.start-footer`
+       *  sibling (issue #105 Option 4); desktop keeps it inline since
+       *  the desktop layout has plenty of viewport. */}
+      {layout === 'desktop' && (
+        <StartStopButton status={state.status} onToggle={onToggleStartStop} />
+      )}
     </>
   )
 
@@ -286,7 +291,20 @@ export default function MetronomePage() {
       ) : (
         <>
           <div className="page">{pageContent}</div>
+          {/* KbdFooter renders BEFORE the sticky `.start-footer` so the
+           *  footer is the last DOM child of `.mt` — `position: sticky;
+           *  bottom: 0` then pins it to the visible viewport bottom
+           *  with nothing sitting below it. */}
           <KbdFooter />
+          <footer
+            className="start-footer"
+            aria-label="Playback controls"
+          >
+            <StartStopButton
+              status={state.status}
+              onToggle={onToggleStartStop}
+            />
+          </footer>
         </>
       )}
     </main>
