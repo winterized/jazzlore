@@ -152,6 +152,12 @@ export function JourneyDetailPage({
                       photo={p?.photo}
                       portrait={p?.portrait}
                       eager={i < EAGER_FIRST_ROW}
+                      /* Journey-entry items don't carry an instrument
+                       * field. Pass `inst={null}` to flag this as a
+                       * MUSICIAN caller (not a record cover) so a
+                       * no-photo entry surfaces the dignified rest
+                       * figure rather than the bare-monogram fallback. */
+                      inst={null}
                     />
                     {/* Always rendered so credited + uncredited cards
                        reserve identical footprints (CLS = 0). Empty

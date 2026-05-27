@@ -123,7 +123,7 @@ export function HomeView({ curated, searchSlot }: Props) {
                        * still keeps the right key. Any future no-photo
                        * curated entry with an unknown instrument falls
                        * through to figKey('rest'). */
-                      inst={m.subtitle}
+                      inst={m.subtitle ?? null}
                     />
                     {/* Always rendered (reserves a fixed-height row so a
                         credited card and an un-credited one keep an

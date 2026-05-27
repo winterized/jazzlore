@@ -72,7 +72,7 @@ export function EraStrip({ items, onActivate }: Props) {
               name={c.name}
               photo={c.photo}
               portrait={c.portrait}
-              inst={c.instrument}
+              inst={c.instrument ?? null}
             />
             <div className="body">
               <div className="nm">{c.name}</div>

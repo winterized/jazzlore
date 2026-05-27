@@ -98,7 +98,7 @@ export function ConnRow({
           name={c.name}
           photo={portrait !== undefined ? portrait.photo : c.photo}
           portrait={portrait?.portrait}
-          inst={c.instrument}
+          inst={c.instrument ?? null}
         />
         <div>
           <div className="nm">{c.name}</div>

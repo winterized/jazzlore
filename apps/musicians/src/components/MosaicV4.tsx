@@ -104,14 +104,16 @@ export function MosaicV4({
               initials={false}
               photo={resolvedPhoto}
               portrait={portrait?.portrait}
-              inst={c.instrument}
+              inst={c.instrument ?? null}
             />
             {/* When the no-photo figure takes over the tile the external
              * mtile-init monogram would duplicate the figure's own corner
-             * monogram. Drop the external span in that branch; keep it for
-             * the existing photoless-without-instrument fallback so dense
-             * mosaic rows still carry a discriminator. */}
-            {!(noPhoto && c.instrument) && (
+             * monogram. Drop the external span on every no-photo tile —
+             * `Duo3` now renders `NoPhotoMark` for both has-instrument
+             * AND empty-instrument musicians (empty resolves to the
+             * `rest` figure). Keep the external monogram for photoed
+             * tiles so dense mosaic rows still carry a discriminator. */}
+            {!noPhoto && (
               <span className="mtile-init" aria-hidden="true">
                 {initialsOf(c.name)}
               </span>

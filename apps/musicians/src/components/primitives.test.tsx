@@ -552,7 +552,14 @@ describe('Wave 2a · no-photo figure rendering', () => {
     expect(tile?.querySelector('.mtile-init')).toBeNull()
   })
 
-  it('MosaicV4: photoless tile WITHOUT instrument keeps the external mtile-init fallback', () => {
+  it('MosaicV4: photoless tile WITHOUT instrument renders the rest figure (no bare monogram)', () => {
+    // Wave 2a follow-up (2026-05-27 fix): when a no-photo musician has
+    // no instrument (the residual ~7% the populator derivation can't
+    // recover), the tile must NOT fall through to the bare external
+    // monogram (`UP` boxes seen on the Natalie Cole rail). The dignified
+    // `rest` figure is the Wave 2a intent for unknown-instrument
+    // musicians ("no shrug"). `Duo3` resolves `inst={null}` via
+    // `figKey()` → `'rest'`.
     const { container } = render(
       <MosaicV4
         collabs={[
@@ -565,8 +572,61 @@ describe('Wave 2a · no-photo figure rendering', () => {
         ]}
       />,
     )
+    const mark = container.querySelector('.duo3-mark')
+    expect(mark).not.toBeNull()
+    expect(mark?.getAttribute('data-no-photo-key')).toBe('rest')
+    // External mtile-init monogram is suppressed (the figure carries its
+    // own corner monogram — a second one would duplicate).
+    expect(container.querySelector('.mtile-init')).toBeNull()
+  })
+
+  it('ConnRow: photoless collaborator WITHOUT instrument renders the rest figure', () => {
+    // Regression for the Natalie Cole rail (2026-05-27): a no-photo
+    // collaborator with no instrument was rendering a bare monogram
+    // (`AV`, `AE`, `AM` boxes). Must render the dignified rest figure.
+    const { container } = render(
+      <ConnRow c={collab({ instrument: undefined, photo: false })} />,
+    )
+    const mark = container.querySelector('.duo3-mark')
+    expect(mark).not.toBeNull()
+    expect(mark?.getAttribute('data-no-photo-key')).toBe('rest')
+  })
+
+  it('EraStrip: photoless peer WITHOUT instrument renders the rest figure', () => {
+    const items: EraItem[] = [
+      {
+        id: 'p1',
+        name: 'Unknown Peer',
+        // instrument intentionally omitted (the residual unrecovered case)
+        photo: false,
+      },
+    ]
+    const { container } = render(<EraStrip items={items} />)
+    const mark = container.querySelector('.duo3-mark')
+    expect(mark).not.toBeNull()
+    expect(mark?.getAttribute('data-no-photo-key')).toBe('rest')
+  })
+
+  it('Duo3: explicit inst={null} on a musician caller → rest figure (the no-instrument signal)', () => {
+    const { container } = render(
+      <Duo3 name="Unknown Sideman" photo={false} inst={null} />,
+    )
+    const mark = container.querySelector('.duo3-mark')
+    expect(mark).not.toBeNull()
+    expect(mark?.getAttribute('data-no-photo-key')).toBe('rest')
+    // Plain initials are NOT also rendered (the figure carries its own
+    // corner monogram — the external `.duo3-initials` would duplicate).
+    expect(container.querySelector('.duo3-initials')).toBeNull()
+  })
+
+  it('Duo3: omitted inst (record-cover semantics) → NO figure (byte-identical)', () => {
+    // Sentinel preserved: when `inst` is undefined (record-cover callers
+    // never pass it), the figure path stays OFF — the bare initials
+    // fallback renders. This guards against semantic regression on
+    // album-cover tiles.
+    const { container } = render(<Duo3 name="Some Record" photo={false} />)
     expect(container.querySelector('.duo3-mark')).toBeNull()
-    expect(container.querySelector('.mtile-init')?.textContent).toBe('UP')
+    expect(container.querySelector('.duo3-initials')?.textContent).toBe('SR')
   })
 
   it('MosaicV4: photoed tile is unaffected (real <img>, no figure)', () => {
