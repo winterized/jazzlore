@@ -20,7 +20,7 @@
 //   - Already-resolved ids (top-16 overlap with chunk 0) are filtered
 //     before each call so the batch never wastes its 20-id budget.
 
-import { useCallback, useRef, useState, type Dispatch, type SetStateAction } from 'react'
+import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import { isWaking, type MusicianDetail } from '../../lib/types'
 import type { DataSource, MusicianMinimal } from '../../hooks/useMusicianData'
 
@@ -61,19 +61,36 @@ export function useTailPortraits(
   // effect deps and could double-fire).
   const portraitsRef = useRef(collabPortraits)
   portraitsRef.current = collabPortraits
+  // Mirror the collaborators array too — slicing inside the callback
+  // needs the latest data, but listing the array reference as a dep
+  // would re-create the callback on every parent render (causing
+  // CollaboratorRail's IntersectionObserver effect to tear down + rebuild
+  // on every render — observed in code review).
+  const collaboratorsRef = useRef(detail.collaborators)
+  collaboratorsRef.current = detail.collaborators
+
+  // Navigating between detail pages (same `<DetailView>` instance, different
+  // `detail.id`) — reset the requested set so chunks 0/1 fire fresh on the
+  // new musician. The top-16 useEffect in DetailView already clears
+  // `collabPortraits` on `detail.id` change; this mirrors that lifecycle.
+  useEffect(() => {
+    requestedRef.current = new Set()
+    setRequestedChunks(requestedRef.current)
+  }, [detail.id])
 
   const requestTailChunk = useCallback(
     (idx: number): void => {
       if (idx < 0) return // sentinel: caller asked for "before chunk 0"
-      const tail = detail.collaborators.slice(headlinerCap)
+      const collabs = collaboratorsRef.current
+      const tailLength = Math.max(0, collabs.length - headlinerCap)
       const start = idx * TAIL_CHUNK_SIZE
-      if (start >= tail.length) return // last-chunk guard
+      if (start >= tailLength) return // last-chunk guard
       if (requestedRef.current.has(idx)) return
       // Mark BEFORE async work to prevent in-flight double-fire.
       requestedRef.current = new Set(requestedRef.current).add(idx)
       setRequestedChunks(requestedRef.current)
-      const chunkIds = tail
-        .slice(start, start + TAIL_CHUNK_SIZE)
+      const chunkIds = collabs
+        .slice(headlinerCap + start, headlinerCap + start + TAIL_CHUNK_SIZE)
         .map((c) => c.id)
         .filter((id) => !(id in portraitsRef.current))
       if (chunkIds.length === 0) return
@@ -93,7 +110,11 @@ export function useTailPortraits(
           // retry on the next sentinel re-intersection.
         })
     },
-    [detail.collaborators, headlinerCap, source, setCollabPortraits],
+    // Deliberately scalar deps — `collaboratorsRef` is read inside; listing
+    // the array reference would re-create the callback every parent render
+    // and re-arm CollaboratorRail's IntersectionObserver effect (code-review
+    // HIGH 2026-05-27).
+    [headlinerCap, source, setCollabPortraits],
   )
 
   return { requestTailChunk }

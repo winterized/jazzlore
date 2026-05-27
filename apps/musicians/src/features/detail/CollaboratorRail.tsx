@@ -96,9 +96,17 @@ export function CollaboratorRail({
       (entries) => {
         for (const e of entries) {
           if (!e.isIntersecting) continue
-          const raw = (e.target as HTMLElement).dataset.chunkSentinel
+          const target = e.target as HTMLElement
+          const raw = target.dataset.chunkSentinel
           const idx = raw === undefined ? NaN : Number(raw)
-          if (Number.isFinite(idx)) handler(idx)
+          if (Number.isFinite(idx)) {
+            handler(idx)
+            // Sentinels are one-shot — once a chunk has been signalled,
+            // we don't need to re-fire on every scroll-back into it
+            // (the in-flight dedup would no-op anyway, but the
+            // observer-callback flood is wasted work).
+            io.unobserve(target)
+          }
         }
       },
       { threshold: 0.01 },
@@ -162,11 +170,15 @@ export function CollaboratorRail({
                 </li>
                 {tail.map((c, i) => {
                   // Place a sentinel marker on the FIRST row of every chunk
-                  // (i === 0 → chunk 0, i === TAIL_CHUNK_SIZE → chunk 1, …).
-                  // The IO above maps the sentinel's `idx` to a prefetch of
-                  // chunk `idx + 1` so photos are always one chunk ahead.
+                  // STARTING AT chunk 1 (i === TAIL_CHUNK_SIZE → chunk 1,
+                  // i === 2*TAIL_CHUNK_SIZE → chunk 2, …). The chunk-0
+                  // sentinel would be redundant because `onExpand`
+                  // already prefetches chunks 0 + 1 — the IO would just
+                  // fire chunk-0's sentinel on viewport-mount and ask for
+                  // chunk 1 which is already requested (dedup'd, but a
+                  // wasted callback). Reviewer MEDIUM 2026-05-27.
                   const chunkIdx =
-                    i % TAIL_CHUNK_SIZE === 0
+                    i > 0 && i % TAIL_CHUNK_SIZE === 0
                       ? i / TAIL_CHUNK_SIZE
                       : undefined
                   return (

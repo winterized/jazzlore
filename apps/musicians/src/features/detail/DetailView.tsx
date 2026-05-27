@@ -10,7 +10,7 @@
 // DetailIdentity. D4 wires the mosaic→rail scroll+pulse; D5 the #about
 // sheet — both plug into the slots/props here without restructuring.
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import type { MusicianDetail } from '../../lib/types'
 import { isWaking } from '../../lib/types'
@@ -129,6 +129,27 @@ export function DetailView({
     HEADLINER_CAP,
   )
 
+  // `useCallback`-wrap the rail callbacks — otherwise inline arrows would
+  // change identity every render and re-arm CollaboratorRail's
+  // IntersectionObserver effect on every render (reviewer HIGH 2026-05-27).
+  const onRailExpand = useCallback((): void => {
+    // Prefetch chunks 0 AND 1 immediately on expand so rows 1–16 load
+    // with photos AND rows 17–32 are already on the wire before the
+    // user scrolls into them.
+    requestTailChunk(0)
+    requestTailChunk(1)
+  }, [requestTailChunk])
+  const onRailChunkReached = useCallback(
+    (idx: number): void => {
+      // The user just reached chunk `idx`; prefetch chunk `idx + 1` so
+      // the next screenful's photos are present before the user
+      // scrolls to them. `requestedChunks` dedup makes repeated
+      // firings safe.
+      requestTailChunk(idx + 1)
+    },
+    [requestTailChunk],
+  )
+
   const goToMusician = (id: string): void => {
     void navigate(`/musicians/${encodeURIComponent(id)}`)
   }
@@ -209,20 +230,8 @@ export function DetailView({
           onShowSharedRecords={setSharedRecordsCollabId}
           railRef={railRef}
           portraits={collabPortraits}
-          onExpand={() => {
-            // Prefetch chunks 0 AND 1 immediately on expand so rows 1–16
-            // load with photos AND rows 17–32 are already on the wire
-            // before the user scrolls into them.
-            requestTailChunk(0)
-            requestTailChunk(1)
-          }}
-          onTailChunkReached={(idx) => {
-            // The user just reached chunk `idx`; prefetch chunk `idx + 1`
-            // so the next screenful's photos are present before the user
-            // scrolls to them. `requestedChunks` dedup makes repeated
-            // firings safe.
-            requestTailChunk(idx + 1)
-          }}
+          onExpand={onRailExpand}
+          onTailChunkReached={onRailChunkReached}
         />
 
         <EraStrip items={sameEra} onActivate={goToMusician} />

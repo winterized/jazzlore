@@ -501,7 +501,9 @@ class FakeIntersectionObserver {
   observe(el: HTMLElement): void {
     this.observed.push(el)
   }
-  unobserve(): void {}
+  unobserve(el: HTMLElement): void {
+    this.observed = this.observed.filter((o) => o !== el)
+  }
   disconnect(): void {
     this.disconnected = true
   }
@@ -515,6 +517,12 @@ class FakeIntersectionObserver {
       (el) => el.dataset.chunkSentinel === String(chunkIdx),
     )
     if (!target) return
+    this.callback([{ target, isIntersecting: true }])
+  }
+  /** Force-fire even if the target has been unobserved — used by the
+   * pre-await dedup test to prove the dedup is at the handler level
+   * (not just at the observer level). */
+  triggerRaw(target: HTMLElement): void {
     this.callback([{ target, isIntersecting: true }])
   }
 }
@@ -659,14 +667,55 @@ describe('DetailView — tail-photo enrichment (issue #85)', () => {
     expect(mock).toHaveBeenCalledTimes(3)
     const io = liveFakeIO()
     expect(io).toBeDefined()
+    // Capture the chunk-1 sentinel BEFORE the first trigger (the
+    // observer.unobserve in the handler will remove it from
+    // `io.observed` after the first fire — but the in-flight dedup
+    // must independently catch the second hand-fed trigger via
+    // `triggerRaw`, which proves the dedup is at the handler level,
+    // not just at the observer level).
+    const chunk1Sentinel = io?.observed.find(
+      (el) => el.dataset.chunkSentinel === '1',
+    )
+    expect(chunk1Sentinel).toBeDefined()
     io?.trigger(1) // → asks for chunk 2 (1st time)
-    io?.trigger(1) // → asks for chunk 2 again (must dedup, in-flight)
+    // Yield a microtask between triggers — this proves the dedup is
+    // truly pre-await (not just same-microtask-cycle synchronicity).
+    // Without the pre-await mark in `requestedChunks`, the second
+    // trigger would fire a duplicate byIds for chunk 2 because the
+    // promise's `.then` hasn't run yet (no resolution).
+    await Promise.resolve()
+    // Use `triggerRaw` to bypass the observed-list check (the chunk-1
+    // sentinel was unobserved by the first fire) — this isolates the
+    // pre-await dedup as the thing that prevents the double-call.
+    if (chunk1Sentinel) io?.triggerRaw(chunk1Sentinel)
     // Still only 4 calls — the second trigger of the same sentinel did
     // NOT double-fire because chunk 2 was already in `requestedChunks`.
     expect(mock).toHaveBeenCalledTimes(4)
   })
 
-  it('last-chunk guard: a sentinel beyond the tail end does not fire byIds', async () => {
+  it('sentinel is one-shot: unobserved after firing', async () => {
+    installFakeIO()
+    const source = makeMockSource()
+    const detail = makeDetail(HEADLINER_CAP + 3 * TAIL_CHUNK_SIZE)
+    setupRail(detail, source)
+    await clickExpand()
+    const io = liveFakeIO()
+    expect(io).toBeDefined()
+    // Pre-fire: chunk-1 sentinel is in the observed list.
+    expect(
+      io?.observed.find((el) => el.dataset.chunkSentinel === '1'),
+    ).toBeDefined()
+    io?.trigger(1)
+    // Post-fire: chunk-1 sentinel has been unobserved (the observer
+    // callback called `io.unobserve(target)`). A scroll-back into
+    // chunk 1 would NOT re-fire the callback, which keeps the
+    // callback flood low for long tails.
+    expect(
+      io?.observed.find((el) => el.dataset.chunkSentinel === '1'),
+    ).toBeUndefined()
+  })
+
+  it('last-chunk guard: requesting a chunk past the tail end is a no-op', async () => {
     installFakeIO()
     const source = makeMockSource()
     // Tail = 1 chunk exactly (16 rows). Only chunk index 0 exists.
@@ -674,12 +723,15 @@ describe('DetailView — tail-photo enrichment (issue #85)', () => {
     setupRail(detail, source)
     await clickExpand()
     const mock = source.byIds as ReturnType<typeof vi.fn>
-    // top-16 + chunk 0 (chunk 1's prefetch is past the end, no-op)
+    // onExpand fires requestChunk(0) → 1 byIds call.
+    // onExpand ALSO fires requestChunk(1) — but chunk 1's start
+    // (16) >= tailLength (16) → last-chunk guard returns early
+    // without calling byIds. So total is exactly top-16 + chunk 0.
     expect(mock).toHaveBeenCalledTimes(2)
-    const io = liveFakeIO()
-    io?.trigger(0) // arriving at chunk 0 would normally ask for chunk 1
-    // Chunk 1 is past the tail end → no new call.
-    expect(mock).toHaveBeenCalledTimes(2)
+    // With a 1-chunk tail, no chunk-1 sentinel exists (chunk-0
+    // sentinels are skipped by design; chunk 1 is past the end),
+    // so no IO is set up at all.
+    expect(liveFakeIO()).toBeUndefined()
   })
 
   it('does NOT block expand on the fetch — DOM expands synchronously', async () => {
