@@ -60,3 +60,8 @@ apps/musicians/docs/baseline/joint-fix/**
 # deliberately-curated content under `.omc/` stay trackable. Issue #51.
 **/.omc/state/
 **/.omc/checkpoints/
+# Auto-generated OMC project metadata (re-emitted on every session; not curated).
+**/.omc/project-memory.json
+
+# Claude Code per-project state (transcripts, cache, worktrees) — local only.
+.claude/
