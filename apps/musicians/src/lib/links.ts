@@ -5,17 +5,19 @@
 // Record query is `"<title> <primaryArtist>"`; the same encoded term is used
 // for both services so parity is structural, not coincidental.
 //
-// Musician search query is **disambiguated with `jazz`** — `Paul Chambers`,
-// `George Lewis`, `Sam Jones` etc. share their names with non-jazz artists,
-// and a bare-name search would surface the namesake first. The
-// disambiguator follows the same discipline as the MB-first artist-URL
-// resolution: never search bare name when a disambiguating signal is
-// available. Tier-3 of the 3-tier Listen fallback fires precisely on the
-// obscure / ambiguous tail where mis-hits are worst.
+// Musician search query (tier-3 of the 3-tier Listen fallback) is the
+// **plain name** — no `jazz`, no instrument, no qualifier of any kind.
+// Apple Music's search does strict multi-term matching: ANY qualifier
+// zeroes out the result for artists whose catalog doesn't tag that term
+// (on-device 2026-05-27: `Antoine Karacostas` → "No Results" with any
+// qualifier, resolves perfectly with plain name). Spotify is fuzzier but
+// the qualifier's only benefit (homonym disambiguation among common-name
+// sidemen) doesn't survive on Apple, so it isn't worth a platform-split.
+// We accept the rare case (genuine homonym with no artist URL surfaces
+// the wrong artist) to fix the common case (unique names zeroing out).
 
 const SPOTIFY_SEARCH = 'https://open.spotify.com/search/'
 const APPLE_SEARCH = 'https://music.apple.com/search?term='
-const JAZZ_DISAMBIGUATOR = 'jazz'
 
 /** Build the shared, encoded search term. Trims, then encodeURIComponent so
  * accents and `& ? # / +` are all percent-encoded identically per service. */
@@ -29,11 +31,11 @@ function term(parts: string[]): string {
 }
 
 export function spotifyMusicianUrl(name: string): string {
-  return SPOTIFY_SEARCH + term([name, JAZZ_DISAMBIGUATOR])
+  return SPOTIFY_SEARCH + term([name])
 }
 
 export function appleMusicMusicianUrl(name: string): string {
-  return APPLE_SEARCH + term([name, JAZZ_DISAMBIGUATOR])
+  return APPLE_SEARCH + term([name])
 }
 
 /** Record search term = `"<title> <primaryArtist>"`. `primaryArtist` is

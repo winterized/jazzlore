@@ -34,13 +34,13 @@ describe('DetailView — identity / bio / listen', () => {
     expect(more).toHaveAttribute('href', '#about')
   })
 
-  it('tier 3 — no track + no artist URL → disambiguated search URL (`<name> jazz`)', () => {
+  it('tier 3 — no track + no artist URL → plain-name search URL', () => {
     // MODERATE's id is `wikidata:Q379938` (a non-curated fictional fixture
     // id for unit purposes), and its `links` has no spotify/apple artist
-    // URLs. So both services land in tier 3 — the disambiguated search.
-    // The `jazz` suffix is the namesake guard for common-name sidemen
-    // (Paul Chambers, George Lewis, Sam Jones). The anchor's accessible
-    // name comes from its aria-label.
+    // URLs. So both services land in tier 3 — the plain-name search.
+    // Apple Music's strict multi-term matching zeroes out catalogs that
+    // don't tag the qualifier (on-device 2026-05-27); the namesake hazard
+    // on common-name sidemen is accepted as a trade-off.
     setup()
     const listen = screen.getByRole('region', {
       name: /listen to bobby timmons/i,
@@ -53,11 +53,11 @@ describe('DetailView — identity / bio / listen', () => {
     })
     expect(spotify).toHaveAttribute(
       'href',
-      'https://open.spotify.com/search/Bobby%20Timmons%20jazz',
+      'https://open.spotify.com/search/Bobby%20Timmons',
     )
     expect(apple).toHaveAttribute(
       'href',
-      'https://music.apple.com/search?term=Bobby%20Timmons%20jazz',
+      'https://music.apple.com/search?term=Bobby%20Timmons',
     )
     // No editorial track-title caption when not tier 1.
     expect(document.querySelector('.listen-track')).toBeNull()
@@ -67,7 +67,7 @@ describe('DetailView — identity / bio / listen', () => {
     // Non-tier-1 fixture id; the musician has artist-page URLs on its
     // `links` (populator-supplied via MB URL relationships in real data).
     // Per-service tier resolution: Spotify has an artist URL → tier 2;
-    // Apple has none → tier 3 with the `jazz` disambiguator. Aria-labels
+    // Apple has none → tier 3 with the plain-name search. Aria-labels
     // stay generic at tier 2/3 — never imply a specific track.
     const tier2 = {
       ...MODERATE,
@@ -90,10 +90,10 @@ describe('DetailView — identity / bio / listen', () => {
       'href',
       'https://open.spotify.com/artist/0M1UOBJZ9tcKJbrbnVlHZG',
     )
-    // Apple has no artist URL on this fixture → drops to tier 3.
+    // Apple has no artist URL on this fixture → drops to tier 3 (plain name).
     expect(apple).toHaveAttribute(
       'href',
-      'https://music.apple.com/search?term=Bobby%20Timmons%20jazz',
+      'https://music.apple.com/search?term=Bobby%20Timmons',
     )
     expect(document.querySelector('.listen-track')).toBeNull()
   })
