@@ -1,0 +1,14 @@
+# Local-only secrets for `wrangler dev` against the musicians app's BFF.
+# Copy this file to `.dev.vars` (gitignored) and fill in values. In production
+# these are set as Cloudflare Worker environment variables via the dashboard —
+# never committed to git, never bundled into the client.
+#
+# To run the musicians BFF end-to-end locally, you need a free Neo4j Aura
+# instance (https://neo4j.com/cloud/aura/) and a populated graph. Without these
+# the BFF returns its frozen "waking" 503 and the frontend renders the
+# waking-state placeholder.
+
+NEO4J_URI=neo4j+s://YOUR_INSTANCE_ID.databases.neo4j.io
+NEO4J_USERNAME=YOUR_INSTANCE_ID
+NEO4J_PASSWORD=YOUR_AURA_PASSWORD
+NEO4J_DATABASE=YOUR_INSTANCE_ID
