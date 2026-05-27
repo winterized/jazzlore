@@ -26,9 +26,10 @@ import { RecordsStrip } from '../../components/RecordsStrip'
 import { ChevronIcon, SearchIcon } from '../../components/icons'
 import { ThemeToggleButton } from '../../components/ThemeToggleButton'
 import { DetailIdentity } from './DetailIdentity'
-import { CollaboratorRail } from './CollaboratorRail'
+import { CollaboratorRail, HEADLINER_CAP } from './CollaboratorRail'
 import { MoreAboutSheet } from './MoreAboutSheet'
 import { SharedRecordsSheet } from './SharedRecordsSheet'
+import { useTailPortraits } from './useTailPortraits'
 import { useMosaicScrollPulse } from '../../hooks/useMosaicScrollPulse'
 import { useIsDesktop } from '../../hooks/useIsDesktop'
 import { GraphPanelSlot } from '../graph/GraphPanelSlot'
@@ -117,6 +118,17 @@ export function DetailView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [detail.id, source])
 
+  // Tail-photo enrichment (issue #85). The hook owns the per-chunk
+  // request set + the `byIds` calls; CollaboratorRail fires the
+  // observer-driven prefetch signals.
+  const { requestTailChunk } = useTailPortraits(
+    detail,
+    source,
+    collabPortraits,
+    setCollabPortraits,
+    HEADLINER_CAP,
+  )
+
   const goToMusician = (id: string): void => {
     void navigate(`/musicians/${encodeURIComponent(id)}`)
   }
@@ -197,6 +209,20 @@ export function DetailView({
           onShowSharedRecords={setSharedRecordsCollabId}
           railRef={railRef}
           portraits={collabPortraits}
+          onExpand={() => {
+            // Prefetch chunks 0 AND 1 immediately on expand so rows 1–16
+            // load with photos AND rows 17–32 are already on the wire
+            // before the user scrolls into them.
+            requestTailChunk(0)
+            requestTailChunk(1)
+          }}
+          onTailChunkReached={(idx) => {
+            // The user just reached chunk `idx`; prefetch chunk `idx + 1`
+            // so the next screenful's photos are present before the user
+            // scrolls to them. `requestedChunks` dedup makes repeated
+            // firings safe.
+            requestTailChunk(idx + 1)
+          }}
         />
 
         <EraStrip items={sameEra} onActivate={goToMusician} />

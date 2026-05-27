@@ -127,6 +127,13 @@ export function Duo3({
           loading={eager ? 'eager' : 'lazy'}
           referrerPolicy="no-referrer"
           onError={() => setImgFailed(true)}
+          /* Issue #85 — start at opacity 0, flip on load. `data-loaded`
+           * is the CSS hook; the figure/monogram beneath stays put until
+           * the photo is painted, then fades in over 150ms (collapsed
+           * to 0 under prefers-reduced-motion). */
+          onLoad={(e) => {
+            e.currentTarget.dataset.loaded = 'true'
+          }}
         />
       )}
       {showFigure ? (
