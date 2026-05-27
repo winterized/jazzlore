@@ -44,8 +44,17 @@ type Props = {
    * `SearchCorpusEntry.primaryInstrument`, or the curated card's
    * `subtitle`, which the BFF already populates from `primary_instruments[0]`).
    * The photo path is unchanged — when a real portrait renders, the figure
-   * does not show. Omit (places that should keep today's monogram fallback)
-   * for byte-identical behaviour.
+   * does not show.
+   *
+   * Pass `inst` as `string | null` on EVERY musician call-site. `null`
+   * (or `''`) means "this IS a musician, but instrument data is empty";
+   * `figKey()` resolves it to the discreet `rest` figure — the dignified
+   * fallback for unknown-instrument musicians (Wave 2a intent: "no
+   * shrug"; on-device 2026-05-27 confirmed the residual ~7% of musicians
+   * the populator derivation can't recover would otherwise fall through
+   * to a bare monogram, which is the bug this prop guards against).
+   * `undefined` (or omitting the prop) means "this is NOT a musician —
+   * a record cover, etc." → figure is suppressed.
    *
    * **DO NOT pass for record covers.** Record-cover call-sites (e.g.
    * `AttribAlbum`) render with `initials={false}` and never represent a
@@ -76,16 +85,24 @@ export function Duo3({
   const [imgFailed, setImgFailed] = useState(false)
   const url = portrait?.url?.trim()
   const showPhoto = photo && !!url && !imgFailed
-  // Surface the editorial figure mark (Wave 2a) ONLY when the data flag
-  // says the musician has no portrait (`photo === false`) AND the caller
-  // supplies an instrument string. Gating on `photo === false` instead of
+  // Surface the editorial figure mark (Wave 2a) when the data flag says
+  // the musician has no portrait (`photo === false`) AND the caller
+  // signals "this is a musician" by passing `inst` (any value — string,
+  // null, or empty string). Gating on `photo === false` instead of
   // `!showPhoto` matters: during the brief transient where a photoed
   // musician's portrait is being fetched by byIds enrichment, `photo` is
   // still `true` and we keep the existing duotone+initials placeholder
-  // rather than flashing a figure that will be replaced in ~200ms. Every
-  // record-cover / no-`inst` caller is byte-behaviour-identical.
-  const showFigure =
-    photo === false && inst !== undefined && inst !== null
+  // rather than flashing a figure that will be replaced in ~200ms.
+  //
+  // The `inst !== undefined` check is the musician-vs-record-cover
+  // sentinel — record covers don't pass the prop, so `inst === undefined`
+  // and the figure is suppressed (byte-identical to pre-fix). Musician
+  // call-sites MUST pass `inst={value ?? null}` so an empty-instrument
+  // record (the ~7% residual after the populator derivation pass) still
+  // reaches `NoPhotoMark`, which resolves null/'' to the dignified
+  // `rest` figure instead of the bare monogram (Natalie Cole rail bug,
+  // observed 2026-05-27).
+  const showFigure = photo === false && inst !== undefined
   const cls = ['duo3', photo ? '' : 'flat', showPhoto ? 'has-photo' : '', className]
     .filter(Boolean)
     .join(' ')
