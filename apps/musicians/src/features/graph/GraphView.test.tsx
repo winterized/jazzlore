@@ -272,4 +272,38 @@ describe('GraphView — instrument family colour + on-demand labels', () => {
       'mu-family-unknown',
     )
   })
+
+  it('node initials route through the canonical builder (parenthesised suffix → letters, not "(")', () => {
+    // Regression for the divergence where the graph rendered "P(" for
+    // "Pierre Bernier (2)" while the mosaic correctly rendered "PB".
+    // Both surfaces must read the same — the graph imports `initialsOf`
+    // from `components/duotone.ts` (Unicode-letter filter + particles
+    // skip), not the old naive whitespace-split duplicate.
+    stubReducedMotion(true)
+    const data = {
+      nodes: [
+        {
+          id: 'focus',
+          name: 'Antoine Karacostas',
+          instrument: 'piano',
+          recordCount: 1,
+          focus: true,
+        },
+        {
+          id: 'collab',
+          name: 'Pierre Bernier (2)',
+          instrument: 'tenor saxophone',
+          recordCount: 1,
+          focus: false,
+        },
+      ],
+      edges: [{ source: 'focus', target: 'collab', weight: 1 }],
+    }
+    const { container } = render(<GraphView data={data} focusId="focus" />)
+    const initials = Array.from(
+      container.querySelectorAll('text.mu-gnode-initials'),
+    ).map((t) => t.textContent)
+    expect(initials).toContain('PB')
+    expect(initials).not.toContain('P(')
+  })
 })
