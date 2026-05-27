@@ -41,7 +41,12 @@ test('issue-105 browser baseline — iPhone-15 viewport, light mode', async ({ p
   // `tests/e2e/metronome-issue-105-browser-baseline.spec.ts-snapshots/`.
   await expect(page).toHaveScreenshot('iphone-15-light-browser.png', {
     fullPage: false,
-    maxDiffPixelRatio: 0.001, // ~0.1% tolerance for sub-pixel jitter
+    // 1% tolerance — sub-pixel font rendering across Chromium versions
+    // / GPU drivers can drift past tighter thresholds (Geist's ss01/cv11
+    // substitutions are antialiasing-sensitive). The structural
+    // bounding-box assertion below is the hard fit-proof; this baseline
+    // is the visual-regression sentinel.
+    maxDiffPixelRatio: 0.01,
   })
 
   // Structural fit-proof: even WITHOUT safe-area shim, Start sits

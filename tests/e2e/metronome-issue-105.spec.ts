@@ -139,13 +139,5 @@ for (const d of DEVICES) {
       box!.y + box!.height,
       `Start bottom edge (${box!.y + box!.height}) must be ≤ viewport - safeBottom (${d.viewport.height - d.safeBottom})`,
     ).toBeLessThanOrEqual(d.viewport.height - d.safeBottom)
-    expect(
-      box!.y,
-      `Start top edge (${box!.y}) must be ≥ safeTop (${d.safeTop})`,
-    ).toBeGreaterThanOrEqual(d.safeTop)
-    expect(
-      box!.y + box!.height,
-      `Start bottom edge (${box!.y + box!.height}) must be ≤ viewport - safeBottom (${d.viewport.height - d.safeBottom})`,
-    ).toBeLessThanOrEqual(d.viewport.height - d.safeBottom)
   })
 }

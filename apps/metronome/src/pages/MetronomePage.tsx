@@ -296,12 +296,15 @@ export default function MetronomePage() {
            *  bottom: 0` then pins it to the visible viewport bottom
            *  with nothing sitting below it. */}
           <KbdFooter />
-          <div className="start-footer">
+          <footer
+            className="start-footer"
+            aria-label="Playback controls"
+          >
             <StartStopButton
               status={state.status}
               onToggle={onToggleStartStop}
             />
-          </div>
+          </footer>
         </>
       )}
     </main>

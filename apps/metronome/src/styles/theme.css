@@ -46,10 +46,13 @@
   --beat-off: rgba(244, 238, 222, 0.06);
   --beat-rest: rgba(244, 238, 222, 0);
   --kbd-bg: #161513;
-  /* Shadow alpha for the sticky start-footer (issue #105). Dark mode
-   * uses a denser-but-still-subtle drop so the footer visibly lifts
-   * above the very-dark bg. Light-mode override below. */
-  --shadow: rgba(0, 0, 0, 0.35);
+  /* Shadow-color alpha for the sticky start-footer (issue #105). Dark
+   * mode uses a denser-but-still-subtle drop so the footer visibly
+   * lifts above the very-dark bg. Light-mode override below. Renamed
+   * from `--shadow` to avoid colliding with apps/musicians's
+   * `--shadow` token (which is a full compound box-shadow VALUE; this
+   * is just a colour alpha used inside a single box-shadow rule). */
+  --shadow-color: rgba(0, 0, 0, 0.35);
 
   background: var(--bg);
   color: var(--text);
@@ -94,9 +97,9 @@ html[data-theme='light'] .mt,
   --beat-off: rgba(26, 22, 18, 0.06);
   --beat-rest: rgba(26, 22, 18, 0);
   --kbd-bg: #ede8dc;
-  /* Light-mode shadow is a softer warm-stone drop (lower alpha against
-   * the lighter bg). Tuned for visible-but-restrained lift. */
-  --shadow: rgba(0, 0, 0, 0.08);
+  /* Light-mode shadow-colour — softer warm-stone drop (lower alpha
+   * against the lighter bg). Tuned for visible-but-restrained lift. */
+  --shadow-color: rgba(0, 0, 0, 0.08);
 }
 .mt *,
 .mt *::before,
@@ -252,29 +255,38 @@ html[data-theme='light'] .mt,
 
 /* ─────────────────────────── Start footer (issue #105 Option 4) ─────── */
 /* Sticky-bottom footer on mobile that pins the Start button to the
- * visible viewport regardless of how long pageContent is or how big the
- * safe-area-inset-top is. Footer is a distinct surface (bg-soft tint +
- * top border + soft drop shadow) so it reads as its own UI region, NOT
- * the natural end of the scrolling content above. A fade-gradient
- * `::before` sits just above the footer to signal "more content above
- * — scroll" (the iOS-list affordance; pointer-events: none so it never
- * blocks a tap on the row underneath). Browser mode + non-PWA-iOS:
- * env() = 0, so the padding-bottom collapses to the base 14px.
- * Desktop layout doesn't render `.start-footer` (Start stays inline). */
+ * visible viewport regardless of how long pageContent is or how big
+ * the safe-area-inset-top is. `position: sticky; bottom: 0` pins to
+ * the NEAREST scrolling ancestor — for this app, the document/body
+ * (the viewport). `.mt` MUST NOT receive `overflow: auto|scroll|hidden`
+ * — that would create a new scroll container and the footer would
+ * pin to `.mt`'s bottom instead of the viewport's, silently breaking
+ * the fix.
+ *
+ * The footer is a distinct surface (bg-soft tint + top border + soft
+ * drop shadow) so it reads as its own UI region, NOT the natural end
+ * of the scrolling content above. A fade-gradient `::before` sits
+ * just above the footer to signal "more content above — scroll" (the
+ * iOS-list affordance; pointer-events: none so it never blocks a tap
+ * on the row underneath). Browser mode + non-PWA-iOS: env() = 0, so
+ * the padding-bottom collapses to the base 14px. Desktop layout
+ * doesn't render `.start-footer` (Start stays inline). */
 .mt .start-footer {
   position: sticky;
   bottom: 0;
   z-index: 5;
   background: var(--bg-soft);
   border-top: 1px solid var(--line);
-  box-shadow: 0 -8px 16px -8px var(--shadow);
+  box-shadow: 0 -8px 16px -8px var(--shadow-color);
   padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px));
 }
 /* Fade gradient at the top edge of the footer — soft transparent-to-bg
  * tape that fades scrolled content into the footer surface. Positioned
- * absolutely above the footer (bottom: 100% relative to the sticky
- * footer's positioning context). Static (no transition / animation):
- * prefers-reduced-motion neutral by construction. */
+ * absolutely against the footer (any non-`static` `position` value on
+ * the parent makes it the containing block — `sticky` qualifies, but
+ * `relative` would also work; `sticky` isn't load-bearing here).
+ * Static (no transition / animation): prefers-reduced-motion neutral
+ * by construction. */
 .mt .start-footer::before {
   content: '';
   position: absolute;
