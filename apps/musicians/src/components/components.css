@@ -132,7 +132,17 @@
   display: block;
   z-index: 0;
   filter: grayscale(1) contrast(1.05) brightness(1.02);
-  transition: filter 0.32s ease;
+  /* Issue #85 — start at opacity 0; fade to 1 once the <img> fires
+   * onLoad and sets data-loaded="true". The figure/monogram beneath
+   * stays put until the photo paints, then the photo fades in over
+   * 150ms (collapsed to 0 under prefers-reduced-motion, see bottom of
+   * file). 150ms is short enough to feel like "just appeared", long
+   * enough to never feel like a pop. */
+  opacity: 0;
+  transition: filter 0.32s ease, opacity 150ms ease-out;
+}
+.duo3.has-photo .duo3-photo[data-loaded='true'] {
+  opacity: 1;
 }
 /* The per-name duotone gradient becomes the colour tint over the greyscale
  * image (instead of the standalone placeholder gradient). */
@@ -1783,10 +1793,15 @@
   }
   /* Phase H — the duotone→colour reveal is INSTANT under reduced motion
      (the colour change still happens on hover/focus, but never tweened —
-     CLAUDE.md "reduced-motion = snap", never an animation). */
+     CLAUDE.md "reduced-motion = snap", never an animation). Issue #85 —
+     the photo opacity fade is also snapped: `opacity: 1` regardless of
+     `data-loaded` (the photo is either rendered or it isn't; no tween). */
   .mu3 .duo3.has-photo .duo3-photo,
   .mu3 .duo3.has-photo::before {
     transition: none;
+  }
+  .mu3 .duo3.has-photo .duo3-photo {
+    opacity: 1;
   }
 }
 

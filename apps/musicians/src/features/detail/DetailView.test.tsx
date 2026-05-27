@@ -455,3 +455,300 @@ describe('DetailView — collaborator portraits via byIds', () => {
     expect(screen.queryAllByRole('img')).toHaveLength(0)
   })
 })
+
+// ── Tail-photo enrichment (issue #85) ─────────────────────────────────
+//
+// Each test below mocks `IntersectionObserver` with a manually-driven
+// fake (the deferred-trigger pattern, precedent useMosaicScrollPulse) so
+// we can simulate the user "arriving at chunk N" by firing the right
+// sentinel on demand. The `byIds` method is replaced with a `vi.fn()`
+// so we can assert exact call shapes.
+
+import {
+  HEADLINER_CAP,
+} from './CollaboratorRail'
+import {
+  BY_IDS_CAP,
+  TAIL_CHUNK_SIZE,
+} from './useTailPortraits'
+import type { Collaborator, MusicianDetail } from '../../lib/types'
+
+// One-line invariant guard — encodes the cap-vs-chunk relationship at
+// the test level (see useTailPortraits.ts). If a future change drops
+// BY_IDS_CAP below TAIL_CHUNK_SIZE, this fails fast.
+describe('useTailPortraits — cap-vs-chunk invariant', () => {
+  it('TAIL_CHUNK_SIZE stays at or below BY_IDS_CAP', () => {
+    expect(TAIL_CHUNK_SIZE).toBeLessThanOrEqual(BY_IDS_CAP)
+  })
+})
+
+interface SentinelEntry {
+  target: HTMLElement
+  isIntersecting: boolean
+}
+
+type IOCallback = (entries: SentinelEntry[]) => void
+
+class FakeIntersectionObserver {
+  static instances: FakeIntersectionObserver[] = []
+  observed: HTMLElement[] = []
+  disconnected = false
+  callback: IOCallback
+  constructor(callback: IOCallback) {
+    this.callback = callback
+    FakeIntersectionObserver.instances.push(this)
+  }
+  observe(el: HTMLElement): void {
+    this.observed.push(el)
+  }
+  unobserve(el: HTMLElement): void {
+    this.observed = this.observed.filter((o) => o !== el)
+  }
+  disconnect(): void {
+    this.disconnected = true
+  }
+  takeRecords(): SentinelEntry[] {
+    return []
+  }
+  /** Test helper — fire the callback with a single "now visible" entry
+   * for the observed element whose `data-chunk-sentinel` matches. */
+  trigger(chunkIdx: number): void {
+    const target = this.observed.find(
+      (el) => el.dataset.chunkSentinel === String(chunkIdx),
+    )
+    if (!target) return
+    this.callback([{ target, isIntersecting: true }])
+  }
+  /** Force-fire even if the target has been unobserved — used by the
+   * pre-await dedup test to prove the dedup is at the handler level
+   * (not just at the observer level). */
+  triggerRaw(target: HTMLElement): void {
+    this.callback([{ target, isIntersecting: true }])
+  }
+}
+
+function installFakeIO(): typeof FakeIntersectionObserver {
+  FakeIntersectionObserver.instances = []
+  // @ts-expect-error — assigning a partial fake for unit-test use.
+  globalThis.IntersectionObserver = FakeIntersectionObserver
+  return FakeIntersectionObserver
+}
+
+function liveFakeIO(): FakeIntersectionObserver | undefined {
+  // The most recent non-disconnected instance is the rail's observer
+  // (the earlier ones may have been disconnected by component cleanup).
+  return [...FakeIntersectionObserver.instances]
+    .reverse()
+    .find((io) => !io.disconnected)
+}
+
+function makeCollab(i: number): Collaborator {
+  return {
+    id: `wikidata:Q-mock-${i}`,
+    name: `Mock Collab ${i}`,
+    sharedRecordCount: 1,
+    photo: true,
+  }
+}
+
+function makeDetail(collabCount: number): MusicianDetail {
+  return {
+    ...MODERATE,
+    collaborators: Array.from({ length: collabCount }, (_, i) => makeCollab(i)),
+  }
+}
+
+function makeMockSource(
+  byIdsImpl?: (
+    ids: string[],
+  ) => Promise<{ items: { id: string; name: string; photo: boolean; portrait: { url?: string } }[] }>,
+): DataSource {
+  const impl =
+    byIdsImpl ??
+    (async (ids: string[]) => ({
+      items: ids.map((id) => ({
+        id,
+        name: 'X',
+        photo: true,
+        portrait: { url: `https://x/${id}.jpg` },
+      })),
+    }))
+  return {
+    ...fixtureSource,
+    byIds: vi.fn(impl),
+  } as DataSource
+}
+
+function setupRail(detail: MusicianDetail, source: DataSource) {
+  return render(
+    <MemoryRouter>
+      <DetailView detail={detail} source={source} />
+    </MemoryRouter>,
+  )
+}
+
+async function clickExpand(): Promise<void> {
+  const user = userEvent.setup()
+  const cta = screen.getByRole('button', {
+    name: /Show all \d+ collaborators/,
+  })
+  await user.click(cta)
+}
+
+describe('DetailView — tail-photo enrichment (issue #85)', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+    FakeIntersectionObserver.instances = []
+  })
+
+  it('initial mount fires exactly one byIds for the top-16 ids', () => {
+    installFakeIO()
+    const source = makeMockSource()
+    const detail = makeDetail(HEADLINER_CAP + 3 * TAIL_CHUNK_SIZE)
+    setupRail(detail, source)
+    const calls = (source.byIds as ReturnType<typeof vi.fn>).mock.calls
+    expect(calls).toHaveLength(1)
+    expect(calls[0]?.[0]).toEqual(
+      detail.collaborators.slice(0, HEADLINER_CAP).map((c) => c.id),
+    )
+  })
+
+  it('expand fires the prefetch PAIR — chunks 0 AND 1 — immediately', async () => {
+    installFakeIO()
+    const source = makeMockSource()
+    const detail = makeDetail(HEADLINER_CAP + 3 * TAIL_CHUNK_SIZE)
+    setupRail(detail, source)
+    await clickExpand()
+    const mock = source.byIds as ReturnType<typeof vi.fn>
+    // 1 top-16 + 2 prefetched chunks = 3 calls
+    expect(mock).toHaveBeenCalledTimes(3)
+    const tailIds = detail.collaborators.slice(HEADLINER_CAP).map((c) => c.id)
+    const chunk0Ids = tailIds.slice(0, TAIL_CHUNK_SIZE)
+    const chunk1Ids = tailIds.slice(TAIL_CHUNK_SIZE, 2 * TAIL_CHUNK_SIZE)
+    const argSlices = mock.mock.calls.slice(1).map((c) => c[0] as string[])
+    // Order between chunk 0 and chunk 1 isn't guaranteed — assert by set.
+    expect(argSlices).toContainEqual(chunk0Ids)
+    expect(argSlices).toContainEqual(chunk1Ids)
+  })
+
+  it('sentinel for chunk N → prefetch chunk N+1 (one ahead of scroll)', async () => {
+    installFakeIO()
+    const source = makeMockSource()
+    const detail = makeDetail(HEADLINER_CAP + 4 * TAIL_CHUNK_SIZE)
+    setupRail(detail, source)
+    await clickExpand()
+    const mock = source.byIds as ReturnType<typeof vi.fn>
+    // Drain previous calls (top-16 + chunks 0 + 1)
+    expect(mock).toHaveBeenCalledTimes(3)
+    // User scrolls into chunk 1 → expect a prefetch of chunk 2.
+    const io = liveFakeIO()
+    expect(io).toBeDefined()
+    io?.trigger(1)
+    const tailIds = detail.collaborators.slice(HEADLINER_CAP).map((c) => c.id)
+    const chunk2Ids = tailIds.slice(2 * TAIL_CHUNK_SIZE, 3 * TAIL_CHUNK_SIZE)
+    expect(mock).toHaveBeenCalledTimes(4)
+    expect(mock.mock.calls[3]?.[0]).toEqual(chunk2Ids)
+  })
+
+  it('in-flight dedup: triggering the same sentinel twice fires byIds ONCE', async () => {
+    installFakeIO()
+    // Deferred promise — never resolves during the test, so the chunk
+    // stays "in-flight". The pre-await mark in requestedChunks must
+    // prevent a second fire.
+    // A promise that never resolves — keeps the byIds call "in-flight"
+    // for the duration of the test so we can observe the dedup behavior.
+    const deferred = new Promise<{ items: [] }>(() => {})
+    const source = makeMockSource(() => deferred as Promise<never>)
+    const detail = makeDetail(HEADLINER_CAP + 4 * TAIL_CHUNK_SIZE)
+    setupRail(detail, source)
+    await clickExpand()
+    const mock = source.byIds as ReturnType<typeof vi.fn>
+    // After expand: 3 calls (top-16 + chunk 0 + chunk 1).
+    expect(mock).toHaveBeenCalledTimes(3)
+    const io = liveFakeIO()
+    expect(io).toBeDefined()
+    // Capture the chunk-1 sentinel BEFORE the first trigger (the
+    // observer.unobserve in the handler will remove it from
+    // `io.observed` after the first fire — but the in-flight dedup
+    // must independently catch the second hand-fed trigger via
+    // `triggerRaw`, which proves the dedup is at the handler level,
+    // not just at the observer level).
+    const chunk1Sentinel = io?.observed.find(
+      (el) => el.dataset.chunkSentinel === '1',
+    )
+    expect(chunk1Sentinel).toBeDefined()
+    io?.trigger(1) // → asks for chunk 2 (1st time)
+    // Yield a microtask between triggers — this proves the dedup is
+    // truly pre-await (not just same-microtask-cycle synchronicity).
+    // Without the pre-await mark in `requestedChunks`, the second
+    // trigger would fire a duplicate byIds for chunk 2 because the
+    // promise's `.then` hasn't run yet (no resolution).
+    await Promise.resolve()
+    // Use `triggerRaw` to bypass the observed-list check (the chunk-1
+    // sentinel was unobserved by the first fire) — this isolates the
+    // pre-await dedup as the thing that prevents the double-call.
+    if (chunk1Sentinel) io?.triggerRaw(chunk1Sentinel)
+    // Still only 4 calls — the second trigger of the same sentinel did
+    // NOT double-fire because chunk 2 was already in `requestedChunks`.
+    expect(mock).toHaveBeenCalledTimes(4)
+  })
+
+  it('sentinel is one-shot: unobserved after firing', async () => {
+    installFakeIO()
+    const source = makeMockSource()
+    const detail = makeDetail(HEADLINER_CAP + 3 * TAIL_CHUNK_SIZE)
+    setupRail(detail, source)
+    await clickExpand()
+    const io = liveFakeIO()
+    expect(io).toBeDefined()
+    // Pre-fire: chunk-1 sentinel is in the observed list.
+    expect(
+      io?.observed.find((el) => el.dataset.chunkSentinel === '1'),
+    ).toBeDefined()
+    io?.trigger(1)
+    // Post-fire: chunk-1 sentinel has been unobserved (the observer
+    // callback called `io.unobserve(target)`). A scroll-back into
+    // chunk 1 would NOT re-fire the callback, which keeps the
+    // callback flood low for long tails.
+    expect(
+      io?.observed.find((el) => el.dataset.chunkSentinel === '1'),
+    ).toBeUndefined()
+  })
+
+  it('last-chunk guard: requesting a chunk past the tail end is a no-op', async () => {
+    installFakeIO()
+    const source = makeMockSource()
+    // Tail = 1 chunk exactly (16 rows). Only chunk index 0 exists.
+    const detail = makeDetail(HEADLINER_CAP + TAIL_CHUNK_SIZE)
+    setupRail(detail, source)
+    await clickExpand()
+    const mock = source.byIds as ReturnType<typeof vi.fn>
+    // onExpand fires requestChunk(0) → 1 byIds call.
+    // onExpand ALSO fires requestChunk(1) — but chunk 1's start
+    // (16) >= tailLength (16) → last-chunk guard returns early
+    // without calling byIds. So total is exactly top-16 + chunk 0.
+    expect(mock).toHaveBeenCalledTimes(2)
+    // With a 1-chunk tail, no chunk-1 sentinel exists (chunk-0
+    // sentinels are skipped by design; chunk 1 is past the end),
+    // so no IO is set up at all.
+    expect(liveFakeIO()).toBeUndefined()
+  })
+
+  it('does NOT block expand on the fetch — DOM expands synchronously', async () => {
+    installFakeIO()
+    // A promise that never resolves — keeps the byIds call "in-flight"
+    // for the duration of the test so we can observe the dedup behavior.
+    const deferred = new Promise<{ items: [] }>(() => {})
+    const source = makeMockSource(() => deferred as Promise<never>)
+    const detail = makeDetail(HEADLINER_CAP + 2 * TAIL_CHUNK_SIZE)
+    setupRail(detail, source)
+    // Before expand: tail rows are not present.
+    expect(screen.queryByText(/Mock Collab 16/)).toBeNull()
+    await clickExpand()
+    // After expand: tail rows are present even though no byIds promise
+    // has resolved (they're all stuck on the deferred Promise above).
+    // This is the "instant expand" guarantee.
+    expect(screen.getByText(/Mock Collab 16/)).toBeInTheDocument()
+    expect(screen.getByText(/Mock Collab 31/)).toBeInTheDocument()
+  })
+})
