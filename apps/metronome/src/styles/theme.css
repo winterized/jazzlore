@@ -46,6 +46,10 @@
   --beat-off: rgba(244, 238, 222, 0.06);
   --beat-rest: rgba(244, 238, 222, 0);
   --kbd-bg: #161513;
+  /* Shadow alpha for the sticky start-footer (issue #105). Dark mode
+   * uses a denser-but-still-subtle drop so the footer visibly lifts
+   * above the very-dark bg. Light-mode override below. */
+  --shadow: rgba(0, 0, 0, 0.35);
 
   background: var(--bg);
   color: var(--text);
@@ -90,6 +94,9 @@ html[data-theme='light'] .mt,
   --beat-off: rgba(26, 22, 18, 0.06);
   --beat-rest: rgba(26, 22, 18, 0);
   --kbd-bg: #ede8dc;
+  /* Light-mode shadow is a softer warm-stone drop (lower alpha against
+   * the lighter bg). Tuned for visible-but-restrained lift. */
+  --shadow: rgba(0, 0, 0, 0.08);
 }
 .mt *,
 .mt *::before,
@@ -241,6 +248,42 @@ html[data-theme='light'] .mt,
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+/* ─────────────────────────── Start footer (issue #105 Option 4) ─────── */
+/* Sticky-bottom footer on mobile that pins the Start button to the
+ * visible viewport regardless of how long pageContent is or how big the
+ * safe-area-inset-top is. Footer is a distinct surface (bg-soft tint +
+ * top border + soft drop shadow) so it reads as its own UI region, NOT
+ * the natural end of the scrolling content above. A fade-gradient
+ * `::before` sits just above the footer to signal "more content above
+ * — scroll" (the iOS-list affordance; pointer-events: none so it never
+ * blocks a tap on the row underneath). Browser mode + non-PWA-iOS:
+ * env() = 0, so the padding-bottom collapses to the base 14px.
+ * Desktop layout doesn't render `.start-footer` (Start stays inline). */
+.mt .start-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  background: var(--bg-soft);
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -8px 16px -8px var(--shadow);
+  padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+}
+/* Fade gradient at the top edge of the footer — soft transparent-to-bg
+ * tape that fades scrolled content into the footer surface. Positioned
+ * absolutely above the footer (bottom: 100% relative to the sticky
+ * footer's positioning context). Static (no transition / animation):
+ * prefers-reduced-motion neutral by construction. */
+.mt .start-footer::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 28px;
+  pointer-events: none;
+  background: linear-gradient(to top, var(--bg), transparent);
 }
 
 /* ─────────────────────────── BPM hero ───────────────────────────────── */
