@@ -1036,9 +1036,12 @@ test.describe('Issue #84 — detail-page alias resolution (stale id → canonica
 //            Aura 2026-05-25; 339 Spotify / 159 Apple). The earlier
 //            test.skip-on-absent gate was sunset by PR #95 — tier 2 now
 //            fails fast in CI on a wire-shape regression.
-//   Tier 3 — disambiguated search URL (`<name> jazz`) — the namesake
-//            guard for common-name sidemen. George Lewis (Q1507760) is
-//            the canonical tier-3 case: he's in the populator's
+//   Tier 3 — plain-name search URL. Apple Music's strict multi-term
+//            matching zeroes out catalogs that don't tag the qualifier
+//            (on-device 2026-05-27: `Antoine Karacostas + jazz` →
+//            "No Results"). The namesake-hazard trade-off on
+//            common-name sidemen is accepted. George Lewis (Q1507760)
+//            is the canonical tier-3 case: he's in the populator's
 //            streaming_ids.jsonl with BOTH `spotify_resolved_via: "none"`
 //            AND `apple_resolved_via: "none"`, so he stays tier 3 for
 //            both services even after the populator loads.
@@ -1089,7 +1092,7 @@ test.describe('Wave 3 / 3-tier Listen graceful degradation', () => {
     await expect(page.locator('.listen-track')).toHaveCount(0)
   })
 
-  test('tier 3 — George Lewis (no MB streaming URL on either service) lands on disambiguated `jazz` search', async ({
+  test('tier 3 — George Lewis (no MB streaming URL on either service) lands on plain-name search', async ({
     page,
   }) => {
     await page.goto(`${PREVIEW_BASE}/musicians/${GEORGE_LEWIS_ID}`)
@@ -1102,12 +1105,14 @@ test.describe('Wave 3 / 3-tier Listen graceful degradation', () => {
     })
     const spotifyHref = (await spotify.getAttribute('href')) ?? ''
     const appleHref = (await apple.getAttribute('href')) ?? ''
-    // Both services land on a search URL with the `jazz` disambiguator —
-    // bare-name searches re-introduce the namesake hazard.
-    expect(spotifyHref).toMatch(/open\.spotify\.com\/search\//)
-    expect(spotifyHref).toContain('jazz')
-    expect(appleHref).toMatch(/music\.apple\.com\/search\?term=/)
-    expect(appleHref).toContain('jazz')
+    // Both services land on a search URL with EXACTLY the encoded name —
+    // no `jazz`, no instrument, no qualifier of any kind. Apple Music's
+    // strict multi-term matching zeroes out otherwise (on-device 2026-05-27).
+    expect(spotifyHref).toBe('https://open.spotify.com/search/George%20Lewis')
+    expect(appleHref).toBe('https://music.apple.com/search?term=George%20Lewis')
+    // Structural guard against any future qualifier-revival.
+    expect(spotifyHref.split('/search/')[1]).toBe('George%20Lewis')
+    expect(appleHref.split('?term=')[1]).toBe('George%20Lewis')
     // Tier 3 also never shows the editorial caption.
     await expect(page.locator('.listen-track')).toHaveCount(0)
   })
