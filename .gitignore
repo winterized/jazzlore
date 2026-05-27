@@ -33,6 +33,7 @@ tmp/
 .env.*.local
 .dev.vars
 .dev.vars.*
+!.dev.vars.example
 
 # Wrangler local state/cache (musicians unified Worker dev) — never commit
 .wrangler/
