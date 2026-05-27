@@ -7,51 +7,69 @@ import {
 } from './links'
 
 describe('musician deep-links', () => {
-  // Musician search queries are disambiguated with `jazz` to dodge the
-  // namesake hazard (Paul Chambers, George Lewis, Sam Jones, etc.).
-  // Same discipline as the MB-first artist-URL resolution — never search
-  // bare name when we have a disambiguating signal.
+  // Musician search queries are the **plain name** — no `jazz`, no
+  // instrument, no qualifier of any kind. Apple Music's strict
+  // multi-term matching zeroes out catalogs that don't tag the
+  // qualifier (on-device 2026-05-27: `Antoine Karacostas + jazz` →
+  // "No Results"; bare `Antoine Karacostas` → resolves). The
+  // namesake-hazard (Paul Chambers, George Lewis, Sam Jones) is
+  // accepted as a known trade-off; tier-2 (artist URL) and tier-1
+  // (curated track) handle those cases when populator data is present.
 
-  it('Spotify musician = open.spotify.com/search/<name>%20jazz', () => {
+  it('Spotify musician = open.spotify.com/search/<name> (plain, no qualifier)', () => {
     expect(spotifyMusicianUrl('Miles Davis')).toBe(
-      'https://open.spotify.com/search/Miles%20Davis%20jazz',
+      'https://open.spotify.com/search/Miles%20Davis',
     )
   })
 
-  it('Apple musician = music.apple.com/search?term=<name>%20jazz', () => {
+  it('Apple musician = music.apple.com/search?term=<name> (plain, no qualifier)', () => {
     expect(appleMusicMusicianUrl('Miles Davis')).toBe(
-      'https://music.apple.com/search?term=Miles%20Davis%20jazz',
+      'https://music.apple.com/search?term=Miles%20Davis',
     )
   })
 
-  it('disambiguates common-name sidemen (Paul Chambers → namesake guard)', () => {
-    // The whole point of the disambiguator — `Paul Chambers` alone surfaces
-    // a different artist on Spotify. With `jazz` appended, the jazz bassist
-    // ranks first.
-    expect(spotifyMusicianUrl('Paul Chambers')).toBe(
-      'https://open.spotify.com/search/Paul%20Chambers%20jazz',
+  it('Antoine Karacostas resolves with plain name (on-device regression)', () => {
+    // Direct regression: with `jazz` appended, Apple Music returned
+    // "No Results" for this name (his catalog isn't tagged jazz at
+    // Apple). The plain-name fallback restores the artist page.
+    expect(appleMusicMusicianUrl('Antoine Karacostas')).toBe(
+      'https://music.apple.com/search?term=Antoine%20Karacostas',
     )
-    expect(appleMusicMusicianUrl('George Lewis')).toBe(
-      'https://music.apple.com/search?term=George%20Lewis%20jazz',
+    expect(spotifyMusicianUrl('Antoine Karacostas')).toBe(
+      'https://open.spotify.com/search/Antoine%20Karacostas',
     )
   })
 
-  it('encodes accents and edge characters (and still appends jazz)', () => {
+  it('appends no qualifier (no "jazz", no instrument, nothing)', () => {
+    // Structural assertion: the query string contains exactly the
+    // encoded name and nothing else past it. Guards against a future
+    // re-introduction of a disambiguator (`jazz`, `musician`, …).
+    const spotify = spotifyMusicianUrl('Paul Chambers')
+    const apple = appleMusicMusicianUrl('George Lewis')
+    expect(spotify).toBe('https://open.spotify.com/search/Paul%20Chambers')
+    expect(apple).toBe('https://music.apple.com/search?term=George%20Lewis')
+    // The query portion (after `/search/` or `?term=`) must equal the
+    // encoded name exactly — no `%20jazz`, `%20musician`, etc.
+    expect(spotify.split('/search/')[1]).toBe('Paul%20Chambers')
+    expect(apple.split('?term=')[1]).toBe('George%20Lewis')
+  })
+
+  it('encodes accents and edge characters (plain name only)', () => {
     expect(spotifyMusicianUrl('Antoine Hervé')).toBe(
-      'https://open.spotify.com/search/Antoine%20Herv%C3%A9%20jazz',
+      'https://open.spotify.com/search/Antoine%20Herv%C3%A9',
     )
     expect(appleMusicMusicianUrl('Antoine Hervé')).toBe(
-      'https://music.apple.com/search?term=Antoine%20Herv%C3%A9%20jazz',
+      'https://music.apple.com/search?term=Antoine%20Herv%C3%A9',
     )
     // & ? # / + are all percent-encoded by encodeURIComponent
     expect(spotifyMusicianUrl('Ty & The #1 Band / +')).toBe(
-      'https://open.spotify.com/search/Ty%20%26%20The%20%231%20Band%20%2F%20%2B%20jazz',
+      'https://open.spotify.com/search/Ty%20%26%20The%20%231%20Band%20%2F%20%2B',
     )
   })
 
-  it('trims surrounding whitespace before encoding (jazz still appended)', () => {
+  it('trims surrounding whitespace before encoding', () => {
     expect(spotifyMusicianUrl('  Bill Evans  ')).toBe(
-      'https://open.spotify.com/search/Bill%20Evans%20jazz',
+      'https://open.spotify.com/search/Bill%20Evans',
     )
   })
 })

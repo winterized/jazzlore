@@ -24,9 +24,13 @@ import { metaLine, firstSentence } from './detailIdentityMeta'
 //   Tier 2 — artist-page URL on the musician's `links` (Spotify ~50% /
 //            Apple <30% via MusicBrainz; populator-supplied). Aria-label
 //            stays generic on the musician name — we don't imply a track.
-//   Tier 3 — disambiguated search URL (`<name> jazz`) so the namesake
+//   Tier 3 — plain-name search URL. Apple Music's strict multi-term
+//            matching zeroes out artists whose catalog isn't tagged
+//            for a given qualifier (on-device 2026-05-27: any qualifier
+//            on `Antoine Karacostas` → "No Results"). The namesake
 //            hazard on common-name sidemen (Paul Chambers, George Lewis,
-//            Sam Jones) doesn't surface a non-jazz artist.
+//            Sam Jones) is accepted as a trade-off; tier-2 covers those
+//            cases when the populator landed an artist URL.
 // The two services resolve INDEPENDENTLY — a musician can land in tier 2
 // for Spotify (artist URL present) and tier 3 for Apple (no artist URL).
 // Tier 1, when present, covers both services together (same track, two
