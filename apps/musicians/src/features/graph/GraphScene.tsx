@@ -6,7 +6,7 @@
 import { useMemo, useState, type KeyboardEvent } from 'react'
 import type { LayoutEdge } from './layout'
 import type { FrameNode, GraphFrame } from './useRecentre'
-import { initialsOf } from './palette'
+import { initialsOf } from '../../components/duotone'
 import { familyClass } from './instrumentFamilies'
 
 interface GraphSceneProps {
