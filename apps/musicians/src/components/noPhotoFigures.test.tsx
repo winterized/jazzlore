@@ -64,6 +64,11 @@ describe('figKey', () => {
     // Organ specifically before piano (Hammond is a keyboard but the visual
     // is a two-manual console, not a piano).
     expect(figKey('hammond organ')).toBe('organ')
+    // "saxhorn" is a conical brass, NOT a saxophone. The `horn` branch must
+    // stay ahead of the `sax` branch so it resolves to brass — pin it so a
+    // future reorder of the woodwind/brass branches can't silently regress
+    // it to 'sax'.
+    expect(figKey('saxhorn')).toBe('trumpet')
   })
 
   it('returns "rest" for empty / null / undefined / em-dash / unknown', () => {

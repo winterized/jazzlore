@@ -472,6 +472,8 @@ export function figKey(inst?: string | null): FigKey {
   if (i.includes('trombone')) return 'trombone'
   if (i.includes('trumpet') || i.includes('cornet') || i.includes('flugel'))
     return 'trumpet'
+  // `horn` stays ahead of the `sax` branch below so "saxhorn" (a conical
+  // brass) resolves to brass, not saxophone — pinned in the test suite.
   if (i.includes('tuba') || i.includes('horn')) return 'trumpet'
   // Woodwinds — clarinet matches "bass clarinet" before bass.
   if (i.includes('clarinet') || i.includes('oboe') || i.includes('bassoon'))

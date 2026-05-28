@@ -154,7 +154,7 @@ matters (more specific keys checked first).
 | --- | --- |
 | `piano` | piano, electric piano, rhodes, wurlitzer, keyboard, keys |
 | `organ` | organ, hammond, hammond b3 |
-| `trumpet` | trumpet, cornet, flugelhorn, french horn, tuba |
+| `trumpet` | trumpet, cornet, flugelhorn, french horn, tuba, saxhorn (conical brass — caught by `horn` before the `sax` branch, intentionally) |
 | `trombone` | trombone, bass trombone |
 | `sax` | tenor sax, alto sax, soprano sax, baritone sax, saxophone |
 | `clarinet` | clarinet, bass clarinet, oboe, bassoon |
