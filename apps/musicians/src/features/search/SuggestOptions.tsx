@@ -7,6 +7,15 @@
 // via per-option animation-delay (components.css mu3-suggest-in;
 // reduced-motion clamps it). Highlight is the FROZEN matchRanges; the <em>
 // is never remounted (Highlight uses stable keys).
+//
+// No-photo treatment (issue #69): each row shows the editorial instrument
+// figure (figKey/NoPhotoMark via `Duo3 photo={false} inst=…`, `rest` for
+// unknown) in place of a monogram — same figure path as every other no-photo
+// surface (home cards / era tiles / conn rows). Photos are deliberately NOT
+// fetched here: autosuggest is a transient surface and per-result image
+// requests aren't worth the free-tier cost. The corner monogram is hidden by
+// CSS at this density (`.suggest-row .duo3-mark-ini`, NOT `.mu3`-scoped — the
+// listbox portals to <body>, outside the `.mu3` wrapper).
 
 import type { CSSProperties } from 'react'
 import { Duo3 } from '../../components/Duo3'
@@ -64,7 +73,11 @@ export function SuggestOptions({
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => onChoose(h.entry.id)}
           >
-            <Duo3 name={h.entry.name} />
+            <Duo3
+              name={h.entry.name}
+              photo={false}
+              inst={h.entry.primaryInstrument ?? null}
+            />
             <div>
               <div className="nm">
                 <Highlight text={h.entry.name} ranges={h.ranges} />
