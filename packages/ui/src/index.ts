@@ -10,6 +10,11 @@ export {
 export { default as ThemeToggle } from './ThemeToggle'
 export { useFocusTrap } from './useFocusTrap'
 export {
+  useSwipeDownDismiss,
+  type SwipeDownDismissHandlers,
+  type SwipeDownDismissOptions,
+} from './useSwipeDownDismiss'
+export {
   usePwaInstall,
   type PwaInstallPlatform,
   type PwaInstallState,
