@@ -12,9 +12,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useFocusTrap } from '@jazzlore/ui'
-
-const SWIPE_DISMISS_PX = 80
+import { useFocusTrap, useSwipeDownDismiss } from '@jazzlore/ui'
 
 type Props = {
   name: string
@@ -34,9 +32,12 @@ export function MoreAboutSheet({
   // `open` drives the enter transition: false on first paint → true next
   // frame so the sheet slides up from translateY(100%).
   const [open, setOpen] = useState(false)
-  const touchStartY = useRef<number | null>(null)
 
   useFocusTrap(sheetRef, true)
+  // No `ignoreClosest` gate: the bio body doesn't scroll past the dismiss
+  // threshold today, so the whole sheet stays swipe-to-dismiss (preserved
+  // exactly from before the #115 extraction).
+  const swipe = useSwipeDownDismiss(onClose)
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setOpen(true))
@@ -54,19 +55,8 @@ export function MoreAboutSheet({
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  const onTouchStart = (e: React.TouchEvent): void => {
-    touchStartY.current = e.touches[0]?.clientY ?? null
-  }
   const onTouchMove = (): void => {
     /* tracked on end; move kept so the gesture is recognised */
-  }
-  const onTouchEnd = (e: React.TouchEvent): void => {
-    const start = touchStartY.current
-    const end = e.changedTouches[0]?.clientY ?? null
-    touchStartY.current = null
-    if (start !== null && end !== null && end - start >= SWIPE_DISMISS_PX) {
-      onClose()
-    }
   }
 
   return createPortal(
@@ -88,9 +78,8 @@ export function MoreAboutSheet({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        onTouchStart={onTouchStart}
+        {...swipe}
         onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
       >
         <div className="more-handle" aria-hidden="true" />
         <div className="more-head">
