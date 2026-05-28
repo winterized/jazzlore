@@ -1428,9 +1428,6 @@
   padding: 4px;
   border-radius: 4px;
 }
-.suggest-row .duo3-initials {
-  font-size: 16px;
-}
 .suggest-row .nm {
   font-size: 14.5px;
   font-weight: 600;
@@ -1887,14 +1884,19 @@
   opacity: 0.72;
 }
 
-/* Autosuggest dropdown row — 44×44 — dense, no monogram. */
-.mu3 .suggest-row .duo3-mark {
+/* Autosuggest dropdown row — 44×44 — dense, no monogram. The suggest listbox
+ * is portalled to <body> (OUTSIDE the `.mu3` wrapper in Shell.tsx), so these
+ * figure rules are intentionally NOT `.mu3`-scoped — unlike the other no-photo
+ * surfaces (home-card / era-tile / conn), which live inside `.mu3`. Scoping
+ * them to `.mu3` would silently miss the portal (issue #69: monogram leaked,
+ * stroke/padding overrides never applied). */
+.suggest-row .duo3-mark {
   padding: 11%;
 }
-.mu3 .suggest-row .duo3-mark svg .ln {
+.suggest-row .duo3-mark svg .ln {
   stroke-width: 4.5;
 }
-.mu3 .suggest-row .duo3-mark-ini {
+.suggest-row .duo3-mark-ini {
   display: none;
 }
 
