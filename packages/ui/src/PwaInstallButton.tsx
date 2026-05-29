@@ -1,7 +1,8 @@
 // PwaInstallButton — square icon button that opens the PWA-install
 // instructions sheet. Matches the StickyHeader theme button's footprint
-// exactly so it slots in cleanly next to it. Hidden when the app is
-// already running in standalone mode (no point installing twice).
+// exactly so it slots in cleanly next to it. Hidden when the app is already
+// running in standalone mode or inside the Capacitor native shell (no point
+// installing twice — see issue #130).
 
 import { useState } from 'react'
 import { usePwaInstall } from './usePwaInstall'
@@ -46,9 +47,11 @@ export function PwaInstallButton({
   appIconHref,
   appAccent,
 }: Props) {
-  const { isStandalone } = usePwaInstall()
+  const { isStandalone, isNativeApp } = usePwaInstall()
   const [open, setOpen] = useState(false)
-  if (isStandalone) return null
+  // Hide when already installed (standalone PWA) or wrapped in the Capacitor
+  // native shell — in both cases an install prompt is pointless (issue #130).
+  if (isStandalone || isNativeApp) return null
   return (
     <>
       <button
