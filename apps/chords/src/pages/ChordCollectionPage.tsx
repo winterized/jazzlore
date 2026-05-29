@@ -55,7 +55,12 @@ export default function ChordCollectionPage() {
 
   return (
     <main
-      className="min-h-screen bg-stone-100 p-4 text-stone-900 dark:bg-stone-950 dark:text-stone-100 md:p-8"
+      // Safe-area insets (issue #131): this page renders its own <main> and is
+      // NOT wrapped by StickyHeader, so it must lift content past the notch /
+      // home indicator itself. Horizontal padding keeps p-4/md:p-8 (1rem/2rem);
+      // top+bottom add env(safe-area-inset-*) — a no-op (0px) in non-notched
+      // browsers, so web/desktop layout is unchanged.
+      className="min-h-screen bg-stone-100 px-4 pt-[calc(1rem+env(safe-area-inset-top,0px))] pb-[calc(1rem+env(safe-area-inset-bottom,0px))] text-stone-900 md:px-8 md:pt-[calc(2rem+env(safe-area-inset-top,0px))] md:pb-[calc(2rem+env(safe-area-inset-bottom,0px))] dark:bg-stone-950 dark:text-stone-100"
       data-density={density}
     >
       <div className="mb-6 flex items-center justify-between gap-4">

@@ -88,7 +88,19 @@ describe('ChordCollectionPage', () => {
     expect(screen.getAllByTestId('chord-row')).toHaveLength(1)
   })
 
-  // 8. removeChord external call causes reactive update
+  // 8. Safe-area insets (issue #131) — the page renders its own <main>
+  // (not wrapped by StickyHeader), so it must apply env(safe-area-inset-*)
+  // itself or content runs under the notch / home indicator on notched iPhones.
+  it('applies top and bottom safe-area-inset padding on the page root', () => {
+    const { container } = renderPage()
+    const main = container.querySelector('main')
+    const cls = main?.getAttribute('class') ?? ''
+    // Pin the property + side (pt-/pb-), not just the env() token.
+    expect(cls).toContain('pt-[calc(1rem+env(safe-area-inset-top')
+    expect(cls).toContain('pb-[calc(1rem+env(safe-area-inset-bottom')
+  })
+
+  // 9. removeChord external call causes reactive update
   it('updates reactively when removeChord is called externally', () => {
     addChord('C', 'maj7')
     renderPage()
