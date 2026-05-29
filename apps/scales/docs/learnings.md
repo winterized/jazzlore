@@ -47,3 +47,5 @@ Dev-environment verification doesn't prove production behavior. As soon as a pro
 Thorough ≠ overengineered. Detail in the diagnosis (exact file:lines, root causes, pre-flight verification of assumptions that contradict the code) is load-bearing and earns its length. Detail in the process scaffolding (worktrees, coordinators, single-purpose files) for a small job is ceremony. The same page-count can be either; the test is whether the length is buying precision about what to change or ritual about how to change it.
 
 a session showing repeated operational stalls (read-first errors, claiming-to-fix-but-not-fixing) is likely past its useful life — restart sooner rather than later.
+
+when a strict global rule produces correct-but-frustrating local outcomes, the right answer is usually neither "loosen the rule" nor "live with it" but "use the curated-override layer the system already has for exactly this purpose." The override file is not a workaround; it's where your human judgment lives, formally encoded into the data. Use it.
