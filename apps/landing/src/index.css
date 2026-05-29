@@ -15,6 +15,7 @@
 @import './styles/animations.css';
 @import './styles/components.css';
 @import './styles/tiles.css';
+@import './styles/privacy.css';
 
 /* Tailwind-specific directives — variant follows the same data-theme
    convention as every other Jazzlore app, source-scan pulls in @jazzlore/ui
