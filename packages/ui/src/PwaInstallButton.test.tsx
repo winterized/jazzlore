@@ -60,6 +60,9 @@ const PROPS = {
 beforeEach(() => {
   __resetPwaInstallForTests()
   setStandaloneDisplayMode(false)
+  if (Object.prototype.hasOwnProperty.call(window, 'Capacitor')) {
+    Reflect.deleteProperty(window, 'Capacitor')
+  }
   if (Object.prototype.hasOwnProperty.call(window.navigator, 'standalone')) {
     Object.defineProperty(window.navigator, 'standalone', {
       value: undefined,
@@ -70,6 +73,9 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals()
+  if (Object.prototype.hasOwnProperty.call(window, 'Capacitor')) {
+    Reflect.deleteProperty(window, 'Capacitor')
+  }
 })
 
 describe('PwaInstallButton', () => {
@@ -88,6 +94,19 @@ describe('PwaInstallButton', () => {
     const { container } = render(<PwaInstallButton {...PROPS} />)
     // No button mounted at all — keeps the header from having a redundant
     // install affordance in an already-installed PWA.
+    expect(container).toBeEmptyDOMElement()
+  })
+
+  it('is hidden when running inside the Capacitor native shell', () => {
+    setNavigator(DESKTOP_UA)
+    // Not standalone in the browser sense, but Capacitor injects this global
+    // inside the native iOS/Android shell — the install affordance is
+    // meaningless there (issue #130).
+    Object.defineProperty(window, 'Capacitor', {
+      value: { isNativePlatform: () => true },
+      configurable: true,
+    })
+    const { container } = render(<PwaInstallButton {...PROPS} />)
     expect(container).toBeEmptyDOMElement()
   })
 

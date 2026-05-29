@@ -82,9 +82,23 @@ function dispatchBeforeInstallPrompt(
   return { prompt }
 }
 
+function setCapacitor(isNativePlatform: (() => boolean) | undefined): void {
+  Object.defineProperty(window, 'Capacitor', {
+    value: isNativePlatform === undefined ? {} : { isNativePlatform },
+    configurable: true,
+  })
+}
+
+function clearCapacitor(): void {
+  if (Object.prototype.hasOwnProperty.call(window, 'Capacitor')) {
+    Reflect.deleteProperty(window, 'Capacitor')
+  }
+}
+
 beforeEach(() => {
   __resetPwaInstallForTests()
   setStandaloneDisplayMode(false)
+  clearCapacitor()
   // navigator.standalone is set as a configurable property by individual
   // tests — clear it between cases so a prior test leaves no leak.
   if (Object.prototype.hasOwnProperty.call(window.navigator, 'standalone')) {
@@ -97,6 +111,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals()
+  clearCapacitor()
 })
 
 describe('usePwaInstall — platform detection', () => {
@@ -161,6 +176,35 @@ describe('usePwaInstall — standalone detection', () => {
     setNavigator({ userAgent: DESKTOP_UA })
     const { result } = renderHook(() => usePwaInstall())
     expect(result.current.isStandalone).toBe(false)
+  })
+})
+
+describe('usePwaInstall — native app detection', () => {
+  it('returns isNativeApp=true inside the Capacitor native shell', () => {
+    setNavigator({ userAgent: IOS_UA })
+    setCapacitor(() => true)
+    const { result } = renderHook(() => usePwaInstall())
+    expect(result.current.isNativeApp).toBe(true)
+  })
+
+  it('returns isNativeApp=false on a regular browser tab (no Capacitor)', () => {
+    setNavigator({ userAgent: DESKTOP_UA })
+    const { result } = renderHook(() => usePwaInstall())
+    expect(result.current.isNativeApp).toBe(false)
+  })
+
+  it('returns isNativeApp=false when isNativePlatform() reports false', () => {
+    setNavigator({ userAgent: ANDROID_UA })
+    setCapacitor(() => false)
+    const { result } = renderHook(() => usePwaInstall())
+    expect(result.current.isNativeApp).toBe(false)
+  })
+
+  it('returns isNativeApp=false when Capacitor lacks isNativePlatform', () => {
+    setNavigator({ userAgent: IOS_UA })
+    setCapacitor(undefined)
+    const { result } = renderHook(() => usePwaInstall())
+    expect(result.current.isNativeApp).toBe(false)
   })
 })
 
