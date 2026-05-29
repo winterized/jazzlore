@@ -27,6 +27,19 @@
   border: 0;
 }
 
+/* Keyboard focus affordance (WCAG 2.4.7). axe can't auto-detect a missing
+   focus indicator, so this isn't covered by the a11y test — but several
+   controls (footer/header links, About button, tile cards, the privacy
+   page's links) strip native chrome, so a branded ring is needed. Only
+   paints for keyboard users via :focus-visible; mouse clicks show nothing.
+   Uses the existing --accent token so it matches in both themes. */
+.landing a:focus-visible,
+.landing button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 /* <main> wraps explanation + grid so axe's landmark-one-main / region
    rules pass (every text node lives in a landmark). Layout-neutral —
    it's a passthrough flex column. */

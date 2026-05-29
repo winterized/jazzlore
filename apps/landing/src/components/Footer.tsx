@@ -5,6 +5,11 @@ export function Footer() {
     <footer className="jzl-footer">
       <div className="jzl-footer-left">jazzlore.com · mmxxvi</div>
       <div className="jzl-footer-right">
+        {/* Real <a> full-page nav to the privacy page (App Store links here).
+            No client router, so a plain href is correct — see lib/route.ts. */}
+        <a href="/privacy" className="jzl-footer-link">
+          Privacy
+        </a>
         <a
           href={REPO_URL}
           className="jzl-footer-link"
