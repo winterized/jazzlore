@@ -61,4 +61,21 @@ describe('CollectionPage', () => {
     )
     expect(screen.getByRole('link', { name: /scales/i })).toHaveAttribute('href', '/scales/C')
   })
+
+  // Safe-area insets (issue #131) — this page renders its own <main> (not
+  // wrapped by StickyHeader), so it must apply env(safe-area-inset-*) itself
+  // or content runs under the notch / home indicator on notched iPhones.
+  // Symmetric with the chords collection page.
+  it('applies top and bottom safe-area-inset padding on the page root', () => {
+    const { container } = render(
+      <MemoryRouter>
+        <CollectionPage />
+      </MemoryRouter>,
+    )
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- asserting the page-root <main> class
+    const cls = container.querySelector('main')?.getAttribute('class') ?? ''
+    // Pin the property + side (pt-/pb-), not just the env() token.
+    expect(cls).toContain('pt-[calc(1rem+env(safe-area-inset-top')
+    expect(cls).toContain('pb-[calc(1rem+env(safe-area-inset-bottom')
+  })
 })
