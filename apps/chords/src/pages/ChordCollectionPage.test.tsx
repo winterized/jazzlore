@@ -93,11 +93,39 @@ describe('ChordCollectionPage', () => {
   // itself or content runs under the notch / home indicator on notched iPhones.
   it('applies top and bottom safe-area-inset padding on the page root', () => {
     const { container } = renderPage()
+    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- asserting the page-root <main> class
     const main = container.querySelector('main')
     const cls = main?.getAttribute('class') ?? ''
     // Pin the property + side (pt-/pb-), not just the env() token.
     expect(cls).toContain('pt-[calc(1rem+env(safe-area-inset-top')
     expect(cls).toContain('pb-[calc(1rem+env(safe-area-inset-bottom')
+  })
+
+  // Print toolbar hidden inside the Capacitor native shell (window.print() is
+  // a no-op in WKWebView, #135). Density control goes with it — print-only UI.
+  it('hides the print toolbar (button + density) inside the native shell', () => {
+    addChord('C', 'maj7')
+    Object.defineProperty(window, 'Capacitor', {
+      value: { isNativePlatform: () => true },
+      configurable: true,
+    })
+    try {
+      renderPage()
+      expect(screen.queryByRole('button', { name: /print collection/i })).toBeNull()
+      expect(screen.queryByText(/print density/i)).toBeNull()
+      // The collection itself still renders.
+      expect(screen.getAllByTestId('chord-row')).toHaveLength(1)
+    } finally {
+      Reflect.deleteProperty(window, 'Capacitor')
+    }
+  })
+
+  it('shows the print toolbar in a normal browser tab', () => {
+    addChord('C', 'maj7')
+    renderPage()
+    expect(
+      screen.getByRole('button', { name: /print collection/i }),
+    ).toBeInTheDocument()
   })
 
   // 9. removeChord external call causes reactive update

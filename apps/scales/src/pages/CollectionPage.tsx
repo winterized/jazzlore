@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { ThemeToggle } from '@jazzlore/ui'
+import { ThemeToggle, isNativeApp } from '@jazzlore/ui'
 import { useTheme } from '../lib/useTheme'
 import { listSaved } from '../features/collection/collectionStore'
 import PrintDensity from '../features/collection/PrintDensity'
@@ -46,16 +46,22 @@ export default function CollectionPage() {
         </p>
       ) : (
         <>
-          <div className="no-print mb-4 flex flex-wrap items-center gap-4">
-            <PrintDensity />
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="rounded-md border border-stone-300 px-3 py-1 text-sm hover:bg-stone-50 dark:border-stone-700 dark:hover:bg-stone-800"
-            >
-              Print selected
-            </button>
-          </div>
+          {/* Print toolbar — hidden inside the Capacitor native shell, where
+              window.print() is a silent no-op in WKWebView (#135). The density
+              control is hidden with it: it only configures print output, so on
+              native it would be orphaned dead UI. */}
+          {!isNativeApp() && (
+            <div className="no-print mb-4 flex flex-wrap items-center gap-4">
+              <PrintDensity />
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="rounded-md border border-stone-300 px-3 py-1 text-sm hover:bg-stone-50 dark:border-stone-700 dark:hover:bg-stone-800"
+              >
+                Print selected
+              </button>
+            </div>
+          )}
 
           <div className="print-grid space-y-3">
             {saved.map(({ rootNote, scaleId }) => {

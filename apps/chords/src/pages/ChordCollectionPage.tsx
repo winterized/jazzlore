@@ -15,7 +15,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { Link } from 'react-router'
-import { ThemeToggle } from '@jazzlore/ui'
+import { ThemeToggle, isNativeApp } from '@jazzlore/ui'
 import { read, write } from '@jazzlore/music-core'
 import { useTheme } from '../lib/useTheme'
 import { getCollection, subscribe } from '../features/collection/chordCollectionStore'
@@ -86,16 +86,22 @@ export default function ChordCollectionPage() {
         </p>
       ) : (
         <>
-          <div className="no-print mb-4 flex flex-wrap items-center gap-4">
-            <PrintDensityControl density={density} onChange={handleDensityChange} />
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="rounded-md border border-stone-300 px-3 py-1 text-sm hover:bg-stone-50 dark:border-stone-700 dark:hover:bg-stone-800"
-            >
-              Print collection
-            </button>
-          </div>
+          {/* Print toolbar — hidden inside the Capacitor native shell, where
+              window.print() is a silent no-op in WKWebView (#135). The density
+              control is hidden with it: it only configures print output, so on
+              native it would be orphaned dead UI. */}
+          {!isNativeApp() && (
+            <div className="no-print mb-4 flex flex-wrap items-center gap-4">
+              <PrintDensityControl density={density} onChange={handleDensityChange} />
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="rounded-md border border-stone-300 px-3 py-1 text-sm hover:bg-stone-50 dark:border-stone-700 dark:hover:bg-stone-800"
+              >
+                Print collection
+              </button>
+            </div>
+          )}
 
           <ul className="print-grid flex flex-col gap-4">
             {saved.map(({ rootNote, chordId }) => {
