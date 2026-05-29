@@ -8,6 +8,7 @@ export {
   type SearchResult,
 } from './StickyHeader'
 export { default as ThemeToggle } from './ThemeToggle'
+export { isNativeApp, type CapacitorGlobal } from './isNativeApp'
 export { useFocusTrap } from './useFocusTrap'
 export {
   useSwipeDownDismiss,

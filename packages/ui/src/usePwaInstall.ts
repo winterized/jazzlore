@@ -12,6 +12,7 @@
 // same architectural neighborhood as ThemeToggle.
 
 import { useEffect, useState } from 'react'
+import { isNativeApp } from './isNativeApp'
 
 export type PwaInstallPlatform =
   | 'ios' // iOS Safari — no beforeinstallprompt; show Share → Add to Home Screen
@@ -94,20 +95,6 @@ function detectStandalone(): boolean {
   return false
 }
 
-/** The runtime-injected Capacitor global (we don't depend on `@capacitor/core`,
- * so TS has no typing for it). Only the bit we read is declared. */
-interface CapacitorGlobal {
-  isNativePlatform?: () => boolean
-}
-
-function detectNativeApp(): boolean {
-  if (typeof window === 'undefined') return false
-  // Capacitor injects `window.Capacitor` at runtime when the web build is
-  // bundled in the native shell — no `@capacitor/core` dependency needed.
-  const cap = (window as Window & { Capacitor?: CapacitorGlobal }).Capacitor
-  return cap?.isNativePlatform?.() === true
-}
-
 function detectPlatform(): PwaInstallPlatform {
   if (typeof window === 'undefined') return 'desktop-no-prompt'
   const ua = window.navigator.userAgent
@@ -136,7 +123,7 @@ export function usePwaInstall(): PwaInstallState {
   }, [])
   const platform = detectPlatform()
   const isStandalone = detectStandalone()
-  const isNativeApp = detectNativeApp()
+  const nativeApp = isNativeApp()
   const requestInstall =
     bipEvent && (platform === 'android-prompt' || platform === 'desktop-prompt')
       ? async (): Promise<void> => {
@@ -150,5 +137,5 @@ export function usePwaInstall(): PwaInstallState {
           notify()
         }
       : null
-  return { platform, isStandalone, isNativeApp, requestInstall }
+  return { platform, isStandalone, isNativeApp: nativeApp, requestInstall }
 }

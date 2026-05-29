@@ -62,6 +62,40 @@ describe('CollectionPage', () => {
     expect(screen.getByRole('link', { name: /scales/i })).toHaveAttribute('href', '/scales/C')
   })
 
+  // Print toolbar hidden inside the Capacitor native shell (window.print() is
+  // a no-op in WKWebView, #135). Density control goes with it — print-only UI.
+  it('hides the print toolbar (button + density) inside the native shell', () => {
+    save({ rootNote: 'C', scaleId: 'dorian' })
+    Object.defineProperty(window, 'Capacitor', {
+      value: { isNativePlatform: () => true },
+      configurable: true,
+    })
+    try {
+      render(
+        <MemoryRouter>
+          <CollectionPage />
+        </MemoryRouter>,
+      )
+      expect(screen.queryByRole('button', { name: /print selected/i })).toBeNull()
+      expect(screen.queryByText(/print density/i)).toBeNull()
+      expect(screen.getByRole('heading', { name: /^Dorian$/ })).toBeInTheDocument()
+    } finally {
+      Reflect.deleteProperty(window, 'Capacitor')
+    }
+  })
+
+  it('shows the print toolbar in a normal browser tab', () => {
+    save({ rootNote: 'C', scaleId: 'dorian' })
+    render(
+      <MemoryRouter>
+        <CollectionPage />
+      </MemoryRouter>,
+    )
+    expect(
+      screen.getByRole('button', { name: /print selected/i }),
+    ).toBeInTheDocument()
+  })
+
   // Safe-area insets (issue #131) — this page renders its own <main> (not
   // wrapped by StickyHeader), so it must apply env(safe-area-inset-*) itself
   // or content runs under the notch / home indicator on notched iPhones.
