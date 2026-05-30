@@ -23,7 +23,6 @@ describe('ChordSymbolDisplay', () => {
     const { container } = render(<ChordSymbolDisplay primary="C7" />)
     // When alternate is absent an aria-hidden placeholder div is rendered
     // so all rows maintain the same height.
-    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container -- structural check
     const placeholder = container.querySelector('[aria-hidden="true"]')
     expect(placeholder).not.toBeNull()
   })
@@ -31,7 +30,6 @@ describe('ChordSymbolDisplay', () => {
   it('does NOT render placeholder div when alternate is present', () => {
     const { container } = render(<ChordSymbolDisplay primary="Cmaj7" alternate="CΔ7" />)
     // aria-hidden placeholder should not be present when alternate text is shown
-    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container -- structural check
     const placeholder = container.querySelector('[aria-hidden="true"]')
     expect(placeholder).toBeNull()
   })
@@ -60,7 +58,6 @@ describe('ChordSymbolDisplay', () => {
   // sub-pixel residual can never regress into a real whole-pixel offset.
   it('lays both lines out in one shared left-aligned column (no left divergence)', () => {
     const { container } = render(<ChordSymbolDisplay primary="Cm" alternate="C-" />)
-    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container -- structural contract check
     const wrapper = container.querySelector('.chord-symbol-display')
     expect(wrapper).not.toBeNull()
     // One flex column → both <p> share the same left origin; w-fit shrinks the

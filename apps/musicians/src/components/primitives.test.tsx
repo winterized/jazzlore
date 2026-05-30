@@ -253,7 +253,7 @@ describe('ConnRow', () => {
 
   it('+N more button click invokes onShowSharedRecords and does NOT trigger row navigation', () => {
     let rowClicks = 0
-    let sharedClicks: string[] = []
+    const sharedClicks: string[] = []
     render(
       <ConnRow
         c={collab({ sharedRecordCount: 38 })}

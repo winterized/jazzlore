@@ -3,7 +3,6 @@
 // square, with NO photo fetch (autosuggest is a transient surface). The figure
 // is an aria-hidden decorative mark with no accessible role, so these
 // structural assertions need direct node access.
-/* eslint-disable testing-library/no-container, testing-library/no-node-access */
 import { render } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { SuggestOptions } from './SuggestOptions'

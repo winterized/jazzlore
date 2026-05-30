@@ -93,7 +93,6 @@ describe('ChordCollectionPage', () => {
   // itself or content runs under the notch / home indicator on notched iPhones.
   it('applies top and bottom safe-area-inset padding on the page root', () => {
     const { container } = renderPage()
-    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- asserting the page-root <main> class
     const main = container.querySelector('main')
     const cls = main?.getAttribute('class') ?? ''
     // Pin the property + side (pt-/pb-), not just the env() token.

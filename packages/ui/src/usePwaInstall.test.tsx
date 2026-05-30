@@ -1,7 +1,7 @@
 // usePwaInstall — platform detection + beforeinstallprompt capture +
 // requestInstall integration.
 
-import { act, render, renderHook } from '@testing-library/react'
+import { act, render, renderHook, screen } from '@testing-library/react'
 import {
   afterEach,
   beforeEach,
@@ -233,18 +233,18 @@ describe('usePwaInstall — requestInstall', () => {
       const state = usePwaInstall()
       return <div data-testid={tag}>{state.platform}</div>
     }
-    const { getByTestId } = render(
+    render(
       <>
         <Probe tag="a" />
         <Probe tag="b" />
       </>,
     )
-    expect(getByTestId('a').textContent).toBe('desktop-no-prompt')
-    expect(getByTestId('b').textContent).toBe('desktop-no-prompt')
+    expect(screen.getByTestId('a').textContent).toBe('desktop-no-prompt')
+    expect(screen.getByTestId('b').textContent).toBe('desktop-no-prompt')
 
     dispatchBeforeInstallPrompt()
 
-    expect(getByTestId('a').textContent).toBe('desktop-prompt')
-    expect(getByTestId('b').textContent).toBe('desktop-prompt')
+    expect(screen.getByTestId('a').textContent).toBe('desktop-prompt')
+    expect(screen.getByTestId('b').textContent).toBe('desktop-prompt')
   })
 })

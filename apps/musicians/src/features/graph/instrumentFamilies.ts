@@ -4,14 +4,14 @@
 // exact instrument string still appears on the hover/focus label.
 //
 // This is a thin lookup on top of `figKey` (the existing 14-key resolver
-// in components/noPhotoFigures.tsx), so instrument-string normalisation
+// in components/noPhotoFigures.lib.ts), so instrument-string normalisation
 // stays in one place — adding "cornet" / "flugelhorn" / etc. is a
 // noPhotoFigures concern; the family mapping below stays stable.
 //
 // Lives under features/graph/ on purpose: the family colour is a graph
 // affordance and must NOT propagate to tiles, rails, cards, mosaic, era
 // strip, or the Duo3 primitive. Those keep the existing duotone treatment.
-import { figKey, type FigKey } from '../../components/noPhotoFigures'
+import { figKey, type FigKey } from '../../components/noPhotoFigures.lib'
 
 /** Six visual families plus an unknown bucket for sparse data.
  *

@@ -60,6 +60,7 @@ export function useTailPortraits(
   // callback every time the map updates (which would re-arm React's
   // effect deps and could double-fire).
   const portraitsRef = useRef(collabPortraits)
+  // eslint-disable-next-line react-hooks/refs -- deliberate "latest ref" mirror (see comment above); reading via an effect instead would re-arm the callback's deps and double-fire the IntersectionObserver
   portraitsRef.current = collabPortraits
   // Mirror the collaborators array too — slicing inside the callback
   // needs the latest data, but listing the array reference as a dep
@@ -67,6 +68,7 @@ export function useTailPortraits(
   // CollaboratorRail's IntersectionObserver effect to tear down + rebuild
   // on every render — observed in code review).
   const collaboratorsRef = useRef(detail.collaborators)
+  // eslint-disable-next-line react-hooks/refs -- deliberate "latest ref" mirror (see comment above); listing the array as a dep would tear down + rebuild CollaboratorRail's IntersectionObserver on every parent render
   collaboratorsRef.current = detail.collaborators
 
   // Navigating between detail pages (same `<DetailView>` instance, different

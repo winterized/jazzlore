@@ -10,6 +10,10 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
   globalIgnores(['dist', '**/dist/**', '**/storybook-static/**', 'node_modules', 'playwright-report', 'test-results']),
+  // Stale `eslint-disable` directives must not silently accumulate — a red gate
+  // hides new violations behind old noise (GH #134). Reported as errors so they
+  // surface and get trimmed.
+  { linterOptions: { reportUnusedDisableDirectives: 'error' } },
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -26,6 +30,16 @@ export default defineConfig([
   {
     files: ['{apps,packages}/**/src/**/*.{test,spec}.{ts,tsx}', '{apps,packages}/**/src/test/**/*.{ts,tsx}'],
     extends: [testingLibrary.configs['flat/react']],
+    rules: {
+      // This codebase tests SVG (graph `<g>` nodes, music notation) and
+      // decorative `aria-hidden` marks that have no ARIA role, so structural
+      // assertions must reach for nodes/containers. These two rules fire almost
+      // exclusively on legitimate cases here — off for tests. Other
+      // testing-library rules (prefer-screen-queries, render-result-naming,
+      // no-unnecessary-act) stay on. See GH #134.
+      'testing-library/no-node-access': 'off',
+      'testing-library/no-container': 'off',
+    },
   },
   {
     files: ['packages/ui/**/*.{ts,tsx}'],

@@ -68,12 +68,10 @@ describe('PrintDensity', () => {
   it('has a fieldset with a legend describing print density', () => {
     const onChange = vi.fn()
     const { container } = render(<PrintDensity density="medium" onChange={onChange} />)
-    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container -- structural a11y check
     const fieldset = container.querySelector('fieldset')
     expect(fieldset).not.toBeNull()
     // The legend should be present and labelled "Print density:" (visible per
     // WCAG 2.4.6 — visible labels where practical).
-    // eslint-disable-next-line testing-library/no-node-access -- structural a11y check
     const legend = fieldset?.querySelector('legend')
     expect(legend).not.toBeNull()
     expect(legend?.textContent).toMatch(/Print density/i)
