@@ -14,6 +14,12 @@ test('isConflictDuplicate matches the iCloud " N.ext" signature', () => {
   assert.equal(isConflictDuplicate('config 10.xml'), true)
   // Extensionless conflict copy (e.g. a dir or no-ext file)
   assert.equal(isConflictDuplicate('LICENSE 2'), true)
+  // iCloud inserts the counter before the LAST dot on double extensions
+  assert.equal(isConflictDuplicate('archive.tar 2.gz'), true)
+  // Accepted recall-over-precision: a legit " N.ext" name would also match.
+  // Harmless because the scan is scoped to apps/*/dist (hashed build assets),
+  // never source dirs where such names live. Pinned so the tradeoff is explicit.
+  assert.equal(isConflictDuplicate('Catch 22.txt'), true)
 })
 
 test('isConflictDuplicate rejects legitimate filenames', () => {
