@@ -59,6 +59,9 @@ test('pick C, save Dorian, see it in collection, print preview', async ({ page }
   // swallowed each scale's name (it lives inside an <article><header>...). The
   // strip rule must keep article headers visible.
   await expect(page.getByRole('heading', { name: /^Dorian$/ })).toBeVisible()
+  // The editorial description · theoryTag line is suppressed in print at every
+  // density — the printed "My scales" sheet carries no per-card editorial line.
+  await expect(page.locator('.print-grid .scale-alias').first()).toBeHidden()
 })
 
 // ─── Phase 7: StickyHeader integration ───────────────────────────────────────

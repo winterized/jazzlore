@@ -28,8 +28,14 @@ test('every scale description line fits in ≤2 lines at 390px with no overflow'
       const line = a.querySelector('.scale-alias') as HTMLElement | null
       if (!line) return [{ name, reason: 'no description line' }]
       const lh = parseFloat(getComputedStyle(line).lineHeight)
-      const lines = Number.isFinite(lh) ? Math.round(line.getBoundingClientRect().height / lh) : 0
       const problems: { name: string; reason: string }[] = []
+      // Guard against a non-px line-height (e.g. "normal") silently passing the
+      // line-count check — the count math depends on a resolved px value.
+      if (!Number.isFinite(lh)) {
+        problems.push({ name, reason: 'line-height not a px value' })
+        return problems
+      }
+      const lines = Math.round(line.getBoundingClientRect().height / lh)
       if (lines > 2) problems.push({ name, reason: `${lines} lines` })
       // Horizontal overflow: text wider than its container.
       if (line.scrollWidth > line.clientWidth + 1) {
