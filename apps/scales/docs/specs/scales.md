@@ -65,12 +65,20 @@ The corner sub-button is visually small (~14 px) but has invisible padding exten
 
 ### Scale list
 
-- Source of truth: Tonal's scale dictionary, supplemented with manually-defined scales where Tonal doesn't expose them under the intended name
-- Grouped by family with collapsible sections
-- Each scale row shows: **primary name**, optional **alias** (smaller subtitle, only set where a different common name is widely used), **intervals** (e.g. `1 2 ♭3 4 5 6 ♭7`), and **note names** for the currently selected root
-- Initial collapsed state: **Modes of major** expanded, all other families collapsed
+> **Superseded 2026-05-30 — grouping is now by chord-quality use case.** The 38
+> scales are presented by *"what plays over this chord?"* rather than by
+> derivational family. See **"Chord-quality regrouping (2026-05-30)"** below for
+> the authoritative grouping, the new per-card description line, and the two name
+> inversions. The family tables in this section are retained as **derivational
+> reference** — the `family` field still exists on every scale (searchable), but
+> no longer drives the UI.
 
-#### Curated set (v1) — 38 scales, 7 families
+- Source of truth: `CURATED_SCALES` in `apps/scales/src/features/scales/data/curated.ts` (curated 38; not Tonal's dictionary at runtime)
+- Grouped by **chord-quality use case** with collapsible sections (was: by family)
+- Each scale row shows: **primary name**, a muted **description · theory-tag** line (replaces the old alias subtitle), **intervals** (e.g. `1 2 ♭3 4 5 6 ♭7`), and **note names** for the currently selected root
+- Initial collapsed state: **Major / maj7** expanded, all other groups collapsed
+
+#### Curated set — 38 scales, derivational families (retained as reference)
 
 **Modes of major (7)**
 
@@ -338,6 +346,52 @@ Full rationale and the phased plan live in `.claude/plans/temporal-bouncing-bubb
 ## 2-column card grid on large desktops (2026-05-16)
 
 Each expanded family's scale list is a responsive grid: 1 column by default, **2 columns at `xl` (≥1280px)** — a shared breakpoint with the chords app for cross-site consistency (see `apps/chords/docs/chords.md`). The family accordion header (`<h2>`) spans full width above its grid; an odd count leaves one trailing empty cell (`align-items: start` — not filled/centered/stretched, by design; revisit only on user feedback). The family-level scroll-spy anchor is the `<h2 id="group-…">` above the grid, so it is unaffected by the inner 2-col layout. Scale cards stack vertically (no side-by-side score|keyboard), so a half-width card naturally reads as a narrower full card — no internal-layout override is needed (unlike chords). Sub-breakpoint rendering (<1280) is byte-identical to the prior single-column layout (MD5-gated at 390/1024/1279). (History: first shipped at `2xl`/≥1536, moved to `xl`/≥1280 the same day per user request for two columns on regular desktops.)
+
+## Chord-quality regrouping (2026-05-30)
+
+The scales are grouped by **chord-quality use case** — the question a player asks
+at the piano (*"what scale plays over this chord?"*) — instead of by derivational
+family. This is a structural + editorial change only; the card body (notes,
+intervals, staff, piano, play, favorite), root picker, search, routing, collapse,
+PWA/print all stay identical.
+
+**Data shape.** `CuratedScale` (in `curated.ts`) extends the music-core
+`ScaleDefinition` with app-level fields — `group: ScaleGroup`, `groupOrder`
+(1-based, within-group), `description`, `theoryTag`. `music-core` is unchanged
+(editorial/grouping fields are this app's concern). The derivational `family`
+field is preserved on every scale (searchable, future use). `GROUPS` (id / `chip`
+short-form / full `label` / `defaultExpanded`) drives the section headers and the
+chip row; **maj7 is the one group open by default**.
+
+**8 groups (chip → section header, count):**
+
+| Chip | Section header | Scales |
+|---|---|---|
+| maj7 | Major / maj7 | 4 |
+| 7 | Dominant / 7 | 6 |
+| 7alt | Altered dominant / 7alt | 3 |
+| m7 | Minor / m7 | 6 |
+| m6 | Minor-major / m6 | 3 |
+| m7♭5 | Half-diminished / m7♭5 | 3 |
+| dim7 | Diminished / dim7 | 1 |
+| color | Color / Modal | 12 |
+
+Total 38. DOM anchors use ASCII slugs: heading/chip `group-<id>` (id `m7b5` for the
+`m7♭5` chip), panel `group-panel-<id>`.
+
+**Card line.** The former alias subtitle slot now always renders
+`description · theoryTag` (space-middot-space) in the same muted treatment. Aliases
+are no longer shown on the card but remain in the data for search.
+
+**Name inversions.** Ionian → **Major** (alias *Ionian*); Aeolian → **Natural
+minor** (alias *Aeolian*); Bebop major → **Major bebop**. All other names, aliases,
+intervals, and semitones are unchanged. The editorial copy (description/theoryTag
+per scale) is reviewed/approved and embedded verbatim in `curated.ts`.
+
+**Search.** Matches name + alias + description + theoryTag (accidental/diacritic
+folded); a result's `sublabel`/`chipId` reflect the use-case group. So `ionian`
+still finds Major (via the kept alias), `altered` finds Altered (name), `japanese`
+finds Hirajoshi + In Sen (description).
 
 ## Acceptance criteria (v1 ships when…)
 
