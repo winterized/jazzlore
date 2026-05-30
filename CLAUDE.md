@@ -38,7 +38,7 @@ Per-app `CLAUDE.md` files take precedence over this one for that app's conventio
 - **Package manager:** pnpm 11 (`packageManager` field) + workspaces (`pnpm-workspace.yaml`)
 - **Language:** TypeScript 6 strict, `noUncheckedIndexedAccess`, `verbatimModuleSyntax`. Shared compiler options in `tsconfig.base.json`.
 - **Testing:** Vitest 4 + React Testing Library per package; Playwright 1.60 for e2e at the workspace root.
-- **Lint / format:** ESLint flat config + Prettier at the workspace root, scanning all packages.
+- **Lint / format:** ESLint flat config + Prettier at the workspace root, scanning all packages. `pnpm lint` is **green (0/0) and a required CI gate** — `.github/workflows/lint.yml` runs it on every PR + push (Node 22; the `eslint` check is a required status check on `main`), and stale `eslint-disable` directives are errors (`reportUnusedDisableDirectives`). Keep it green; don't merge red. Prettier is **not** enforced (many files are unformatted on `main`) — don't reformat unrelated files in a PR.
 - **Styling:** Tailwind CSS 4 (CSS-first config, no JS config file). Each app imports `tailwindcss` and adds `@source` for any `packages/*` whose classes it uses.
 - **Deployment:** Cloudflare Workers Static Assets via `wrangler.jsonc` at the repo root (single project covering this monorepo's first deployed app). `not_found_handling: "single-page-application"` for React Router. Auto-deploy on push to `main` via Cloudflare's GitHub integration.
 
