@@ -14,6 +14,8 @@ Sub-sites under `jazzlore.com`:
 
 The public apps are also wrapped as **native iOS apps via Capacitor** (separate repo `winterized/jazzlore-ios`), each bundling a frozen snapshot of the web build served from `capacitor://localhost` — no auto-update, so reaching iOS users needs a native rebuild (`make <app>`) + a new App Store build. Detect the native shell with `window.Capacitor?.isNativePlatform?.()` (canonical: `packages/ui/src/usePwaInstall.ts` → `isNativeApp`); a Capacitor WKWebView matches neither `display-mode: standalone` nor `navigator.standalone`. The shared PWA install button hides in the native shell (and when standalone) — shipped 2026-05-29 via PR #132 (#130), covering Metronome / Chords / Scales from `@jazzlore/ui`.
 
+**iCloud build-output hazard (#137):** the working tree lives under `~/Documents`, which is iCloud-synced ("Desktop & Documents"), so iCloud spawns `"<name> 2.ext"` conflict-duplicate copies in build output (`apps/*/dist`). Because `make <app>` copies `dist/` verbatim, that junk would bundle into the `.ipa`. **Run `pnpm check:dupes` before every `make <app>`** (guard: `scripts/check-conflict-dupes.mjs`, exits non-zero listing offenders); if it flags anything, clean-rebuild the affected app (`rm -rf apps/<app>/dist && pnpm build:<app>`) — `dist` is gitignored, so these never reach git; Vite _does_ empty `outDir`, iCloud just re-creates the copies during sync. Relocating the tree out of iCloud (the true root-cause fix) was deliberately deferred — tracked separately. First cleaned for chords 2026-05-30 (#137).
+
 Every public-facing app must feel public-ready from v1: clean, fast, accessible, mobile-friendly, no rough edges.
 
 ## Workspace layout
