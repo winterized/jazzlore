@@ -1,12 +1,12 @@
 import { PianoKeyboard } from '@jazzlore/ui'
 import { formatRoot, pitchClass, withOctaves } from '@jazzlore/music-core'
-import type { ScaleDefinition } from '@jazzlore/music-core'
+import type { CuratedScale } from './data/curated'
 import PlayButton from '../audio/PlayButton'
 import ScaleScore from './ScaleScore'
 import StarButton from './StarButton'
 
 type Props = {
-  scale: ScaleDefinition
+  scale: CuratedScale
   root: string
   notes: string[]
 }
@@ -19,9 +19,11 @@ export default function ScaleRow({ scale, root, notes }: Props) {
       <header className="mb-2 flex items-start justify-between gap-3">
         <div>
           <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100">{scale.name}</h3>
-          {scale.alias && (
-            <p className="scale-alias text-sm text-stone-600 dark:text-stone-400">{scale.alias}</p>
-          )}
+          {/* Description + theory tag in the former alias slot — same muted
+              treatment. Joined by space-middot-space. */}
+          <p className="scale-alias text-sm text-stone-600 dark:text-stone-400">
+            {scale.description} · {scale.theoryTag}
+          </p>
         </div>
         {/* Order: sound then favorite — consistent with the chords app. */}
         <div className="flex items-center gap-2">

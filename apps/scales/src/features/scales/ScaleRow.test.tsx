@@ -7,27 +7,26 @@ const ionian = CURATED_SCALES.find((s) => s.id === 'ionian')!
 const aeolian = CURATED_SCALES.find((s) => s.id === 'aeolian')!
 
 describe('ScaleRow', () => {
-  it('shows the scale name', () => {
+  it('shows the scale name (Ionian renamed to Major)', () => {
     render(<ScaleRow scale={ionian} root="C" notes={['C', 'D', 'E', 'F', 'G', 'A', 'B']} />)
-    expect(screen.getByRole('heading', { name: /^Ionian$/ })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /^Major$/ })).toBeInTheDocument()
   })
 
-  it('shows the alias when present (Aeolian → Natural minor)', () => {
-    render(
+  it('renders the description · theory-tag line in the muted slot', () => {
+    const { container } = render(
       <ScaleRow scale={aeolian} root="C" notes={['C', 'D', 'Eb', 'F', 'G', 'Ab', 'Bb']} />,
     )
-    expect(screen.getByText('Natural minor')).toBeInTheDocument()
+    const line = container.querySelector('.scale-alias')
+    expect(line?.textContent).toBe(`${aeolian.description} · ${aeolian.theoryTag}`)
   })
 
-  it('does not render an alias subtitle when the scale has no alias', () => {
-    render(
-      <ScaleRow
-        scale={CURATED_SCALES.find((s) => s.id === 'dorian')!}
-        root="C"
-        notes={['C', 'D', 'Eb', 'F', 'G', 'A', 'Bb']}
-      />,
+  it('always renders the description line, even for scales that had no alias', () => {
+    const dorian = CURATED_SCALES.find((s) => s.id === 'dorian')!
+    const { container } = render(
+      <ScaleRow scale={dorian} root="C" notes={['C', 'D', 'Eb', 'F', 'G', 'A', 'Bb']} />,
     )
-    expect(screen.queryByText('Natural minor')).toBeNull()
+    const line = container.querySelector('.scale-alias')
+    expect(line?.textContent).toBe(`${dorian.description} · ${dorian.theoryTag}`)
   })
 
   it('renders the intervals exactly as in the curated data', () => {
@@ -49,7 +48,7 @@ describe('ScaleRow', () => {
 
   it('renders a play button labelled with scale + root', () => {
     render(<ScaleRow scale={ionian} root="Bb" notes={['Bb', 'C', 'D', 'Eb', 'F', 'G', 'A']} />)
-    expect(screen.getByRole('button', { name: /Play Ionian on B♭/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Play Major on B♭/ })).toBeInTheDocument()
   })
 
   it('renders a star button for saving the scale', () => {
