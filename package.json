@@ -31,7 +31,9 @@
     "build-storybook": "pnpm -F @jazzlore/ui build-storybook",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "check:dupes": "node scripts/check-conflict-dupes.mjs",
+    "test:scripts": "node --test scripts/*.test.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.3",
