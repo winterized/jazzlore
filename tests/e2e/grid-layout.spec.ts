@@ -46,9 +46,9 @@ function gridAreas(page: Page, selector: string): Promise<string> {
 const COMPACT_AREAS = '"info score actions" "kbd kbd kbd"' // 480–767 and (inGrid) >=1280
 const WIDE_AREAS = '"info info actions" "score kbd kbd"' //  >=768 full-width
 
-// chords: each group's <ul>; scales: each expanded family's panel <div>.
+// chords: each group's <ul>; scales: each expanded group's panel <div>.
 const CHORDS_GRID = 'section[aria-label="TRIADS"] ul'
-const SCALES_GRID = 'div[id^="family-"]'
+const SCALES_GRID = 'div[id^="group-panel-"]'
 
 test('chords card grid: 1 column below xl, 2 columns at xl', async ({ page }) => {
   await page.setViewportSize({ width: 1279, height: 832 })
@@ -63,7 +63,7 @@ test('chords card grid: 1 column below xl, 2 columns at xl', async ({ page }) =>
 test('scales card grid: 1 column below xl, 2 columns at xl', async ({ page }) => {
   await page.setViewportSize({ width: 1279, height: 832 })
   await settle(page, SCALES)
-  // First family is expanded by default → its panel exists.
+  // First group (maj7) is expanded by default → its panel exists.
   await page.locator(SCALES_GRID).first().waitFor()
   expect(await trackCount(page, SCALES_GRID)).toBe(1)
 
