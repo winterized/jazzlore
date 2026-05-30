@@ -9,6 +9,7 @@ export {
 } from './StickyHeader'
 export { default as ThemeToggle } from './ThemeToggle'
 export { isNativeApp, type CapacitorGlobal } from './isNativeApp'
+export { hideNativeSplashAfterMount } from './hideNativeSplash'
 export { useFocusTrap } from './useFocusTrap'
 export {
   useSwipeDownDismiss,
