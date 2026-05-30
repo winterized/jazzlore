@@ -25,9 +25,11 @@ jobs:
         uses: pnpm/action-setup@v4
 
       - name: Install Node
+        # pnpm 11 (packageManager field) requires Node >= 22.13 — the repo's
+        # engines.node ">=20" is only a soft floor for app code, not the toolchain.
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       - name: Install dependencies
