@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router'
 import { StickyHeader, type ChipGroup, type RootOption } from '@jazzlore/ui'
-import ScaleList, { type FamilyId } from '../features/scales/ScaleList'
-import { CURATED_SCALES, FAMILIES } from '../features/scales/data/curated'
+import ScaleList, { type GroupId } from '../features/scales/ScaleList'
+import { CURATED_SCALES, GROUPS } from '../features/scales/data/curated'
 import {
   DEFAULT_ROOTS,
   alternateSpelling,
@@ -32,11 +32,11 @@ const RouterLink = ({
   </Link>
 )
 
-// Initial expanded state derived from FAMILIES — computed once outside the
+// Initial expanded state derived from GROUPS — computed once outside the
 // component so it does not trigger memo-churn on every render.
 const initialExpanded = Object.fromEntries(
-  FAMILIES.map((f) => [f.id, f.defaultExpanded]),
-) as Record<FamilyId, boolean>
+  GROUPS.map((g) => [g.id, g.defaultExpanded]),
+) as Record<GroupId, boolean>
 
 export default function ScalesPage() {
   const { root: slug } = useParams<{ root: string }>()
@@ -44,10 +44,10 @@ export default function ScalesPage() {
   const root = slug ? rootFromSlug(slug) : null
   const { theme, toggle } = useTheme()
 
-  const [expanded, setExpanded] = useState<Record<FamilyId, boolean>>(initialExpanded)
+  const [expanded, setExpanded] = useState<Record<GroupId, boolean>>(initialExpanded)
 
-  const handleExpandedChange = useCallback((familyId: FamilyId, next: boolean) => {
-    setExpanded((prev) => ({ ...prev, [familyId]: next }))
+  const handleExpandedChange = useCallback((groupId: GroupId, next: boolean) => {
+    setExpanded((prev) => ({ ...prev, [groupId]: next }))
   }, [])
 
   const rootOptions: readonly RootOption[] = useMemo(
@@ -64,56 +64,58 @@ export default function ScalesPage() {
   )
 
   // Single unlabelled chip group — StickyHeader omits empty group labels.
+  // The chip shows the short form (g.chip, e.g. "m7♭5"); the section header
+  // carries the full label.
   const chipGroups: ChipGroup[] = useMemo(
     () => [
       {
         label: '',
-        chips: FAMILIES.map((f) => ({ id: `group-${f.id}`, label: f.label })),
+        chips: GROUPS.map((g) => ({ id: `group-${g.id}`, label: g.chip })),
       },
     ],
     [],
   )
 
   const handleChipActivate = useCallback((chipId: string) => {
-    // chipId is "group-<familyId>" — strip the prefix to get the familyId.
-    const familyId = chipId.replace(/^group-/, '') as FamilyId
+    // chipId is "group-<groupId>" — strip the prefix to get the groupId.
+    const groupId = chipId.replace(/^group-/, '') as GroupId
     // Expand-only: if already open, stay open (no toggle-off per handoff).
     // Functional update form — no closure over `expanded`, so deps array is [].
-    setExpanded((prev) => (prev[familyId] ? prev : { ...prev, [familyId]: true }))
+    setExpanded((prev) => (prev[groupId] ? prev : { ...prev, [groupId]: true }))
   }, [])
 
   // ── Header search ─────────────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState('')
   const searchResults = useMemo(() => searchScales(searchQuery), [searchQuery])
 
-  // `scale-<id>` → its family, so a search hit can expand the (maybe collapsed)
+  // `scale-<id>` → its group, so a search hit can expand the (maybe collapsed)
   // accordion before we scroll to the row.
-  const scaleFamily = useMemo(
-    () => new Map(CURATED_SCALES.map((s) => [`scale-${s.id}`, s.family])),
+  const scaleGroup = useMemo(
+    () => new Map(CURATED_SCALES.map((s) => [`scale-${s.id}`, s.group])),
     [],
   )
 
   // Pending scroll target lives in a ref (no setState in the effect); a tick
   // bumped from the handler (an event — lint-clean) drives the effect, and so
-  // does `expanded` (the family just opened → the row mounts).
+  // does `expanded` (the group just opened → the row mounts).
   const pendingScrollRef = useRef<string | null>(null)
   const [scrollTick, setScrollTick] = useState(0)
 
   const handleSearchSelect = useCallback(
     (domId: string) => {
-      const fam = scaleFamily.get(domId)
-      if (fam) setExpanded((prev) => (prev[fam] ? prev : { ...prev, [fam]: true }))
+      const grp = scaleGroup.get(domId)
+      if (grp) setExpanded((prev) => (prev[grp] ? prev : { ...prev, [grp]: true }))
       pendingScrollRef.current = domId
       setScrollTick((t) => t + 1)
     },
-    [scaleFamily],
+    [scaleGroup],
   )
 
   useEffect(() => {
     const id = pendingScrollRef.current
     if (!id) return
     const el = document.getElementById(id)
-    if (!el) return // family not expanded/rendered yet — the next run gets it
+    if (!el) return // group not expanded/rendered yet — the next run gets it
     el.scrollIntoView({
       behavior: prefersReducedMotion() ? 'instant' : 'smooth',
       block: 'start',

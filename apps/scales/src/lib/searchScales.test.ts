@@ -12,15 +12,33 @@ describe('searchScales', () => {
     expect(ids).toContain('scale-locrian')
     expect(ids).toContain('scale-locrian-nat2')
     const locrian = searchScales('locr').find((r) => r.id === 'scale-locrian')
+    // Sublabel + chip now reflect the use-case group, not the family.
     expect(locrian).toMatchObject({
       label: 'Locrian',
-      sublabel: 'Modes of major',
-      chipId: 'group-modes-of-major',
+      sublabel: 'Half-diminished / m7♭5',
+      chipId: 'group-m7b5',
     })
   })
 
-  it('matches the alias too (Super Locrian → altered)', () => {
+  it('matches kept aliases (Super Locrian → Altered)', () => {
     expect(searchScales('super locrian').map((r) => r.id)).toContain('scale-altered')
+  })
+
+  it('finds the renamed scales by their inverted aliases', () => {
+    // Ionian became "Major" (alias Ionian); Aeolian became "Natural minor"
+    // (alias Aeolian) — the old names must still resolve via the alias.
+    expect(searchScales('ionian').map((r) => r.id)).toContain('scale-ionian')
+    expect(searchScales('aeolian').map((r) => r.id)).toContain('scale-aeolian')
+  })
+
+  it('matches by name (altered → Altered)', () => {
+    expect(searchScales('altered').map((r) => r.id)).toContain('scale-altered')
+  })
+
+  it('matches by description (japanese → Hirajoshi and In Sen)', () => {
+    const ids = searchScales('japanese').map((r) => r.id)
+    expect(ids).toContain('scale-hirajoshi')
+    expect(ids).toContain('scale-in-sen')
   })
 
   it('is case-insensitive', () => {

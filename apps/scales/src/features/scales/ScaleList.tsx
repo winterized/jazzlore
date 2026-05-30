@@ -1,23 +1,25 @@
 import { useMemo } from 'react'
-import { notesForScale, type Family, type ScaleDefinition } from '@jazzlore/music-core'
-import { CURATED_SCALES, FAMILIES } from './data/curated'
+import { notesForScale } from '@jazzlore/music-core'
+import { CURATED_SCALES, GROUPS, type CuratedScale, type ScaleGroup } from './data/curated'
 import ScaleRow from './ScaleRow'
 
-export type FamilyId = Family
+export type GroupId = ScaleGroup
 
 type Props = {
   root: string
-  expanded: Record<FamilyId, boolean>
-  onExpandedChange: (familyId: FamilyId, next: boolean) => void
+  expanded: Record<GroupId, boolean>
+  onExpandedChange: (groupId: GroupId, next: boolean) => void
 }
 
 export default function ScaleList({ root, expanded, onExpandedChange }: Props) {
   const grouped = useMemo(() => {
-    const map = new Map<Family, readonly ScaleDefinition[]>()
-    for (const family of FAMILIES) {
+    const map = new Map<ScaleGroup, readonly CuratedScale[]>()
+    for (const group of GROUPS) {
       map.set(
-        family.id,
-        CURATED_SCALES.filter((s) => s.family === family.id),
+        group.id,
+        CURATED_SCALES.filter((s) => s.group === group.id).sort(
+          (a, b) => a.groupOrder - b.groupOrder,
+        ),
       )
     }
     return map
@@ -25,25 +27,25 @@ export default function ScaleList({ root, expanded, onExpandedChange }: Props) {
 
   return (
     <div className="space-y-4">
-      {FAMILIES.map((family) => {
-        const isOpen = expanded[family.id]
-        const scales = grouped.get(family.id) ?? []
-        const panelId = `family-${family.id}`
+      {GROUPS.map((group) => {
+        const isOpen = expanded[group.id]
+        const scales = grouped.get(group.id) ?? []
+        const panelId = `group-panel-${group.id}`
         return (
-          <section key={family.id} aria-label={family.label}>
+          <section key={group.id} aria-label={group.label}>
             <h2
-              id={`group-${family.id}`}
+              id={`group-${group.id}`}
               className="text-base scroll-mt-[140px] md:scroll-mt-[220px]"
             >
               <button
                 type="button"
-                onClick={() => onExpandedChange(family.id, !isOpen)}
+                onClick={() => onExpandedChange(group.id, !isOpen)}
                 aria-expanded={isOpen}
                 aria-controls={panelId}
                 className="flex w-full items-center justify-between rounded-md bg-stone-200 px-4 py-2 text-left font-medium hover:bg-stone-300 dark:bg-stone-800 dark:hover:bg-stone-700"
               >
                 <span>
-                  {family.label}{' '}
+                  {group.label}{' '}
                   <span className="text-stone-600 dark:text-stone-400">
                     ({scales.length})
                   </span>
@@ -52,8 +54,8 @@ export default function ScaleList({ root, expanded, onExpandedChange }: Props) {
               </button>
             </h2>
             {isOpen && (
-              // Per-family grid: 1 col, → 2 cols at xl (1280px) — shared
-              // breakpoint with chords for cross-site consistency. The family
+              // Per-group grid: 1 col, → 2 cols at xl (1280px) — shared
+              // breakpoint with chords for cross-site consistency. The group
               // header (<h2>) is above this panel so it spans full width; an
               // odd count leaves one trailing empty cell (align-items:start,
               // by design). gap-3 == the prior space-y-3 rhythm in 1 col.

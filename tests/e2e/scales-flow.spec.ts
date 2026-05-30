@@ -36,8 +36,14 @@ test('pick C, save Dorian, see it in collection, print preview', async ({ page }
   const cRadios = page.getByRole('radio', { name: 'C' })
   await expect(cRadios.first()).toHaveAttribute('aria-checked', 'true')
 
-  // Save Dorian via star
-  const dorianRow = page.locator('article', { hasText: 'Dorian' }).first()
+  // Dorian now lives in the "Minor / m7" group, collapsed by default — expand
+  // it first, then target the card by its exact heading (m7 also contains
+  // "Bebop dorian" and "Dorian ♭2").
+  await page.locator('[aria-controls="group-panel-m7"]').click()
+  const dorianRow = page
+    .locator('article')
+    .filter({ has: page.getByRole('heading', { name: /^Dorian$/ }) })
+    .first()
   await dorianRow.getByRole('button', { name: /Save to My scales/i }).click()
 
   // Navigate to collection
@@ -53,6 +59,9 @@ test('pick C, save Dorian, see it in collection, print preview', async ({ page }
   // swallowed each scale's name (it lives inside an <article><header>...). The
   // strip rule must keep article headers visible.
   await expect(page.getByRole('heading', { name: /^Dorian$/ })).toBeVisible()
+  // The editorial description · theoryTag line is suppressed in print at every
+  // density — the printed "My scales" sheet carries no per-card editorial line.
+  await expect(page.locator('.print-grid .scale-alias').first()).toBeHidden()
 })
 
 // ─── Phase 7: StickyHeader integration ───────────────────────────────────────
@@ -67,74 +76,66 @@ test('sticky header renders with title and chip row', async ({ page }) => {
   const chipNav = page.getByRole('navigation', { name: 'Scale categories' })
   await expect(chipNav).toBeVisible()
 
-  // All 7 family chips are present
-  for (const label of [
-    'Modes of major',
-    'Modes of melodic minor',
-    'Modes of harmonic minor',
-    'Symmetric',
-    'Pentatonic & blues',
-    'Bebop',
-    'Exotic',
-  ]) {
+  // All 8 use-case group chips are present (short forms).
+  for (const label of ['maj7', '7', '7alt', 'm7', 'm6', 'm7♭5', 'dim7', 'color']) {
     await expect(chipNav.getByRole('button', { name: label, exact: true })).toBeVisible()
   }
 })
 
-test('family chip click expands accordion and scrolls section into viewport below header', async ({ page }) => {
+test('group chip click expands accordion and scrolls section into viewport below header', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 })
   // Instant scroll so the chip can't shift under Playwright under 4-worker parallel load.
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/scales/C')
 
-  // "Bebop" is collapsed by default. Use aria-controls to uniquely target the
-  // accordion header button — it controls "family-bebop" and is the only button
-  // with that attribute value.
-  const bebopAccordionBtn = page.locator('[aria-controls="family-bebop"]')
-  await expect(bebopAccordionBtn).toHaveAttribute('aria-expanded', 'false')
+  // "color" is collapsed by default. Use aria-controls to uniquely target the
+  // accordion header button — it controls "group-panel-color" and is the only
+  // button with that attribute value.
+  const colorAccordionBtn = page.locator('[aria-controls="group-panel-color"]')
+  await expect(colorAccordionBtn).toHaveAttribute('aria-expanded', 'false')
 
-  // Click the Bebop chip in the chip nav (exact name = no count suffix).
+  // Click the color chip in the chip nav (exact name = short form, no count).
   const chipNav = page.getByRole('navigation', { name: 'Scale categories' })
-  await chipNav.getByRole('button', { name: 'Bebop', exact: true }).click()
+  await chipNav.getByRole('button', { name: 'color', exact: true }).click()
 
   // The accordion must now be expanded (aria-expanded="true").
-  await expect(bebopAccordionBtn).toHaveAttribute('aria-expanded', 'true')
+  await expect(colorAccordionBtn).toHaveAttribute('aria-expanded', 'true')
 
-  // The group heading (scroll target id="group-bebop") must be scrolled into view.
+  // The group heading (scroll target id="group-color") must be scrolled into view.
   // Smooth scroll is timing-sensitive in headless browsers; we use instant scroll
   // to the element directly from the test and then check it's in the viewport.
   // The scroll-margin-top (220px desktop) keeps the landing below the sticky header.
-  await page.locator('#group-bebop').scrollIntoViewIfNeeded()
-  await expect(page.locator('#group-bebop')).toBeInViewport()
+  await page.locator('#group-color').scrollIntoViewIfNeeded()
+  await expect(page.locator('#group-color')).toBeInViewport()
 })
 
-test('chip click on already-open family keeps it open (expand-only, no toggle-off)', async ({ page }) => {
+test('chip click on already-open group keeps it open (expand-only, no toggle-off)', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 })
   // Instant scroll so the chip can't shift under Playwright under 4-worker parallel load.
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/scales/C')
 
-  // "Modes of major" is open by default. Use aria-controls to uniquely target
-  // the accordion button (controls "family-modes-of-major").
-  const modesAccordionBtn = page.locator('[aria-controls="family-modes-of-major"]')
-  await expect(modesAccordionBtn).toHaveAttribute('aria-expanded', 'true')
+  // "maj7" is open by default. Use aria-controls to uniquely target the
+  // accordion button (controls "group-panel-maj7").
+  const majAccordionBtn = page.locator('[aria-controls="group-panel-maj7"]')
+  await expect(majAccordionBtn).toHaveAttribute('aria-expanded', 'true')
 
-  // Click the "Modes of major" chip (exact match = no count suffix).
+  // Click the "maj7" chip (exact match = short form).
   const chipNav = page.getByRole('navigation', { name: 'Scale categories' })
-  await chipNav.getByRole('button', { name: 'Modes of major', exact: true }).click()
+  await chipNav.getByRole('button', { name: 'maj7', exact: true }).click()
 
   // It must stay open — no toggle-off.
-  await expect(modesAccordionBtn).toHaveAttribute('aria-expanded', 'true')
+  await expect(majAccordionBtn).toHaveAttribute('aria-expanded', 'true')
 })
 
-test('header search scrolls to the exact scale and expands its collapsed family', async ({ page }) => {
+test('header search scrolls to the exact scale and expands its collapsed group', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 })
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/scales/C')
 
-  // "Locrian ♮2" lives in "Modes of melodic minor" — collapsed by default.
-  const mmBtn = page.locator('[aria-controls="family-modes-of-melodic-minor"]')
-  await expect(mmBtn).toHaveAttribute('aria-expanded', 'false')
+  // "Locrian ♮2" lives in "Half-diminished / m7♭5" — collapsed by default.
+  const m7b5Btn = page.locator('[aria-controls="group-panel-m7b5"]')
+  await expect(m7b5Btn).toHaveAttribute('aria-expanded', 'false')
 
   const search = page.getByRole('combobox', { name: 'Search scales' })
   await search.fill('locrian ♮2')
@@ -142,18 +143,18 @@ test('header search scrolls to the exact scale and expands its collapsed family'
   await expect(option).toBeVisible()
   await option.click()
 
-  // The family auto-expands and the exact scale row is scrolled into view.
-  await expect(mmBtn).toHaveAttribute('aria-expanded', 'true')
+  // The group auto-expands and the exact scale row is scrolled into view.
+  await expect(m7b5Btn).toHaveAttribute('aria-expanded', 'true')
   await expect(page.locator('#scale-locrian-nat2')).toBeInViewport()
 
-  // The family scroll-spy chip is pinned active (chips are family-level).
+  // The group scroll-spy chip is pinned active (chips are group-level).
   const chipNav = page.getByRole('navigation', { name: 'Scale categories' })
-  const mmChip = chipNav.getByRole('button', { name: 'Modes of melodic minor', exact: true })
-  await expect(mmChip).toHaveAttribute('aria-current', 'true')
+  const m7b5Chip = chipNav.getByRole('button', { name: 'm7♭5', exact: true })
+  await expect(m7b5Chip).toHaveAttribute('aria-current', 'true')
   // Bug 2: input blurred. Bug 3: chip stays after the scroll settles.
   await expect(page.getByRole('combobox', { name: 'Search scales' })).not.toBeFocused()
   await page.waitForTimeout(1500)
-  await expect(mmChip).toHaveAttribute('aria-current', 'true')
+  await expect(m7b5Chip).toHaveAttribute('aria-current', 'true')
 })
 
 test('the "My scales" collection link is reachable on mobile (icon) and desktop (text)', async ({

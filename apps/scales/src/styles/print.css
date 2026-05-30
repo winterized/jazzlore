@@ -18,12 +18,17 @@
     page-break-inside: avoid;
   }
 
+  /* The on-screen `.scale-alias` line now carries the editorial
+     description · theoryTag (it replaced the old optional alias subtitle).
+     Suppress it in print at every density so the printed "My scales" sheet
+     stays clean — matching the pre-regrouping printout, which carried no
+     per-card editorial line. */
+  .scale-alias { display: none !important; }
+
   /* Density-aware per-scale content */
-  /* 1 per row: full content (default) — alias shown */
-  /* 2 per row: hide alias */
-  :root[data-density="2"] .scale-alias { display: none !important; }
-  /* 3 per row: hide alias, intervals, and note names — only name + score */
-  :root[data-density="3"] .scale-alias,
+  /* 1 per row: full content (default) */
+  /* 2 per row: name + intervals + notes + score (alias already hidden above) */
+  /* 3 per row: hide intervals and note names too — only name + score */
   :root[data-density="3"] .scale-intervals,
   :root[data-density="3"] .scale-notes { display: none !important; }
 
