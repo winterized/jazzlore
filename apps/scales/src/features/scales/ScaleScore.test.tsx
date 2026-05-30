@@ -8,7 +8,6 @@ import ScaleScore from './ScaleScore'
 // the <svg> appears asynchronously after mount — we wait for it.
 const findSvg = (): SVGElement | null => {
   const host = screen.getByRole('img', { name: /Scale notation/ })
-  // eslint-disable-next-line testing-library/no-node-access
   return host.querySelector('svg')
 }
 

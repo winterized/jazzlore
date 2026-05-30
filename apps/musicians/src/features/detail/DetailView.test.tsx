@@ -588,11 +588,10 @@ function setupRail(detail: MusicianDetail, source: DataSource) {
 }
 
 async function clickExpand(): Promise<void> {
-  const user = userEvent.setup()
   const cta = screen.getByRole('button', {
     name: /Show all \d+ collaborators/,
   })
-  await user.click(cta)
+  await userEvent.setup().click(cta)
 }
 
 describe('DetailView — tail-photo enrichment (issue #85)', () => {

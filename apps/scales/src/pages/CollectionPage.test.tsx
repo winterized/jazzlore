@@ -49,7 +49,6 @@ describe('CollectionPage', () => {
       </MemoryRouter>,
     )
     await userEvent.click(screen.getByRole('checkbox', { name: /include.*dorian.*in print/i }))
-    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- need to query our wrapping data attribute
     expect(container.querySelector('[data-print-include="false"]')).not.toBeNull()
   })
 
@@ -106,7 +105,6 @@ describe('CollectionPage', () => {
         <CollectionPage />
       </MemoryRouter>,
     )
-    // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access -- asserting the page-root <main> class
     const cls = container.querySelector('main')?.getAttribute('class') ?? ''
     // Pin the property + side (pt-/pb-), not just the env() token.
     expect(cls).toContain('pt-[calc(1rem+env(safe-area-inset-top')

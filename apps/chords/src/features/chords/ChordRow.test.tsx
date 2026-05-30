@@ -36,7 +36,6 @@ describe('ChordRow — Cmaj7 with root C', () => {
 
   it('renders a piano keyboard (14 white keys)', () => {
     const { container } = render(<ChordRow rootNote="C" definition={cmaj7} />)
-    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container -- SVG structure check
     expect(container.querySelectorAll('[data-role="white-key"]')).toHaveLength(14)
   })
 
@@ -82,7 +81,6 @@ describe('ChordRow — C major (no alternate)', () => {
     // carry aria-hidden on their decorative spans, so a bare query would pass
     // even if the placeholder was deleted. Match on the explicit `h-4` class
     // to confirm the vertical-rhythm reservation is present.
-    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container -- structural check
     const placeholder = container.querySelector('div.h-4[aria-hidden="true"]')
     expect(placeholder).not.toBeNull()
   })

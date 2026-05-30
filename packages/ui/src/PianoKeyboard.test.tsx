@@ -5,7 +5,6 @@ import PianoKeyboard from './PianoKeyboard'
 // SVG primitives like <rect>/<text> don't expose accessible roles for individual
 // keys, so we query the structural data-* attributes we set on each <rect>.
 const queryAll = (container: HTMLElement, selector: string) =>
-  // eslint-disable-next-line testing-library/no-node-access
   container.querySelectorAll(selector)
 
 // Pitch class arrays (0..11) for common scales, computed without music-core

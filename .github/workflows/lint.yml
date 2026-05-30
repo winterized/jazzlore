@@ -1,0 +1,39 @@
+# Lint gate — keep `pnpm lint` green so it can serve as a real quality gate.
+#
+# The baseline was red for a long time (~100 pre-existing errors, GH #134), which
+# made the gate non-functional: new violations couldn't be told apart from the
+# noise. Once green, this workflow stops it from silently re-rotting — a PR that
+# introduces a lint error (or a stale `eslint-disable`, which the flat config now
+# reports as an error) fails here before merge.
+#
+# Lint only: no build, no secrets, no deploy. Cloudflare still handles app builds
+# + deploys on push to main via the GitHub integration.
+name: Lint
+
+on:
+  pull_request: {}
+  push:
+    branches: [main]
+
+jobs:
+  eslint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install Node
+        # pnpm 11 (packageManager field) requires Node >= 22.13 — the repo's
+        # engines.node ">=20" is only a soft floor for app code, not the toolchain.
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run ESLint
+        run: pnpm lint

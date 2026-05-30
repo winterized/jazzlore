@@ -91,12 +91,9 @@ describe('RootSheet — portal target (guards the flagged bug)', () => {
     const dialog = screen.getByRole('dialog')
     const trigger = screen.getByTestId('trigger')
 
-    // eslint-disable-next-line testing-library/no-node-access -- structural portal guard: the whole point is asserting DOM ancestry
     expect(dialog.parentElement).toBe(document.body)
-    // eslint-disable-next-line testing-library/no-container -- must prove the dialog escaped the React mount container
     expect(container.contains(dialog)).toBe(false)
     // Sanity: the trigger (a normal child) DID render inside the container.
-    // eslint-disable-next-line testing-library/no-container -- structural sanity counterpart
     expect(container.contains(trigger)).toBe(true)
   })
 

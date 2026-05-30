@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { FIG_LIB, figKey, NoPhotoMark } from './noPhotoFigures'
+import { FIG_LIB, figKey } from './noPhotoFigures.lib'
+import { NoPhotoMark } from './noPhotoFigures'
 
 describe('figKey', () => {
   it('maps the canonical instrument strings to their figure key', () => {
