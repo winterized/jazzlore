@@ -14,7 +14,11 @@ The first sub-site of the Jazzlore portfolio: a public, polished jazz scales ref
 
 ## Sticky-header design (2026-05-15)
 
-The page now uses `StickyHeader` from `@jazzlore/ui` (sticky translucent header, scroll-reactive title, inline root picker, scroll-spy chip row — one chip per scale family). The family-accordion `expanded` state is controlled: lifted to `ScalesPage`, passed into `ScaleList` via props (`expanded` + `onExpandedChange`). Clicking a chip expands that family (expand-only — never collapses via chip); the family's own accordion header still toggles freely. See `apps/scales/docs/specs/scales.md` → "Superseded by the sticky-header design" for the full rationale.
+The page now uses `StickyHeader` from `@jazzlore/ui` (sticky translucent header, scroll-reactive title, inline root picker, scroll-spy chip row — one chip per group). The group-accordion `expanded` state is controlled: lifted to `ScalesPage`, passed into `ScaleList` via props (`expanded` + `onExpandedChange`). Clicking a chip expands that group (expand-only — never collapses via chip); the group's own accordion header still toggles freely. See `apps/scales/docs/specs/scales.md` → "Superseded by the sticky-header design" for the full rationale.
+
+## Scale grouping (2026-05-30, PR #144)
+
+Scales group by **chord-quality use case**, not derivational family. Data lives in `src/features/scales/data/curated.ts`: `CURATED_SCALES: CuratedScale[]` (each carries `group`, `groupOrder`, `description`, `theoryTag`, plus the preserved `family`) and `GROUPS` (id / short `chip` / full `label` / `defaultExpanded`; `maj7` open by default). `CuratedScale = ScaleDefinition & {…}` keeps the editorial/grouping fields **in this app** — `packages/music-core` stays pure (its `ScaleDefinition` is unchanged). DOM anchors: heading/chip `group-<id>` (ASCII slug `m7b5` for the `m7♭5` chip), panel `group-panel-<id>`. The card's `.scale-alias` slot now renders `description · theoryTag` full-width **below** the name/buttons header (not in the narrow left column) so it fits ≤2 lines on mobile — guarded by `tests/e2e/scales-mobile-fit.spec.ts`; it is suppressed in `@media print`. Search (`lib/searchScales.ts`) matches name + alias + description + theoryTag.
 
 ## Source structure (`apps/scales/src/`)
 
