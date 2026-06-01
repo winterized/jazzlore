@@ -22,7 +22,6 @@ import type { Collaborator } from '../lib/types'
 import type { MusicianMinimal } from '../hooks/useMusicianData'
 import { spotifyMusicianUrl, appleMusicMusicianUrl } from '../lib/links'
 import { Duo3 } from './Duo3'
-import { SpotifyIcon, AppleIcon } from './icons'
 
 type Props = {
   c: Collaborator
@@ -152,7 +151,10 @@ export function ConnRow({
           aria-label={`Listen to ${c.name} on Spotify`}
           onClick={stop}
         >
-          <SpotifyIcon />
+          {/* Official Spotify mark (vendored, unmodified), theme-swapped
+              black/white via background-image in CSS. Decorative — the
+              anchor carries the accessible name. */}
+          <span className="ic-glyph ic-spotify" aria-hidden="true" />
         </a>
         <a
           className="ic"
@@ -162,7 +164,11 @@ export function ConnRow({
           aria-label={`Listen to ${c.name} on Apple Music`}
           onClick={stop}
         >
-          <AppleIcon />
+          {/* Official Apple Music icon (vendored, unmodified), theme-swapped
+              black/white via background-image in CSS — Apple's guidelines
+              forbid recolouring, so we use the supplied blk/wht files as-is.
+              Decorative — the anchor carries the accessible name. */}
+          <span className="ic-glyph ic-apple" aria-hidden="true" />
         </a>
       </div>
     </div>

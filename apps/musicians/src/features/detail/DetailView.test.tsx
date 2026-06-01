@@ -34,6 +34,48 @@ describe('DetailView — identity / bio / listen', () => {
     expect(more).toHaveAttribute('href', '#about')
   })
 
+  it('primary Apple Music surface is the official "Listen on Apple Music" badge', () => {
+    // Phase 2 (brand compliance): the custom outlined "Apple Music" button is
+    // replaced by Apple's fixed badge artwork, embedded verbatim as an <img>.
+    // The badge wording is decorative (alt="") so the anchor's tiered
+    // aria-label remains the single, honest accessible name — no double-read.
+    setup()
+    const listen = screen.getByRole('region', { name: /listen to bobby timmons/i })
+    const apple = within(listen).getByRole('link', {
+      name: /listen to bobby timmons on apple music/i,
+    })
+    const badge = apple.querySelector('img')
+    expect(badge).not.toBeNull()
+    expect(badge).toHaveAttribute(
+      'src',
+      expect.stringContaining('US-UK_Apple_Music_Listen_on_Badge'),
+    )
+    // Decorative: empty alt + aria-hidden so the badge text isn't announced
+    // on top of the anchor's aria-label.
+    expect(badge).toHaveAttribute('alt', '')
+    expect(badge).toHaveAttribute('aria-hidden', 'true')
+    // The old custom-button text is gone.
+    expect(within(apple).queryByText(/^Apple Music$/)).toBeNull()
+  })
+
+  it('primary Spotify button keeps its amber styling but uses the official mark', () => {
+    // Phase 2 (brand compliance): the hand-drawn SpotifyIcon is replaced by
+    // the official Spotify mark, rendered as a CSS-masked span (.spfy-mark)
+    // so it inherits the button's text colour. The amber .btn styling + the
+    // "Listen on Spotify" text are deliberately unchanged.
+    setup()
+    const listen = screen.getByRole('region', { name: /listen to bobby timmons/i })
+    const spotify = within(listen).getByRole('link', {
+      name: /listen to bobby timmons on spotify/i,
+    })
+    expect(spotify).toHaveClass('btn')
+    expect(spotify).not.toHaveClass('alt')
+    expect(spotify).toHaveTextContent(/Listen on Spotify/)
+    expect(spotify.querySelector('.spfy-mark')).not.toBeNull()
+    // The decorative mark must not carry an accessible name (anchor owns it).
+    expect(spotify.querySelector('.spfy-mark')).toHaveAttribute('aria-hidden', 'true')
+  })
+
   it('tier 3 — no track + no artist URL → plain-name search URL', () => {
     // MODERATE's id is `wikidata:Q379938` (a non-curated fictional fixture
     // id for unit purposes), and its `links` has no spotify/apple artist
@@ -153,6 +195,18 @@ describe('DetailView — identity / bio / listen', () => {
     expect(trackCaption?.textContent).toContain(
       'This Here Is Bobby Timmons (1960)',
     )
+  })
+
+  it('renders the Apple/Spotify trademark attribution in the footer', () => {
+    // Phase 4 (brand compliance): the streaming marks (Listen on Apple Music
+    // badge + per-collaborator icons) live on this page, so the trademark
+    // acknowledgement sits in the page footer near them — quiet fine print.
+    setup()
+    expect(
+      screen.getByText(
+        /Apple and Apple Music are trademarks of Apple Inc\., registered in the U\.S\. and other countries\. Spotify is a trademark of Spotify AB\./i,
+      ),
+    ).toBeInTheDocument()
   })
 
   it('renders the orbit mosaic and the records strip', () => {

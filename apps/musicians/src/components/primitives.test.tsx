@@ -177,6 +177,10 @@ describe('ConnRow', () => {
     })
     expect(spotify).toHaveAttribute('href', expect.stringContaining('open.spotify.com'))
     expect(apple).toHaveAttribute('href', expect.stringContaining('music.apple.com'))
+    // Brand compliance (Phase 3): each icon button renders the official mark
+    // via a decorative, theme-swapped background-image glyph (no inline SVG).
+    expect(spotify.querySelector('.ic-glyph.ic-spotify')).not.toBeNull()
+    expect(apple.querySelector('.ic-glyph.ic-apple')).not.toBeNull()
     spotify.click()
     apple.click()
     expect(rowClicks).toBe(0)
