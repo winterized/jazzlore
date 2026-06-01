@@ -8,7 +8,6 @@
 import type { MusicianDetail } from '../../lib/types'
 import { spotifyMusicianUrl, appleMusicMusicianUrl } from '../../lib/links'
 import { AttribPhoto } from '../../components/Attrib'
-import { SpotifyIcon, AppleIcon } from '../../components/icons'
 import {
   CURATED,
   LISTEN_EXTRAS,
@@ -49,6 +48,15 @@ const TIER1_LISTEN_BY_ID: ReadonlyMap<string, CuratedListenLink> = new Map([
   ...LISTEN_EXTRAS.map((e) => [e.id, e.listen] as const),
   ...CURATED.map((c) => [c.id, c.listen] as const),
 ])
+
+// Official Apple-supplied "Listen on Apple Music" badge, vendored UNMODIFIED
+// at public/brand-assets/apple-music (Phase 1). Apple's Identity Guidelines
+// REQUIRE the badge be used exactly as supplied — no recolour, no redraw —
+// so it ships as a static asset embedded via <img> (public/ is copied
+// verbatim, never transformed by the build). It is the primary Apple Music
+// surface; the badge's own colour note is Apple's mandated artwork.
+const APPLE_MUSIC_BADGE =
+  '/brand-assets/apple-music/US-UK_Apple_Music_Listen_on_Badge_RGB_072720.svg'
 
 export function DetailIdentity({
   d,
@@ -123,16 +131,23 @@ export function DetailIdentity({
           rel="noreferrer"
           aria-label={spotifyAria}
         >
-          <SpotifyIcon /> Listen on Spotify
+          {/* Official Spotify mark (vendored unmodified) rendered as a CSS
+              mask so it inherits the button's text colour via currentColor —
+              white on light, near-black on dark, exactly like the label. */}
+          <span className="spfy-mark" aria-hidden="true" /> Listen on Spotify
         </a>
+        {/* Primary Apple Music surface — Apple's fixed badge artwork
+            (embedded verbatim). The badge already reads "Listen on Apple
+            Music", so the <img> is decorative (alt="" + aria-hidden) and the
+            anchor's tiered aria-label stays the single accessible name. */}
         <a
-          className="btn alt"
+          className="apple-badge"
           href={appleHref}
           target="_blank"
           rel="noreferrer"
           aria-label={appleAria}
         >
-          <AppleIcon /> Apple Music
+          <img src={APPLE_MUSIC_BADGE} alt="" aria-hidden="true" />
         </a>
       </section>
       {/* Editorial provenance line — only when both services land in

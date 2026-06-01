@@ -367,6 +367,12 @@
   display: flex;
   gap: 8px;
   padding: 0 14px 14px;
+  /* Phase 2 — the Apple Music badge is fixed-size artwork. Wrap the row so on
+     very narrow phones the badge drops below the (flex:1) Spotify button
+     rather than overflowing or distorting; centre items so the badge and the
+     button align on a shared baseline when they share a line. */
+  flex-wrap: wrap;
+  align-items: center;
 }
 .mu3 .listen .btn {
   flex: 1;
@@ -389,6 +395,52 @@
   background: transparent;
   color: var(--text);
   border-color: var(--line);
+}
+
+/* Primary Spotify button — the official Spotify mark (vendored UNMODIFIED at
+   public/brand-assets/spotify) rendered as a CSS mask, so the silhouette is
+   painted in currentColor = the button's --accent-fg. That tracks the
+   "Listen on Spotify" label exactly: white on light, near-black (#1a1410) on
+   dark. Pragmatic Spotify treatment — the SVG file is untouched on disk; we
+   recolour the silhouette to keep the amber CTA monochrome (no green) and
+   theme-matched, exactly as the prior hand-drawn icon behaved via
+   currentColor. mask uses the artwork's alpha, so the source file's own
+   colour is irrelevant. */
+.mu3 .listen .btn .spfy-mark {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  background-color: currentColor;
+  -webkit-mask: url('/brand-assets/spotify/Primary_Logo_Black_RGB.svg') center /
+    contain no-repeat;
+  mask: url('/brand-assets/spotify/Primary_Logo_Black_RGB.svg') center / contain
+    no-repeat;
+}
+
+/* Phase 2 — primary Apple Music surface: the official Apple-supplied
+   "Listen on Apple Music" badge (public/brand-assets/apple-music), embedded
+   verbatim via <img>. Apple's Identity Guidelines forbid recolouring or
+   redrawing it, so it is NOT themed — the badge ships its own dark pill +
+   grey border + colour note and reads on either theme. We only size the box:
+   match the Spotify button's 44px height, preserve the artwork's aspect ratio
+   (width:auto), and keep it non-dominant (flex:0 0 auto so the flex:1 Spotify
+   button stays wider). Apple's required clear space (>=1/10 badge height,
+   ~4.4px at 44px) is satisfied by the row gap (8px) + container padding. */
+.mu3 .listen .apple-badge {
+  flex: 0 0 auto;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.mu3 .listen .apple-badge img {
+  height: 100%;
+  width: auto;
+  display: block;
+}
+.mu3 .listen .apple-badge:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 /* Wave 3 / Tier 1 — curated track-title caption that sits beneath the
