@@ -197,6 +197,18 @@ describe('DetailView — identity / bio / listen', () => {
     )
   })
 
+  it('renders the Apple/Spotify trademark attribution in the footer', () => {
+    // Phase 4 (brand compliance): the streaming marks (Listen on Apple Music
+    // badge + per-collaborator icons) live on this page, so the trademark
+    // acknowledgement sits in the page footer near them — quiet fine print.
+    setup()
+    expect(
+      screen.getByText(
+        /Apple and Apple Music are trademarks of Apple Inc\., registered in the U\.S\. and other countries\. Spotify is a trademark of Spotify AB\./i,
+      ),
+    ).toBeInTheDocument()
+  })
+
   it('renders the orbit mosaic and the records strip', () => {
     setup()
     expect(screen.getByRole('group', { name: /orbit/i })).toBeInTheDocument()

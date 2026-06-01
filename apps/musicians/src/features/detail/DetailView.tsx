@@ -248,8 +248,17 @@ export function DetailView({
             lineHeight: 1.55,
           }}
         >
-          Portraits · attribution rendered per-image where licensed. Source ·
-          Jazzlore graph.
+          <div>
+            Portraits · attribution rendered per-image where licensed. Source ·
+            Jazzlore graph.
+          </div>
+          {/* Brand trademark attribution — the Apple Music "Listen" badge and
+              the per-collaborator Apple Music / Spotify icons appear on this
+              page, so their marks are acknowledged here as quiet fine print. */}
+          <div style={{ marginTop: 8 }}>
+            Apple and Apple Music are trademarks of Apple Inc., registered in
+            the U.S. and other countries. Spotify is a trademark of Spotify AB.
+          </div>
         </footer>
        </main>
 
