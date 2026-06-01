@@ -48,6 +48,8 @@ External links (search deep-links, no API integration v1, both services equal):
 - Spotify musician `https://open.spotify.com/search/{encodeURIComponent(name)}` · record `…/search/{title} {primaryArtist}`
 - Apple musician `https://music.apple.com/search?term={encodeURIComponent(name)}` · record `…?term={title} {primaryArtist}`
 
+Listen-button branding (PR #147, 2026-06-02): the buttons use **official** Apple Music + Spotify artwork, vendored unmodified at `apps/musicians/public/brand-assets/`. Primary surface = the official "Listen on Apple Music" badge (`<img>`) + the amber "Listen on Spotify" button with the official Spotify mark. Per-collaborator surface = the official Apple Music icon + Spotify mark, theme-swapped black/white. **Invariant: Apple artwork is NEVER recoloured** (Identity Guidelines) — only Spotify may be tinted (CSS mask + `currentColor`, no green). Trademark line lives in the detail footer. Do not reintroduce hand-drawn icons.
+
 ## v1 scope
 
 **IN:** home (hero + search + journey row + curated 12), mobile detail (rich + sparse), autosuggest (cached corpus, accent-fold), "More about" bottom sheet, desktop force-directed graph + re-centre, waking/error states, both themes, both breakpoints, Spotify + Apple deep-links, mandatory image attribution captions, per-request OG/meta injection (HTMLRewriter) + dynamic `/sitemap.xml`.
