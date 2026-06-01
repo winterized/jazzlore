@@ -766,9 +766,40 @@
   gap: 5px;
   align-items: flex-end;
 }
+/* Phase 3 — per-collaborator listen icons are the OFFICIAL brand marks, which
+   are self-contained shapes (Apple's is already a rounded-square tile), so
+   they stand alone WITHOUT the bordered .ic box (borderless treatment). The
+   faint :hover background (inherited from .ic:hover) still gives a tap
+   affordance. */
 .mu3 .conn-act .ic {
   width: 30px;
   height: 30px;
+  border: 0;
+}
+
+/* The marks are vendored unmodified at public/brand-assets and theme-swapped
+   via background-image: black artwork on the light page, white on the dark
+   page. No recolour (so Apple's icon stays compliant), no green. 26px clears
+   Apple's icon minimum (>=21px). */
+.mu3 .conn-act .ic .ic-glyph {
+  width: 26px;
+  height: 26px;
+  display: block;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+.mu3 .ic-spotify {
+  background-image: url('/brand-assets/spotify/Primary_Logo_Black_RGB.svg');
+}
+.mu3 .ic-apple {
+  background-image: url('/brand-assets/apple-music/Apple_Music_Icon_blk_sm_073120.svg');
+}
+[data-theme='dark'] .mu3 .ic-spotify {
+  background-image: url('/brand-assets/spotify/Primary_Logo_White_RGB.svg');
+}
+[data-theme='dark'] .mu3 .ic-apple {
+  background-image: url('/brand-assets/apple-music/Apple_Music_Icon_wht_sm_073120.svg');
 }
 
 /* ─────────────────────── Expansion CTA + tail-marker (pass 5) ───────── */
