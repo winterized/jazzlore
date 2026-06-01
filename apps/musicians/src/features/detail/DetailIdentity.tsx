@@ -147,7 +147,17 @@ export function DetailIdentity({
           rel="noreferrer"
           aria-label={appleAria}
         >
-          <img src={APPLE_MUSIC_BADGE} alt="" aria-hidden="true" />
+          {/* width/height = the badge artwork's native viewBox (140.62x41,
+              rounded) so the browser reserves the correct aspect box before
+              the SVG loads (no layout shift). CSS still renders it at 44px
+              tall / auto width. */}
+          <img
+            src={APPLE_MUSIC_BADGE}
+            alt=""
+            aria-hidden="true"
+            width={141}
+            height={41}
+          />
         </a>
       </section>
       {/* Editorial provenance line — only when both services land in

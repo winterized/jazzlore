@@ -780,7 +780,10 @@
 /* The marks are vendored unmodified at public/brand-assets and theme-swapped
    via background-image: black artwork on the light page, white on the dark
    page. No recolour (so Apple's icon stays compliant), no green. 26px clears
-   Apple's icon minimum (>=21px). */
+   Apple's icon minimum (>=21px).
+   NOTE: the swap keys off the [data-theme] ATTRIBUTE (set on <html> before
+   first paint), NOT the token cascade — do not "simplify" this to
+   currentColor/var(): Apple's icon must stay an unrecoloured file. */
 .mu3 .conn-act .ic .ic-glyph {
   width: 26px;
   height: 26px;
