@@ -123,19 +123,11 @@ export function DetailIdentity({
         )}
       </section>
 
+      {/* Apple Music FIRST per Apple's Identity Guidelines §1.3: when the
+          Apple Music badge appears alongside another music-service mark it
+          must lead the lineup. `.listen` is a (wrapping) flex row, so DOM
+          order = visual left→right: Apple badge left, Spotify button right. */}
       <section className="listen" aria-label={`Listen to ${d.name}`}>
-        <a
-          className="btn"
-          href={spotifyHref}
-          target="_blank"
-          rel="noreferrer"
-          aria-label={spotifyAria}
-        >
-          {/* Official Spotify mark (vendored unmodified) rendered as a CSS
-              mask so it inherits the button's text colour via currentColor —
-              white on light, near-black on dark, exactly like the label. */}
-          <span className="spfy-mark" aria-hidden="true" /> Listen on Spotify
-        </a>
         {/* Primary Apple Music surface — Apple's fixed badge artwork
             (embedded verbatim). The badge already reads "Listen on Apple
             Music", so the <img> is decorative (alt="" + aria-hidden) and the
@@ -158,6 +150,18 @@ export function DetailIdentity({
             width={141}
             height={41}
           />
+        </a>
+        <a
+          className="btn"
+          href={spotifyHref}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={spotifyAria}
+        >
+          {/* Official Spotify mark (vendored unmodified) rendered as a CSS
+              mask so it inherits the button's text colour via currentColor —
+              white on light, near-black on dark, exactly like the label. */}
+          <span className="spfy-mark" aria-hidden="true" /> Listen on Spotify
         </a>
       </section>
       {/* Editorial provenance line — only when both services land in

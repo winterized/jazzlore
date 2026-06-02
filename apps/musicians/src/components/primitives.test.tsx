@@ -186,6 +186,50 @@ describe('ConnRow', () => {
     expect(rowClicks).toBe(0)
   })
 
+  it('prefers a direct artist URL (tier 2) when the collaborator carries one', () => {
+    render(
+      <ConnRow
+        c={collab({
+          spotifyArtistUrl: 'https://open.spotify.com/artist/abc',
+          appleArtistUrl:
+            'https://music.apple.com/us/artist/john-coltrane/123',
+        })}
+      />,
+    )
+    expect(
+      screen.getByRole('link', { name: /on Spotify/i }),
+    ).toHaveAttribute('href', 'https://open.spotify.com/artist/abc')
+    expect(
+      screen.getByRole('link', { name: /on Apple Music/i }),
+    ).toHaveAttribute(
+      'href',
+      'https://music.apple.com/us/artist/john-coltrane/123',
+    )
+  })
+
+  it('falls back to the name search URL (tier 3) when no direct URL is present', () => {
+    render(<ConnRow c={collab()} />)
+    expect(
+      screen.getByRole('link', { name: /on Spotify/i }),
+    ).toHaveAttribute('href', expect.stringContaining('open.spotify.com/search/John%20Coltrane'))
+    expect(
+      screen.getByRole('link', { name: /on Apple Music/i }),
+    ).toHaveAttribute('href', expect.stringContaining('music.apple.com/search?term=John%20Coltrane'))
+  })
+
+  it('renders the Apple Music icon BEFORE Spotify per Identity Guidelines §1.3', () => {
+    // .conn-act is flex-column, so DOM order = visual top→bottom. The order
+    // swap is the primary purpose of this change — guard it so a future edit
+    // can't silently re-swap them (visual check covers it today, this pins it).
+    render(<ConnRow c={collab()} />)
+    const apple = screen.getByRole('link', { name: /on Apple Music/i })
+    const spotify = screen.getByRole('link', { name: /on Spotify/i })
+    expect(
+      apple.compareDocumentPosition(spotify) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+  })
+
   it('carries the pulse class only when pulse is set', () => {
     // PR4a: the link is a `display: contents` <a> wrapped inside the .conn
     // div — the pulse animation (background gradient) needs a box, so it
