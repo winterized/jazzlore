@@ -23,6 +23,7 @@ import { Shell } from '../../components/Shell'
 import { MosaicV4 } from '../../components/MosaicV4'
 import { EraStrip, type EraItem } from '../../components/EraStrip'
 import { RecordsStrip } from '../../components/RecordsStrip'
+import { PwaInstallButton, ShareButton } from '@jazzlore/ui'
 import { ChevronIcon, SearchIcon } from '../../components/icons'
 import { ThemeToggleButton } from '../../components/ThemeToggleButton'
 import { DetailIdentity } from './DetailIdentity'
@@ -177,6 +178,15 @@ export function DetailView({
   }
   const paras = bioParagraphs(detail, bioFull)
 
+  // Share-sheet tagline: prefer the bio summary; fall back to instrument · era
+  // (and to undefined when the musician is too sparse for either).
+  const shareTagline =
+    detail.bioSummary ??
+    ([detail.primaryInstruments[0], detail.era]
+      .filter(Boolean)
+      .join(' · ') ||
+      undefined)
+
   return (
     <Shell>
       <header className="hdr">
@@ -199,6 +209,20 @@ export function DetailView({
           >
             <SearchIcon />
           </button>
+          {/* One slot, mutually exclusive: the native share sheet in the
+              Capacitor shell, the PWA-install affordance in the browser.
+              ShareButton self-hides off-native; PwaInstallButton self-hides
+              in the native shell + when already standalone. */}
+          <ShareButton
+            title={detail.name}
+            text={shareTagline}
+            label={`Share ${detail.name}`}
+          />
+          <PwaInstallButton
+            appName="Musicians"
+            appIconHref="/icons/icon-192.png"
+            appAccent="#6a9075"
+          />
           <ThemeToggleButton />
         </div>
       </header>
