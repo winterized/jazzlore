@@ -225,7 +225,7 @@ export type AsyncState<T> =
   | { kind: 'loading' }
   | { kind: 'ready'; data: T }
   | { kind: 'waking'; retryAfter: number }
-  | { kind: 'error' }
+  | { kind: 'error'; offline?: boolean }
 
 /**
  * Generic loader. Runs `load`, maps the FROZEN waking shape via `isWaking`
@@ -272,7 +272,15 @@ export function useBffResource<T>(
         )
       })
       .catch(() => {
-        if (live) setState({ kind: 'error' })
+        if (!live) return
+        // `navigator.onLine` only reliably reports `false`; use it as the
+        // conservative offline signal. A real 5xx / 404 still returned an HTTP
+        // response (so `onLine` is true) → `offline:false` → the calm error
+        // screen, never the offline state. A genuine network failure rejects
+        // with `onLine === false` → `offline:true`.
+        const offline =
+          typeof navigator !== 'undefined' && navigator.onLine === false
+        setState({ kind: 'error', offline })
       })
     return () => {
       live = false

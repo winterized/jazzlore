@@ -1,0 +1,956 @@
+{
+  "id": "wikidata:Q93341",
+  "name": "Miles Davis",
+  "aka": [
+    "Miles Dewey Davis III",
+    "Miles Dewey Davis, III Davis",
+    "Miles Dewey Davis Jr"
+  ],
+  "primaryInstruments": [
+    "trumpet",
+    "flugelhorn",
+    "synthesizer",
+    "organ"
+  ],
+  "allInstruments": [
+    "trumpet",
+    "synthesizer",
+    "organ",
+    "flugelhorn"
+  ],
+  "birthYear": 1926,
+  "birthDate": "1926-05-26",
+  "birthPlace": "Alton",
+  "deathYear": 1991,
+  "deathDate": "1991-09-28",
+  "deathPlace": "Santa Monica",
+  "yearsActiveStart": 1944,
+  "yearsActiveEnd": 1991,
+  "nationality": "United States",
+  "genres": [
+    "jazz",
+    "bebop",
+    "cool jazz",
+    "hard bop",
+    "modal jazz",
+    "jazz fusion",
+    "classical",
+    "funk",
+    "jazz-funk",
+    "post-bop",
+    "rock"
+  ],
+  "era": "Bebop",
+  "bioSummary": "Miles Dewey Davis III was an American trumpeter, bandleader and composer. He is among the most influential and acclaimed figures in the history of jazz and 20th-century music. In a career spanning nearly five decades, Davis was at the forefront of several major stylistic developments in jazz, including bebop, cool jazz, hard bop, third stream, modal jazz, avant-garde jazz, and jazz fusion. His legacy extends into rock, funk, classical, and hip-hop.",
+  "portrait": {
+    "url": "https://upload.wikimedia.org/wikipedia/commons/9/94/Miles_Davis_%28Three_Deuces%2C_New_York%2C_N.Y._1947%29.jpg",
+    "license": "Public domain",
+    "attribution": "William P. Gottlieb"
+  },
+  "photo": true,
+  "links": {
+    "wikipediaUrl": "https://en.wikipedia.org/wiki/Miles_Davis",
+    "wikidataId": "Q93341",
+    "musicbrainzId": "561d854a-6a28-4aa7-8c99-323e6ce46c2a",
+    "discogsId": "23755",
+    "spotifyArtistUrl": "https://open.spotify.com/artist/0kbYTNQb4Pb1rPbbaF0pT4",
+    "appleArtistUrl": "https://music.apple.com/us/artist/44984"
+  },
+  "collaborators": [
+    {
+      "id": "wikidata:Q541659",
+      "name": "Paul Chambers",
+      "instrument": "double bass",
+      "sharedRecordCount": 41,
+      "topRecord": {
+        "title": "Miles",
+        "year": 1956
+      },
+      "photo": true,
+      "spotifyArtistUrl": "https://open.spotify.com/artist/0M1UOBJZ9tcKJbrbnVlHZG",
+      "appleArtistUrl": "https://music.apple.com/us/artist/paul-chambers/2162181"
+    },
+    {
+      "id": "wikidata:Q7346",
+      "name": "John Coltrane",
+      "instrument": "tenor saxophone",
+      "sharedRecordCount": 33,
+      "topRecord": {
+        "title": "Miles",
+        "year": 1956
+      },
+      "photo": true,
+      "spotifyArtistUrl": "https://open.spotify.com/artist/2hGh5VOeeqimQFxqXvfCUf",
+      "appleArtistUrl": "https://music.apple.com/us/artist/120199"
+    },
+    {
+      "id": "wikidata:Q105875",
+      "name": "Herbie Hancock",
+      "instrument": "piano",
+      "sharedRecordCount": 24,
+      "topRecord": {
+        "title": "Seven Steps to Heaven",
+        "year": 1963
+      },
+      "photo": true,
+      "spotifyArtistUrl": "https://open.spotify.com/artist/2ZvrvbQNrHKwjT7qfGFFUW",
+      "appleArtistUrl": "https://music.apple.com/us/artist/51639"
+    },
+    {
+      "id": "wikidata:Q709873",
+      "name": "Philly Joe Jones",
+      "instrument": "drum kit",
+      "sharedRecordCount": 24,
+      "topRecord": {
+        "title": "The Musings of Miles",
+        "year": 1955
+      },
+      "photo": true,
+      "spotifyArtistUrl": "https://open.spotify.com/artist/4WhH68K75YKSAwHAqWFpi1",
+      "appleArtistUrl": "https://music.apple.com/us/artist/philly-joe-jones/1101553"
+    },
+    {
+      "id": "wikidata:Q706697",
+      "name": "Red Garland",
+      "instrument": "piano",
+      "sharedRecordCount": 23,
+      "topRecord": {
+        "title": "The Musings of Miles",
+        "year": 1955
+      },
+      "photo": true,
+      "spotifyArtistUrl": "https://open.spotify.com/artist/35iymrFS4VnsKn35ebHKX9",
+      "appleArtistUrl": "https://music.apple.com/us/artist/2773198"
+    },
+    {
+      "id": "wikidata:Q434593",
+      "name": "Ron Carter",
+      "instrument": "double bass",
+      "sharedRecordCount": 22,
+      "topRecord": {
+        "title": "Seven Steps to Heaven",
+        "year": 1963
+      },
+      "photo": true,
+      "spotifyArtistUrl": "https://open.spotify.com/artist/4wnzivx3OQ3vjrySAdTdJP",
+      "appleArtistUrl": "https://music.apple.com/us/artist/44773"
+    },
+    {
+      "id": "wikidata:Q453604",
+      "name": "Tony Williams",
+      "instrument": "drum kit",
+      "sharedRecordCount": 21,
+      "topRecord": {
+        "title": "Seven Steps to Heaven",
+        "year": 1963
+      },
+      "photo": true,
+      "spotifyArtistUrl": "https://open.spotify.com/artist/1TW90GjShgkjySrxBxcwQe",
+      "appleArtistUrl": "https://music.apple.com/us/artist/tony-williams/52545"
+    },
+    {
+      "id": "wikidata:Q317161",
+      "name": "Wayne Shorter",
+      "instrument": "tenor saxophone",
+      "sharedRecordCount": 19,
+      "topRecord": {
+        "title": "E.S.P.",
+        "year": 1965
+      },
+      "photo": true,
+      "spotifyArtistUrl": "https://open.spotify.com/artist/0ZqhrTXYPA9DZR527ZnFdO",
+      "appleArtistUrl": "https://music.apple.com/us/artist/51643"
+    },
+    {
+      "id": "wikidata:Q499491",
+      "name": "Jimmy Cobb",
+      "instrument": "drum kit",
+      "sharedRecordCount": 18,
+      "topRecord": {
+        "title": "Porgy and Bess",
+        "year": 1958
+      },
+      "photo": true,
+      "spotifyArtistUrl": "https://open.spotify.com/artist/7KLg0R9RSUabK2CG2MTbBJ",
+      "appleArtistUrl": "https://music.apple.com/us/artist/jimmy-cobb/409074"
+    },
+    {
+      "id": "wikidata:Q346779",
+      "name": "Kenny Clarke",
+      "instrument": "drum kit",
+      "sharedRecordCount": 15,
+      "topRecord": {
+        "title": "Young Man With a Horn",
+        "year": 1952
+      },
+      "photo": true,
+      "spotifyArtistUrl": "https://open.spotify.com/artist/7xwlN7fhoOwNgDmRTwYZOa",
+      "appleArtistUrl": "https://music.apple.com/us/artist/kenny-clarke/372615"
+    },
+    {
+      "id": "wikidata:Q981283",
+      "name": "Percy Heath",
+      "instrument": "double bass",
+      "sharedRecordCount": 15,
+      "topRecord": {
+        "title": "Miles Davis, Vol. 2",
+        "year": 1953
+      },
+      "photo": true,
+      "appleArtistUrl": "https://music.apple.com/us/artist/percy-heath/2408562"
+    },
+    {
+      "id": "wikidata:Q536415",
+      "name": "Wynton Kelly",
+      "instrument": "piano",
+      "sharedRecordCount": 12,
+      "topRecord": {
+        "title": "Kind of Blue",
+        "year": 1959
+      },
+      "photo": true,
+      "spotifyArtistUrl": "https://open.spotify.com/artist/5ncBRFyyylFng7kQJaRXN0",
+      "appleArtistUrl": "https://music.apple.com/us/artist/wynton-kelly/119882"
+    },
+    {
+      "id": "wikidata:Q311715",
+      "name": "Art Blakey",
+      "instrument": "drum kit",
+      "sharedRecordCount": 10,
+      "topRecord": {
+        "title": "The New Sounds",
+        "year": 1951
+      },
+      "photo": true,
+      "spotifyArtistUrl": "https://open.spotify.com/artist/6QQuESLtKhAOcLW2TeWC2t",
+      "appleArtistUrl": "https://music.apple.com/us/artist/331584"
+    },
+    {
+      "id": "wikidata:Q1341043",
+      "name": "Al Foster",
+      "instrument": "drum kit",
+      "sharedRecordCount": 9,
+      "topRecord": {
+        "title": "On the Corner",
+        "year": 1972
+      },
+      "photo": true,
+      "spotifyArtistUrl": "https://open.spotify.com/artist/4PqV4TEgVltnn4N47ODKV6",
+      "appleArtistUrl": "https://music.apple.com/us/artist/5784441"
+    },
+    {
+      "id": "wikidata:Q110477",
+      "name": "Cannonball Adderley",
+      "instrument": "alto saxophone",
+      "sharedRecordCount": 9,
+      "topRecord": {
+        "title": "Somethin’ Else",
+        "year": 1958
+      },
+      "photo": true,
+      "spotifyArtistUrl": "https://open.spotify.com/artist/5v74mT11KGJqadf9sLw4dA"
+    },
+    {
+      "id": "wikidata:Q175899",
+      "name": "Max Roach",
+      "instrument": "drum kit",
+      "sharedRecordCount": 9,
+      "topRecord": {
+        "title": "Modern Jazz Trumpets",
+        "year": 1951
+      },
+      "photo": true,
+      "spotifyArtistUrl": "https://open.spotify.com/artist/6jrlNnS5B830kpi40j3S6g",
+      "appleArtistUrl": "https://music.apple.com/us/artist/52791"
+    },
+    {
+      "id": "wikidata:Q435665",
+      "name": "Milt Jackson",
+      "instrument": "vibraphone",
+      "sharedRecordCount": 9,
+      "topRecord": {
+        "title": "Modern Jazz Trumpets",
+        "year": 1951
+      },
+      "photo": true,
+      "spotifyArtistUrl": "https://open.spotify.com/artist/23i8EixXKG0EWGRCfHlUGN",
+      "appleArtistUrl": "https://music.apple.com/gb/artist/50103"
+    },
+    {
+      "id": "wikidata:Q192465",
+      "name": "Chick Corea",
+      "instrument": "piano",
+      "sharedRecordCount": 7,
+      "topRecord": {
+        "title": "In a Silent Way",
+        "year": 1969
+      },
+      "photo": true,
+      "spotifyArtistUrl": "https://open.spotify.com/artist/5olDKSsFhhmwh8UCWwKtpq",
+      "appleArtistUrl": "https://music.apple.com/us/artist/chick-corea/117338"
+    },
+    {
+      "id": "wikidata:Q1444006",
+      "name": "Frank Rehak",
+      "instrument": "trombone",
+      "sharedRecordCount": 7,
+      "topRecord": {
+        "title": "Miles Ahead",
+        "year": 1957
+      },
+      "photo": false
+    },
+    {
+      "id": "wikidata:Q504915",
+      "name": "J. J. Johnson",
+      "instrument": "trombone",
+      "sharedRecordCount": 7,
+      "topRecord": {
+        "title": "Young Man With a Horn",
+        "year": 1952
+      },
+      "photo": true,
+      "spotifyArtistUrl": "https://open.spotify.com/artist/3hZ5sdhYTvgrmXIwtVwqmS"
+    },
+    {
+      "id": "wikidata:Q164757",
+      "name": "John McLaughlin",
+      "instrument": "guitar",
+      "sharedRecordCount": 7,
+      "topRecord": {
+        "title": "In a Silent Way",
+        "year": 1969
+      },
+      "photo": true,
+      "spotifyArtistUrl": "https://open.spotify.com/artist/4v0R1feRiuCDch7aAheVhY",
+      "appleArtistUrl": "https://music.apple.com/us/artist/john-mclaughlin/83013"
+    },
+    {
+      "id": "wikidata:Q299208",
+      "name": "Sonny Rollins",
+      "instrument": "tenor saxophone",
+      "sharedRecordCount": 7,
+      "topRecord": {
+        "title": "The New Sounds",
+        "year": 1951
+      },
+      "photo": true,
+      "spotifyArtistUrl": "https://open.spotify.com/artist/1VEzN9lxvG6KPR3QQGsebR",
+      "appleArtistUrl": "https://music.apple.com/gb/artist/37020"
+    },
+    {
+      "id": "wikidata:Q826556",
+      "name": "Bernie Glow",
+      "instrument": "trumpet",
+      "sharedRecordCount": 6,
+      "topRecord": {
+        "title": "Music for Brass",
+        "year": 1957
+      },
+      "photo": false
+    },
+    {
+      "id": "musicbrainz:7a5bb66a-37f4-4410-bcda-36f1e3bf7b37",
+      "name": "Bill Barber",
+      "instrument": "tuba",
+      "sharedRecordCount": 6,
+      "topRecord": {
+        "title": "Music for Brass",
+        "year": 1957
+      },
+      "photo": false
+    },
+    {
+      "id": "wikidata:Q208205",
+      "name": "Bill Evans",
+      "instrument": "piano",
+      "sharedRecordCount": 6,
+      "topRecord": {
+        "title": "Legrand Jazz",
+        "year": 1958
+      },
+      "photo": true,
+      "spotifyArtistUrl": "https://open.spotify.com/artist/4jXfFzeP66Zy67HM2mvIIF",
+      "appleArtistUrl": "https://music.apple.com/us/artist/117975"
+    },
+    {
+      "id": "wikidata:Q504671",
+      "name": "Dave Holland",
+      "instrument": "bass",
+      "sharedRecordCount": 6,
+      "topRecord": {
+        "title": "In a Silent Way",
+        "year": 1969
+      },
+      "photo": true,
+      "spotifyArtistUrl": "https://open.spotify.com/artist/1bqaQBqbqbEXPxLF0v6AAH",
+      "appleArtistUrl": "https://music.apple.com/us/artist/dave-holland/2890370"
+    },
+    {
+      "id": "wikidata:Q491422",
+      "name": "Ernie Royal",
+      "instrument": "trumpet",
+      "sharedRecordCount": 6,
+      "topRecord": {
+        "title": "Miles Ahead",
+        "year": 1957
+      },
+      "photo": false
+    },
+    {
+      "id": "wikidata:Q1386738",
+      "name": "George Coleman",
+      "instrument": "tenor saxophone",
+      "sharedRecordCount": 6,
+      "topRecord": {
+        "title": "Seven Steps to Heaven",
+        "year": 1963
+      },
+      "photo": true,
+      "spotifyArtistUrl": "https://open.spotify.com/artist/2bznm4QNyfgutcxCbRAfwH"
+    },
+    {
+      "id": "wikidata:Q365560",
+      "name": "Horace Silver",
+      "instrument": "piano",
+      "sharedRecordCount": 6,
+      "topRecord": {
+        "title": "Miles Davis With Sonny Rollins",
+        "year": 1954
+      },
+      "photo": true,
+      "spotifyArtistUrl": "https://open.spotify.com/artist/5ZATfKurLqflrBhv2FLht5",
+      "appleArtistUrl": "https://music.apple.com/us/artist/27820"
+    },
+    {
+      "id": "wikidata:Q920490",
+      "name": "Jackie McLean",
+      "instrument": "saxophone",
+      "sharedRecordCount": 6,
+      "topRecord": {
+        "title": "The New Sounds",
+        "year": 1951
+      },
+      "photo": true,
+      "spotifyArtistUrl": "https://open.spotify.com/artist/1lB7KbOr9xdPK1CuasxmeA",
+      "appleArtistUrl": "https://music.apple.com/us/artist/802975"
+    }
+  ],
+  "records": [
+    {
+      "id": "musicbrainz:1a5abe37-f8d5-488e-b600-8ac93f36f7c4",
+      "title": "The Compositions of Al Cohn",
+      "primaryArtist": "Miles Davis",
+      "type": "album",
+      "releaseYear": 1953,
+      "recordingYear": 1953,
+      "label": "Prestige",
+      "catalogNumber": "PRLP 154",
+      "trackCount": 4,
+      "cover": {},
+      "links": {
+        "musicbrainzId": "1a5abe37-f8d5-488e-b600-8ac93f36f7c4",
+        "discogsId": "3846946"
+      }
+    },
+    {
+      "id": "musicbrainz:093a3235-7271-46d5-9c94-c092edf1fb25",
+      "title": "Young Man With a Horn",
+      "primaryArtist": "Miles Davis",
+      "type": "album",
+      "releaseYear": 1952,
+      "recordingYear": 1952,
+      "label": "Blue Note",
+      "catalogNumber": "BLP 5013",
+      "trackCount": 6,
+      "cover": {},
+      "links": {
+        "musicbrainzId": "093a3235-7271-46d5-9c94-c092edf1fb25",
+        "discogsId": "6266465"
+      }
+    },
+    {
+      "id": "musicbrainz:231508e9-a256-4a05-b715-59e1ea242cbf",
+      "title": "Miles Davis With Sonny Rollins",
+      "primaryArtist": "Miles Davis",
+      "type": "album",
+      "releaseYear": 1954,
+      "recordingYear": 1954,
+      "label": "Prestige",
+      "catalogNumber": "PRLP 187",
+      "trackCount": 4,
+      "cover": {},
+      "links": {
+        "musicbrainzId": "231508e9-a256-4a05-b715-59e1ea242cbf",
+        "discogsId": "8546598"
+      }
+    },
+    {
+      "id": "musicbrainz:25a721dc-0940-359e-8b0d-4be9d5616348",
+      "title": "Bags’ Groove",
+      "primaryArtist": "Miles Davis",
+      "type": "album",
+      "releaseYear": 1957,
+      "recordingYear": 1957,
+      "label": "Prestige",
+      "catalogNumber": "PRLP 7109",
+      "trackCount": 7,
+      "cover": {},
+      "links": {
+        "musicbrainzId": "25a721dc-0940-359e-8b0d-4be9d5616348",
+        "discogsId": "3985122"
+      }
+    },
+    {
+      "id": "musicbrainz:28240dc1-bd02-4c17-addf-5b94672c351d",
+      "title": "Somethin’ Else: The Stereo & Mono Versions (Plus Bonus Tracks)",
+      "primaryArtist": "Miles Davis",
+      "type": "album",
+      "releaseYear": 2020,
+      "recordingYear": 2020,
+      "trackCount": 22,
+      "cover": {},
+      "links": {
+        "musicbrainzId": "28240dc1-bd02-4c17-addf-5b94672c351d"
+      }
+    },
+    {
+      "id": "musicbrainz:29393845-34a2-40a6-9c8c-6647c83e9c1d",
+      "title": "Miles Davis, Vol. 2",
+      "primaryArtist": "Miles Davis",
+      "type": "album",
+      "releaseYear": 1953,
+      "recordingYear": 1953,
+      "label": "Blue Note",
+      "catalogNumber": "BLP 5022",
+      "trackCount": 6,
+      "cover": {},
+      "links": {
+        "musicbrainzId": "29393845-34a2-40a6-9c8c-6647c83e9c1d",
+        "discogsId": "4462736"
+      }
+    },
+    {
+      "id": "musicbrainz:2978c580-9123-3ca5-bf60-6a6e45ad2c4a",
+      "title": "Blue Haze",
+      "primaryArtist": "Miles Davis",
+      "type": "album",
+      "releaseYear": 1956,
+      "recordingYear": 1956,
+      "label": "Prestige",
+      "catalogNumber": "LP 7054",
+      "trackCount": 8,
+      "cover": {},
+      "links": {
+        "musicbrainzId": "2978c580-9123-3ca5-bf60-6a6e45ad2c4a",
+        "discogsId": "1966694"
+      }
+    },
+    {
+      "id": "musicbrainz:2fc131ce-5962-32ba-bc5b-51d1c6f770b5",
+      "title": "Doo‐Bop",
+      "primaryArtist": "Miles Davis",
+      "type": "album",
+      "releaseYear": 1992,
+      "recordingYear": 1992,
+      "label": "Warner Bros. Records",
+      "catalogNumber": "7599-26938-2",
+      "trackCount": 9,
+      "cover": {},
+      "links": {
+        "musicbrainzId": "2fc131ce-5962-32ba-bc5b-51d1c6f770b5",
+        "discogsId": "1525614"
+      }
+    },
+    {
+      "id": "musicbrainz:39402cf4-888f-3af0-9d0c-0dc7e80baa35",
+      "title": "Blue Moods",
+      "primaryArtist": "Miles Davis",
+      "type": "album",
+      "releaseYear": 1955,
+      "recordingYear": 1955,
+      "label": "Debut",
+      "catalogNumber": "DEB 120",
+      "trackCount": 4,
+      "cover": {},
+      "links": {
+        "musicbrainzId": "39402cf4-888f-3af0-9d0c-0dc7e80baa35",
+        "discogsId": "4165507"
+      }
+    },
+    {
+      "id": "musicbrainz:3b3675c7-f267-37c0-bda7-e9e96141e8e7",
+      "title": "Miles Davis and the Modern Jazz Giants",
+      "primaryArtist": "Miles Davis",
+      "type": "album",
+      "releaseYear": 1959,
+      "recordingYear": 1959,
+      "label": "Prestige",
+      "catalogNumber": "PRLP 7150",
+      "trackCount": 5,
+      "cover": {},
+      "links": {
+        "musicbrainzId": "3b3675c7-f267-37c0-bda7-e9e96141e8e7",
+        "discogsId": "1550603"
+      }
+    },
+    {
+      "id": "musicbrainz:3c17dc33-ff39-3ac0-a190-847f42e4d03c",
+      "title": "Sorcerer",
+      "primaryArtist": "Miles Davis",
+      "type": "album",
+      "releaseYear": 1967,
+      "recordingYear": 1967,
+      "label": "CBS",
+      "catalogNumber": "S 63097",
+      "trackCount": 7,
+      "cover": {},
+      "links": {
+        "musicbrainzId": "3c17dc33-ff39-3ac0-a190-847f42e4d03c",
+        "discogsId": "5372710"
+      }
+    },
+    {
+      "id": "musicbrainz:44a7c417-f4ce-31d3-9e81-2f370126526f",
+      "title": "Tutu",
+      "primaryArtist": "Miles Davis",
+      "type": "album",
+      "releaseYear": 1986,
+      "recordingYear": 1986,
+      "label": "Warner Bros. Records",
+      "catalogNumber": "92 54901",
+      "trackCount": 8,
+      "cover": {},
+      "links": {
+        "musicbrainzId": "44a7c417-f4ce-31d3-9e81-2f370126526f",
+        "discogsId": "670021"
+      }
+    },
+    {
+      "id": "musicbrainz:495c22f5-90b3-3e87-8be1-2c55aef3ed82",
+      "title": "Somethin’ Else",
+      "primaryArtist": "Miles Davis",
+      "type": "album",
+      "releaseYear": 1958,
+      "recordingYear": 1958,
+      "label": "Blue Note",
+      "catalogNumber": "BST-1595",
+      "trackCount": 5,
+      "cover": {},
+      "links": {
+        "musicbrainzId": "495c22f5-90b3-3e87-8be1-2c55aef3ed82",
+        "discogsId": "17355181"
+      }
+    },
+    {
+      "id": "musicbrainz:49f122e4-8eef-3c69-93d4-a4369dc408d8",
+      "title": "Get Up With It",
+      "primaryArtist": "Miles Davis",
+      "type": "album",
+      "releaseYear": 1974,
+      "recordingYear": 1974,
+      "label": "CBS",
+      "catalogNumber": "CBS 88092",
+      "trackCount": 8,
+      "cover": {},
+      "links": {
+        "musicbrainzId": "49f122e4-8eef-3c69-93d4-a4369dc408d8",
+        "discogsId": "371466"
+      }
+    },
+    {
+      "id": "musicbrainz:5be21119-1842-38bd-8f43-23333e7ee182",
+      "title": "Miles in the Sky",
+      "primaryArtist": "Miles Davis",
+      "type": "album",
+      "releaseYear": 1968,
+      "recordingYear": 1968,
+      "label": "CBS/Sony",
+      "catalogNumber": "SONP 50023",
+      "trackCount": 4,
+      "cover": {},
+      "links": {
+        "musicbrainzId": "5be21119-1842-38bd-8f43-23333e7ee182",
+        "discogsId": "14474954"
+      }
+    },
+    {
+      "id": "musicbrainz:5d5b6555-9752-4edd-9e78-dcd5a76daca3",
+      "title": "Blue Period",
+      "primaryArtist": "Miles Davis",
+      "type": "album",
+      "releaseYear": 1953,
+      "recordingYear": 1953,
+      "label": "Prestige",
+      "catalogNumber": "PRLP 140",
+      "trackCount": 3,
+      "cover": {},
+      "links": {
+        "musicbrainzId": "5d5b6555-9752-4edd-9e78-dcd5a76daca3",
+        "discogsId": "4019573"
+      }
+    },
+    {
+      "id": "musicbrainz:5f491dad-4138-3f03-b3a0-655e6e15df2a",
+      "title": "Seven Steps to Heaven",
+      "primaryArtist": "Miles Davis",
+      "type": "album",
+      "releaseYear": 1963,
+      "recordingYear": 1963,
+      "label": "Columbia",
+      "catalogNumber": "CL 2051",
+      "trackCount": 6,
+      "cover": {},
+      "links": {
+        "musicbrainzId": "5f491dad-4138-3f03-b3a0-655e6e15df2a",
+        "discogsId": "1118709"
+      }
+    },
+    {
+      "id": "musicbrainz:6477da93-2286-4919-a898-031caa34c307",
+      "title": "’Round About Midnight",
+      "primaryArtist": "Miles Davis",
+      "type": "album",
+      "releaseYear": 1957,
+      "recordingYear": 1957,
+      "label": "Columbia",
+      "catalogNumber": "PL 5062",
+      "trackCount": 6,
+      "cover": {},
+      "links": {
+        "musicbrainzId": "6477da93-2286-4919-a898-031caa34c307",
+        "discogsId": "8896620"
+      }
+    },
+    {
+      "id": "musicbrainz:70f3e516-4e76-3dc5-a261-e6c5cd6d71a1",
+      "title": "Porgy and Bess",
+      "primaryArtist": "Miles Davis",
+      "type": "album",
+      "releaseYear": 1958,
+      "recordingYear": 1958,
+      "label": "Columbia",
+      "catalogNumber": "CL 1274",
+      "trackCount": 13,
+      "cover": {},
+      "links": {
+        "musicbrainzId": "70f3e516-4e76-3dc5-a261-e6c5cd6d71a1",
+        "discogsId": "1811497"
+      }
+    },
+    {
+      "id": "musicbrainz:77fe6224-38dc-383d-ad5f-297ddaa14085",
+      "title": "Star People",
+      "primaryArtist": "Miles Davis",
+      "type": "album",
+      "releaseYear": 1983,
+      "recordingYear": 1983,
+      "label": "CBS",
+      "catalogNumber": "CMS 25395",
+      "trackCount": 6,
+      "cover": {},
+      "links": {
+        "musicbrainzId": "77fe6224-38dc-383d-ad5f-297ddaa14085",
+        "discogsId": "669986"
+      }
+    },
+    {
+      "id": "musicbrainz:7aaa93b0-c370-4dae-98e3-d5be559a7167",
+      "title": "Vol. 3",
+      "primaryArtist": "Miles Davis",
+      "type": "album",
+      "releaseYear": 1954,
+      "recordingYear": 1954,
+      "label": "Blue Note",
+      "catalogNumber": "BLP 5040",
+      "trackCount": 6,
+      "cover": {},
+      "links": {
+        "musicbrainzId": "7aaa93b0-c370-4dae-98e3-d5be559a7167",
+        "discogsId": "4462638"
+      }
+    },
+    {
+      "id": "musicbrainz:7b2ac355-548e-3d4a-b625-920dab441509",
+      "title": "Collectors’ Items",
+      "primaryArtist": "Miles Davis",
+      "type": "album",
+      "releaseYear": 1956,
+      "recordingYear": 1956,
+      "label": "Prestige",
+      "catalogNumber": "PRLP 7044",
+      "trackCount": 7,
+      "cover": {},
+      "links": {
+        "musicbrainzId": "7b2ac355-548e-3d4a-b625-920dab441509",
+        "discogsId": "908892"
+      }
+    },
+    {
+      "id": "musicbrainz:7b44726d-0077-39c0-8525-129e59c8e496",
+      "title": "Big Fun",
+      "primaryArtist": "Miles Davis",
+      "type": "album",
+      "releaseYear": 1974,
+      "recordingYear": 1974,
+      "label": "CBS",
+      "catalogNumber": "CBS 88024",
+      "trackCount": 4,
+      "cover": {},
+      "links": {
+        "musicbrainzId": "7b44726d-0077-39c0-8525-129e59c8e496",
+        "discogsId": "1941559"
+      }
+    },
+    {
+      "id": "musicbrainz:7d0a9612-7636-34fe-84d9-445c8df9c0f3",
+      "title": "In a Silent Way",
+      "primaryArtist": "Miles Davis",
+      "type": "album",
+      "releaseYear": 1969,
+      "recordingYear": 1969,
+      "label": "Columbia",
+      "catalogNumber": "CS 9875",
+      "trackCount": 2,
+      "cover": {},
+      "links": {
+        "musicbrainzId": "7d0a9612-7636-34fe-84d9-445c8df9c0f3",
+        "discogsId": "654119"
+      }
+    }
+  ],
+  "sameEra": [
+    {
+      "id": "wikidata:Q346762",
+      "name": "Freddie Hubbard",
+      "photo": true,
+      "instrument": "trumpet",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/7/7c/Freddie_Hubbard_1976.jpg",
+        "license": "CC BY-SA 2.0",
+        "attribution": "Tom Marcello Webster, New York, USA"
+      }
+    },
+    {
+      "id": "wikidata:Q354508",
+      "name": "Sun Ra",
+      "photo": true,
+      "instrument": "piano",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/5/59/Sun_Ra_%281973_publicity_photo_-_Impulse_ABC_Dunhill%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+        "license": "Public domain",
+        "attribution": "Distributed by Impulse! Records and ABC/Dunhill Records. Photographer uncredited on the publicity photo itself; most likely Francis Ing, who is credited for the photography on Astro Black (see Discogs link above)."
+      }
+    },
+    {
+      "id": "wikidata:Q498745",
+      "name": "Barney Kessel",
+      "photo": true,
+      "instrument": "guitar",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/c/c7/Barney_Kessel_2.jpg",
+        "license": "CC BY-SA 2.0",
+        "attribution": "vernon.hyde"
+      }
+    },
+    {
+      "id": "wikidata:Q353822",
+      "name": "Maynard Ferguson",
+      "photo": true,
+      "instrument": "trumpet",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/e/ef/Maynard_Ferguson_.jpg",
+        "license": "CC BY-SA 3.0",
+        "attribution": "Marek Noniewicz"
+      }
+    },
+    {
+      "id": "wikidata:Q105349",
+      "name": "Oscar Peterson",
+      "photo": true,
+      "instrument": "piano",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/6/6e/Oscar_Peterson.jpg",
+        "license": "CC BY-SA 2.0",
+        "attribution": "Tom Marcello Webster, New York, USA"
+      }
+    },
+    {
+      "id": "wikidata:Q468202",
+      "name": "Art Pepper",
+      "photo": true,
+      "instrument": "saxophone",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/9/9e/Art_Pepper.jpg",
+        "license": "CC BY 2.0",
+        "attribution": "The original uploader was Mind meal at English Wikipedia."
+      }
+    },
+    {
+      "id": "wikidata:Q1307036",
+      "name": "Hampton Hawes",
+      "photo": true,
+      "instrument": "piano",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/e/e9/Hampton_Hawes_in_Japan_1953.jpg",
+        "license": "CC BY-SA 4.0",
+        "attribution": "PBysshe"
+      }
+    },
+    {
+      "id": "wikidata:Q329588",
+      "name": "Sadao Watanabe",
+      "photo": true,
+      "instrument": "alto saxophone",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/8/83/Sadao_Watanabe_jazz_musician.jpg",
+        "license": "CC BY 2.0",
+        "attribution": "sergis blog"
+      }
+    },
+    {
+      "id": "wikidata:Q539832",
+      "name": "Yusef Lateef",
+      "photo": true,
+      "instrument": "flute",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/f/f9/Yusef_Lateef.jpg",
+        "license": "CC BY-SA 2.0",
+        "attribution": "Tom Beetz"
+      }
+    },
+    {
+      "id": "wikidata:Q318948",
+      "name": "Jimmy Smith",
+      "photo": true,
+      "instrument": "organ",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/f/f1/Jimmy_Smith_%281958_publicity_photo%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+        "license": "Public domain",
+        "attribution": "Bruno of Hollywood, NYC. Distributed by Joe Glaser's Associated Booking Corporation."
+      }
+    },
+    {
+      "id": "wikidata:Q329001",
+      "name": "Larry Willis",
+      "photo": true,
+      "instrument": "piano",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/8/8e/Larry_Willis_in_Tarrytown.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+        "license": "CC BY-SA 4.0",
+        "attribution": "SigmaIota"
+      }
+    },
+    {
+      "id": "wikidata:Q453406",
+      "name": "Stanley Clarke",
+      "photo": true,
+      "instrument": "bass",
+      "portrait": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/4/45/STANLEY_CLARKE_N_4EVER_Concert_at_International_Jazz_Festival_of_San_Javier_2022_11.jpg",
+        "license": "CC BY-SA 4.0",
+        "attribution": "Tsaorin"
+      }
+    }
+  ]
+}

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="description" content="Tap through jazz musicians to discover who they played with, hear what defined them, and find new artists worth listening to on Spotify and Apple Music." />
     <!-- Preload only the above-the-fold woff2 (Phase-G perf pass): Geist 400
          (body/UI base), Geist 600 (headings/labels), Newsreader 500 (the
@@ -19,6 +19,19 @@
     <link rel="preload" href="/fonts/geist-600.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/newsreader-500.woff2" as="font" type="font/woff2" crossorigin />
     <title>Jazzlore — Jazz musicians</title>
+
+    <!-- PWA manifest — "Add to Home Screen" yields a proper standalone context.
+         The static public/manifest.webmanifest is the canonical source (vite-plugin-pwa
+         is configured with manifest:false and leaves it untouched). -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#0a0a0a" />
+
+    <!-- Apple-specific meta + touch icon. iOS uses these (not the manifest)
+         for the home-screen + status-bar treatment. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Musicians" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
   </head>
   <body>
     <div id="root"></div>
