@@ -98,4 +98,21 @@ describe('WakingState', () => {
     // No countdown when there is no retryAfter (a hard error, not a cold DB).
     expect(screen.queryByText(/retry in/i)).toBeNull()
   })
+
+  it('offline variant is a calm status with a Back affordance, no report/countdown', () => {
+    const onBack = vi.fn()
+    setup({ variant: 'offline', retryAfter: undefined, onBack })
+    // Calm status region, not an alert shout.
+    expect(screen.getByRole('status')).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(
+      screen.getByRole('heading', { level: 1, name: /offline/i }),
+    ).toBeInTheDocument()
+    // Back returns the reader to where they were.
+    fireEvent.click(screen.getByRole('button', { name: /back/i }))
+    expect(onBack).toHaveBeenCalledTimes(1)
+    // No cold-DB countdown, no hard-error report link.
+    expect(screen.queryByText(/retry in/i)).toBeNull()
+    expect(screen.queryByRole('link', { name: /report/i })).toBeNull()
+  })
 })

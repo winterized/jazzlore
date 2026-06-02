@@ -79,5 +79,13 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       timeout: 180_000,
     },
+    // musicians PWA preview — musicians-pwa.spec.ts hardcodes :5185.
+    {
+      command:
+        'pnpm -F @jazzlore/musicians build && pnpm -F @jazzlore/musicians preview --port 5185 --strictPort',
+      url: 'http://localhost:5185',
+      reuseExistingServer: !process.env.CI,
+      timeout: 180_000,
+    },
   ],
 })

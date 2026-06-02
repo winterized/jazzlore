@@ -2,12 +2,16 @@
 // `ErrorState`, pass-4/5 "Error tone calm, fallback names cached locally so
 // the user is never stranded").
 //
-// Two variants over the SAME layout:
+// Three variants over the SAME layout:
 //   - `waking`  → BFF 503 {status:"waking"} (Aura cold-paused; frozen
 //                 isWaking already mapped it upstream). A polite role=status,
 //                 a live retry countdown that auto-re-fires `onRetry` at zero.
 //   - `error`   → a hard failure (rejection). A role=alert, no countdown,
 //                 a "report" affordance.
+//   - `offline` → a navigation that failed because the browser is offline
+//                 (navigator.onLine === false at fetch-reject time). A calm
+//                 role=status, no countdown, a "Back" affordance (`onBack`)
+//                 that returns the reader to where they were.
 //
 // Either way the cached fallback names are real navigable links so the reader
 // is never stranded. Reduced-motion safe: the only motion is the CSS
@@ -22,13 +26,15 @@ import { ThemeToggleButton } from '../../components/ThemeToggleButton'
 export type FallbackName = { id: string; name: string }
 
 type Props = {
-  variant: 'waking' | 'error'
+  variant: 'waking' | 'error' | 'offline'
   /** Seconds until the next auto-retry (waking only; absent on hard errors). */
   retryAfter?: number
   /** Names cached from a previous successful load (never stranded). */
   fallback: FallbackName[]
   /** Re-run the failed BFF call (button + countdown-zero both call it). */
   onRetry: () => void
+  /** Return the reader to where they were (offline variant only). */
+  onBack?: () => void
 }
 
 const COPY = {
@@ -50,6 +56,15 @@ const COPY = {
     ),
     body: "We couldn't reach the database just now. Nobody's gone anywhere — try again in a moment.",
   },
+  offline: {
+    mark: '∿',
+    title: (
+      <>
+        Couldn’t load this — <em>you’re offline.</em>
+      </>
+    ),
+    body: "You're not connected to the internet right now. Anyone you've already opened is still here.",
+  },
 } as const
 
 function nowUtc(): string {
@@ -61,6 +76,7 @@ export function WakingState({
   retryAfter,
   fallback,
   onRetry,
+  onBack,
 }: Props) {
   const c = COPY[variant]
   const showCountdown = variant === 'waking' && typeof retryAfter === 'number'
@@ -111,8 +127,8 @@ export function WakingState({
       <main>
         <section
           className="err"
-          role={variant === 'waking' ? 'status' : 'alert'}
-          aria-live={variant === 'waking' ? 'polite' : 'assertive'}
+          role={variant === 'error' ? 'alert' : 'status'}
+          aria-live={variant === 'error' ? 'assertive' : 'polite'}
         >
           <div className="err-mark" aria-hidden="true">
             {c.mark}
@@ -121,7 +137,16 @@ export function WakingState({
           <p>{c.body}</p>
 
           <div className="actions">
-            <button type="button" className="btn" onClick={onRetry}>
+            {variant === 'offline' && onBack && (
+              <button type="button" className="btn" onClick={onBack}>
+                Back
+              </button>
+            )}
+            <button
+              type="button"
+              className={variant === 'offline' ? 'btn alt' : 'btn'}
+              onClick={onRetry}
+            >
               Try again
             </button>
             {variant === 'error' && (

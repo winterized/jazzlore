@@ -54,7 +54,13 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals()
   vi.clearAllMocks()
+  // Restore the default jsdom connectivity after the offline-routing test.
+  Object.defineProperty(navigator, 'onLine', { configurable: true, value: true })
 })
+
+function setOnLine(value: boolean): void {
+  Object.defineProperty(navigator, 'onLine', { configurable: true, value })
+}
 
 describe('D7 page wiring', () => {
   it('HomePage shows the calm "waking" screen on a 503 waking response', async () => {
@@ -97,5 +103,41 @@ describe('D7 page wiring', () => {
       await screen.findByRole('heading', { level: 1, name: /waking up/i }),
     ).toBeInTheDocument()
     expect(screen.getByText(/retry in 5s/i)).toBeInTheDocument()
+  })
+
+  it('MusicianPage shows the OFFLINE screen when the detail call fails while offline', async () => {
+    setOnLine(false)
+    mocked.detail.mockRejectedValue(new TypeError('Failed to fetch'))
+    render(
+      <MemoryRouter initialEntries={['/musicians/wikidata:Q93341']}>
+        <Routes>
+          <Route path="/musicians/:id" element={<MusicianPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+    expect(
+      await screen.findByRole('heading', { level: 1, name: /offline/i }),
+    ).toBeInTheDocument()
+    // Calm status + a Back affordance, NOT the hard-error "napping" alert.
+    expect(screen.getByRole('status')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /back/i })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /napping/i })).toBeNull()
+  })
+
+  it('MusicianPage shows the ERROR (not offline) screen when the server fails while online', async () => {
+    setOnLine(true)
+    mocked.detail.mockRejectedValue(new Error('bff 500 /api/musicians/x'))
+    render(
+      <MemoryRouter initialEntries={['/musicians/wikidata:Q93341']}>
+        <Routes>
+          <Route path="/musicians/:id" element={<MusicianPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+    expect(
+      await screen.findByRole('heading', { level: 1, name: /napping/i }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /offline/i })).toBeNull()
   })
 })

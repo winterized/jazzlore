@@ -62,6 +62,25 @@ export default function MusicianPage({
       />
     )
   }
+  // A navigation that failed purely because the browser is offline gets the
+  // calm "you're offline" screen with a Back affordance — distinct from a real
+  // server error (5xx/404), which keeps the generic error screen below.
+  if (state.kind === 'error' && state.offline === true) {
+    return (
+      <WakingState
+        variant="offline"
+        fallback={FALLBACK}
+        onRetry={retry}
+        // A cold offline deep-link / "Add to Home Screen" launch into a
+        // musician URL (the feature's own target path) has no prior in-app
+        // history, so `navigate(-1)` would dead-end. Fall back to home — the
+        // SW serves its shell offline.
+        onBack={() =>
+          window.history.length > 1 ? navigate(-1) : navigate('/musicians')
+        }
+      />
+    )
+  }
   if (state.kind === 'error') {
     return (
       <WakingState variant="error" fallback={FALLBACK} onRetry={retry} />
