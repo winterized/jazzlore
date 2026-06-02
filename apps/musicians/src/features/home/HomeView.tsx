@@ -10,6 +10,7 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import type { CuratedCard } from '../../lib/types'
 import { attributionCaption } from '../../lib/attribution'
+import { PwaInstallButton } from '@jazzlore/ui'
 import { Shell } from '../../components/Shell'
 import { Duo3 } from '../../components/Duo3'
 import { ThemeToggleButton } from '../../components/ThemeToggleButton'
@@ -57,6 +58,14 @@ export function HomeView({ curated, searchSlot }: Props) {
             Jazz<b>lore</b> · Musicians
           </div>
           <div className="spacer" />
+          {/* Install-only on home (share is a per-musician affordance, detail
+              page only). Self-hides in the native shell + when standalone. */}
+          <PwaInstallButton
+            appName="Musicians"
+            appIconHref="/icons/icon-192.png"
+            appAccent="#6a9075"
+            className="ic"
+          />
           <ThemeToggleButton />
         </div>
       </header>
