@@ -64,6 +64,7 @@ export function HomeView({ curated, searchSlot }: Props) {
             appName="Musicians"
             appIconHref="/icons/icon-192.png"
             appAccent="#6a9075"
+            className="ic"
           />
           <ThemeToggleButton />
         </div>

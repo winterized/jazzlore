@@ -37,9 +37,20 @@ type Props = {
   url?: string
   /** Accessible label (e.g. "Share Miles Davis"). */
   label?: string
+  /** Optional override for the button's classes. When set, it REPLACES the
+   * default stone-bordered footprint so an app can render the button in its own
+   * design system (musicians passes its transparent `.ic` class, matching the
+   * PwaInstallButton it swaps with). */
+  className?: string
 }
 
-export function ShareButton({ title, text, url, label = 'Share' }: Props) {
+export function ShareButton({
+  title,
+  text,
+  url,
+  label = 'Share',
+  className,
+}: Props) {
   // Native shell only — in the browser the PWA install button owns this slot.
   if (!isNativeApp()) return null
   const onShare = (): void => {
@@ -54,14 +65,17 @@ export function ShareButton({ title, text, url, label = 'Share' }: Props) {
       type="button"
       onClick={onShare}
       aria-label={label}
-      className={[
-        'inline-flex h-8 w-8 items-center justify-center rounded-md',
-        'border border-stone-300 bg-white hover:bg-stone-200',
-        'dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800',
-        'text-stone-900 dark:text-stone-100',
-        'transition-colors duration-[120ms]',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1',
-      ].join(' ')}
+      className={
+        className ??
+        [
+          'inline-flex h-8 w-8 items-center justify-center rounded-md',
+          'border border-stone-300 bg-white hover:bg-stone-200',
+          'dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800',
+          'text-stone-900 dark:text-stone-100',
+          'transition-colors duration-[120ms]',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1',
+        ].join(' ')
+      }
     >
       <ShareIcon />
     </button>

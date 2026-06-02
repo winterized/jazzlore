@@ -19,6 +19,11 @@ type Props = {
    * literal type prevents a caller from accidentally passing arbitrary CSS
    * into the inline `style.backgroundColor` of the install CTA. */
   appAccent: `#${string}`
+  /** Optional override for the trigger button's classes. When set, it REPLACES
+   * the default stone-bordered footprint so an app can render the button in its
+   * own design system (e.g. musicians passes its transparent `.ic` class). The
+   * default is unchanged, so metronome/scales/chords are unaffected. */
+  className?: string
 }
 
 const InstallIcon = () => (
@@ -46,6 +51,7 @@ export function PwaInstallButton({
   appName,
   appIconHref,
   appAccent,
+  className,
 }: Props) {
   const { isStandalone, isNativeApp } = usePwaInstall()
   const [open, setOpen] = useState(false)
@@ -60,14 +66,17 @@ export function PwaInstallButton({
         aria-label={`Install ${appName} as an app`}
         aria-haspopup="dialog"
         aria-expanded={open}
-        className={[
-          'inline-flex h-8 w-8 items-center justify-center rounded-md',
-          'border border-stone-300 bg-white hover:bg-stone-200',
-          'dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800',
-          'text-stone-900 dark:text-stone-100',
-          'transition-colors duration-[120ms]',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1',
-        ].join(' ')}
+        className={
+          className ??
+          [
+            'inline-flex h-8 w-8 items-center justify-center rounded-md',
+            'border border-stone-300 bg-white hover:bg-stone-200',
+            'dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800',
+            'text-stone-900 dark:text-stone-100',
+            'transition-colors duration-[120ms]',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1',
+          ].join(' ')
+        }
       >
         <InstallIcon />
       </button>
