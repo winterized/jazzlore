@@ -145,6 +145,10 @@ export function mapCollaborator(row: RawCollaboratorRow): Collaborator {
     sharedRecordCount: distinctRecordIds.size,
     topRecord: pickTopRecord(row.sharedRecords),
     photo: hasPhoto(row.musician),
+    // Tier-2 direct artist URLs (same provenance as the detail page's
+    // `links.*ArtistUrl`); ConnRow prefers these over a name search.
+    spotifyArtistUrl: str(row.musician.spotify_artist_url),
+    appleArtistUrl: str(row.musician.apple_artist_url),
   }
 }
 

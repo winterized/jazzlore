@@ -161,6 +161,13 @@ export interface Collaborator {
   topRecord?: { title: string; year?: number }
   /** `picture_url` presence ONLY — never a name heuristic (landmine 10). */
   photo: boolean
+  /** Tier-2 direct artist-page URLs (populator-supplied via MusicBrainz),
+   * carried so the per-collaborator listen icons can deep-link to the real
+   * artist page instead of a name search. Absent when the populator didn't
+   * resolve one → ConnRow drops to the tier-3 search builder. Mirrors the
+   * primary buttons' cascade in `DetailIdentity`. */
+  spotifyArtistUrl?: string
+  appleArtistUrl?: string
 }
 
 /** Full musician detail — the `/api/musicians/:id` payload shape. Sparse by

@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
+  mapCollaborator,
   mapCuratedCard,
   mapGraphData,
   mapMusicianDetail,
   mapSearchCorpus,
 } from './map'
+import type { RawCollaboratorRow } from './fixtures'
 import {
   CORPUS_ROWS,
   DUPLICATE_PAIR,
@@ -12,6 +14,32 @@ import {
   RICH_DETAIL,
   SPARSE_DETAIL,
 } from './fixtures'
+
+describe('mapCollaborator — tier-2 direct artist URLs', () => {
+  const rowWith = (over: Record<string, unknown>): RawCollaboratorRow => ({
+    musician: { id: 'wikidata:Q7346', name: 'John Coltrane', ...over },
+    sharedRecords: [],
+  })
+
+  it('carries spotify/apple artist URLs through to the Collaborator', () => {
+    const c = mapCollaborator(
+      rowWith({
+        spotify_artist_url: 'https://open.spotify.com/artist/abc',
+        apple_artist_url: 'https://music.apple.com/us/artist/john-coltrane/123',
+      }),
+    )
+    expect(c.spotifyArtistUrl).toBe('https://open.spotify.com/artist/abc')
+    expect(c.appleArtistUrl).toBe(
+      'https://music.apple.com/us/artist/john-coltrane/123',
+    )
+  })
+
+  it('leaves them undefined when the raw node has no artist URL', () => {
+    const c = mapCollaborator(rowWith({}))
+    expect(c.spotifyArtistUrl).toBeUndefined()
+    expect(c.appleArtistUrl).toBeUndefined()
+  })
+})
 
 describe('mapMusicianDetail — rich (Miles-like)', () => {
   const m = mapMusicianDetail(RICH_DETAIL)

@@ -142,23 +142,18 @@ export function ConnRow({
           </div>
         </div>
       </a>
+      {/* Apple Music FIRST per Apple's Identity Guidelines §1.3 (when an Apple
+          Music badge/icon sits alongside other music-service marks it must
+          lead the lineup). `.conn-act` is flex-column, so DOM order = visual
+          top→bottom: Apple on top, Spotify below. */}
       <div className="conn-act">
         <a
           className="ic"
-          href={spotifyMusicianUrl(c.name)}
-          target="_blank"
-          rel="noreferrer"
-          aria-label={`Listen to ${c.name} on Spotify`}
-          onClick={stop}
-        >
-          {/* Official Spotify mark (vendored, unmodified), theme-swapped
-              black/white via background-image in CSS. Decorative — the
-              anchor carries the accessible name. */}
-          <span className="ic-glyph ic-spotify" aria-hidden="true" />
-        </a>
-        <a
-          className="ic"
-          href={appleMusicMusicianUrl(c.name)}
+          // Tier-2 direct artist URL when the populator resolved one, else the
+          // tier-3 name search. Mirrors the tier-2→tier-3 portion of
+          // DetailIdentity's cascade (there is no per-collaborator curated
+          // track, so the tier-1 track step doesn't apply here).
+          href={c.appleArtistUrl ?? appleMusicMusicianUrl(c.name)}
           target="_blank"
           rel="noreferrer"
           aria-label={`Listen to ${c.name} on Apple Music`}
@@ -169,6 +164,19 @@ export function ConnRow({
               forbid recolouring, so we use the supplied blk/wht files as-is.
               Decorative — the anchor carries the accessible name. */}
           <span className="ic-glyph ic-apple" aria-hidden="true" />
+        </a>
+        <a
+          className="ic"
+          href={c.spotifyArtistUrl ?? spotifyMusicianUrl(c.name)}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={`Listen to ${c.name} on Spotify`}
+          onClick={stop}
+        >
+          {/* Official Spotify mark (vendored, unmodified), theme-swapped
+              black/white via background-image in CSS. Decorative — the
+              anchor carries the accessible name. */}
+          <span className="ic-glyph ic-spotify" aria-hidden="true" />
         </a>
       </div>
     </div>
