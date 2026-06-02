@@ -58,6 +58,22 @@ describe('DetailView — identity / bio / listen', () => {
     expect(within(apple).queryByText(/^Apple Music$/)).toBeNull()
   })
 
+  it('renders the Apple Music badge BEFORE the Spotify button per Identity Guidelines §1.3', () => {
+    // .listen is a flex row, so DOM order = visual left→right. Apple Music must
+    // lead when shown alongside another music service. Pin the order so a
+    // future edit can't silently re-swap them.
+    setup()
+    const listen = screen.getByRole('region', { name: /listen to bobby timmons/i })
+    const apple = within(listen).getByRole('link', {
+      name: /on apple music/i,
+    })
+    const spotify = within(listen).getByRole('link', { name: /on spotify/i })
+    expect(
+      apple.compareDocumentPosition(spotify) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+  })
+
   it('primary Spotify button keeps its amber styling but uses the official mark', () => {
     // Phase 2 (brand compliance): the hand-drawn SpotifyIcon is replaced by
     // the official Spotify mark, rendered as a CSS-masked span (.spfy-mark)
