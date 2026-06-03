@@ -18,7 +18,16 @@ function jsonResponse(body: unknown, status = 200): Response {
   })
 }
 
-afterEach(() => vi.restoreAllMocks())
+function setNative(on: boolean): void {
+  const w = window as unknown as { Capacitor?: unknown }
+  if (on) w.Capacitor = { isNativePlatform: () => true }
+  else delete w.Capacitor
+}
+
+afterEach(() => {
+  vi.restoreAllMocks()
+  setNative(false)
+})
 
 describe('httpSource — fetch-backed BFF seam', () => {
   it('GET /api/musicians/curated → parsed CuratedResponse', async () => {
@@ -86,6 +95,41 @@ describe('httpSource — fetch-backed BFF seam', () => {
     expect(isWaking(r)).toBe(true)
     if (!isWaking(r)) throw new Error('unreachable')
     expect(r.retryAfter).toBe(10)
+  })
+
+  it('native shell: targets the ABSOLUTE BFF origin (capacitor://localhost has no backend)', async () => {
+    setNative(true)
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(jsonResponse({ curated: [] }))
+    await httpSource.curated()
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'https://musicians.jazzlore.com/api/musicians/curated',
+      expect.objectContaining({ headers: { Accept: 'application/json' } }),
+    )
+  })
+
+  it('browser/PWA: stays relative same-origin (no absolute prefix)', async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(jsonResponse({ curated: [] }))
+    await httpSource.curated()
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/musicians/curated',
+      expect.anything(),
+    )
+  })
+
+  it('a 200 with a non-JSON / null body REJECTS (no blank-screen data.x crash)', async () => {
+    // Mirrors the native capacitor://localhost miss that returned the SPA
+    // fallback HTML and stranded HomePage on `data.curated`.
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response('<!doctype html><title>app</title>', {
+        status: 200,
+        headers: { 'Content-Type': 'text/html' },
+      }),
+    )
+    await expect(httpSource.curated()).rejects.toThrow()
   })
 
   it('a network failure REJECTS (→ calm error state upstream)', async () => {

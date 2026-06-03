@@ -8,6 +8,7 @@
 // untouched (the contract is frozen).
 
 import { useEffect, useState } from 'react'
+import { isNativeApp } from '@jazzlore/ui'
 import type {
   CuratedResponse,
   GraphResponse,
@@ -174,16 +175,33 @@ type Waking = { status: 'waking'; retryAfter: number }
  * a network failure, a non-ok HTTP status, or an `{status:"error"}` envelope
  * REJECTS so the hook surfaces the calm error state (D7).
  */
+/**
+ * Live BFF origin for the NATIVE Capacitor shell. The shell serves the bundled
+ * app from `capacitor://localhost` with NO backend, so a relative `/api/*` would
+ * hit that local origin (which returns the SPA fallback HTML, not JSON) and
+ * strand the data layer — the unique wrinkle of Musicians being the only app
+ * with a backend. In the native shell we target the live BFF directly; in the
+ * browser/PWA the BFF is same-origin so the prefix stays empty. The cross-origin
+ * native call is routed through CapacitorHttp (enabled in capacitor.config.ts)
+ * to bypass the WebView CORS — the BFF sends no CORS headers and is out of scope
+ * to change.
+ */
+const NATIVE_BFF_ORIGIN = 'https://musicians.jazzlore.com'
+
 async function bffGet<T>(path: string): Promise<T | Waking> {
-  const res = await fetch(path, { headers: { Accept: 'application/json' } })
+  const url = isNativeApp() ? `${NATIVE_BFF_ORIGIN}${path}` : path
+  const res = await fetch(url, { headers: { Accept: 'application/json' } })
   const body: unknown = await res.json().catch(() => null)
   if (isWaking(body)) return body
   if (!res.ok) throw new Error(`bff ${res.status} ${path}`)
-  if (
-    typeof body === 'object' &&
-    body !== null &&
-    (body as { status?: unknown }).status === 'error'
-  ) {
+  // Defensive: a 200 with a null / non-object body (e.g. an HTML SPA fallback
+  // parsed to null) must NOT resolve as data — consumers index it directly
+  // (`data.curated`) and would crash to a blank screen. Treat it as a hard
+  // error so the calm error screen shows instead.
+  if (body === null || typeof body !== 'object') {
+    throw new Error(`bff non-JSON body ${path}`)
+  }
+  if ((body as { status?: unknown }).status === 'error') {
     throw new Error(`bff error envelope ${path}`)
   }
   return body as T
