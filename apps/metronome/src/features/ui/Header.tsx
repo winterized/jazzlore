@@ -1,5 +1,5 @@
 import type { Theme } from '@jazzlore/music-core'
-import { PwaInstallButton } from '@jazzlore/ui'
+import { InstallOrAppStoreButton } from '@jazzlore/ui'
 import { MoonIcon, SunIcon } from './icons'
 import { StatusPill } from './StatusPill'
 import type { Status } from '../state/metronomeReducer'
@@ -26,7 +26,8 @@ export function Header({ theme, status, onToggleTheme }: HeaderProps) {
       <div className="spc" />
       <StatusPill status={status} />
       <div style={{ marginLeft: 8 }}>
-        <PwaInstallButton
+        <InstallOrAppStoreButton
+          appStoreKey="metronome"
           appName="Metronome"
           appIconHref="/icons/icon-192.png"
           appAccent="#a06b6b"

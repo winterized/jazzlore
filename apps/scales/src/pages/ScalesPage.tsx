@@ -147,6 +147,7 @@ export default function ScalesPage() {
         installAppName="Scales"
         installAppIconHref="/icons/icon-192.png"
         installAppAccent="#6f8caa"
+        appStoreKey="scales"
       />
       <main className="min-h-screen bg-stone-100 p-4 text-stone-900 dark:bg-stone-950 dark:text-stone-100 md:p-8">
         <ScaleList
