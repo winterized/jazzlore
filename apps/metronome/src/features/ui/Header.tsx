@@ -1,5 +1,5 @@
 import type { Theme } from '@jazzlore/music-core'
-import { InstallOrAppStoreButton } from '@jazzlore/ui'
+import { PwaInstallButton } from '@jazzlore/ui'
 import { MoonIcon, SunIcon } from './icons'
 import { StatusPill } from './StatusPill'
 import type { Status } from '../state/metronomeReducer'
@@ -24,17 +24,11 @@ export function Header({ theme, status, onToggleTheme }: HeaderProps) {
         <span className="sub">metronome</span>
       </div>
       <div className="spc" />
-      {/* The transient status pill yields below 390px so the (undistorted, fixed
-          aspect-ratio) App Store badge + theme toggle always fit on smaller
-          phones (iPhone SE / mini / SE3). Status is recoverable on-screen; the
-          badge + toggle are persistent controls. Only the iOS-browser badge makes
-          the row this wide — the native shell hides the badge entirely, so the
-          status pill is unaffected in the app. */}
-      <div className="max-[389px]:hidden">
-        <StatusPill status={status} />
-      </div>
-      <div style={{ marginLeft: 8, flexShrink: 0 }}>
-        <InstallOrAppStoreButton
+      <StatusPill status={status} />
+      <div style={{ marginLeft: 8 }}>
+        {/* Install icon unchanged. On iOS, its sheet offers the native App Store
+            badge instead of PWA instructions (appStoreKey="metronome"). */}
+        <PwaInstallButton
           appStoreKey="metronome"
           appName="Metronome"
           appIconHref="/icons/icon-192.png"

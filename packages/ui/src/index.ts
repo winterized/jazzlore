@@ -23,8 +23,6 @@ export {
 } from './usePwaInstall'
 export { PwaInstallButton } from './PwaInstallButton'
 export { PwaInstallSheet } from './PwaInstallSheet'
-export { AppStoreLinkButton } from './AppStoreLinkButton'
-export { InstallOrAppStoreButton } from './InstallOrAppStoreButton'
 export {
   APP_STORE_LINKS,
   chooseInstallAffordance,

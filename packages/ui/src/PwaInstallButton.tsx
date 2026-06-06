@@ -7,6 +7,7 @@
 import { useState } from 'react'
 import { usePwaInstall } from './usePwaInstall'
 import { PwaInstallSheet } from './PwaInstallSheet'
+import type { AppStoreKey } from './appStoreLinks'
 
 type Props = {
   /** App name shown in the sheet (e.g. "Scales"). */
@@ -24,6 +25,11 @@ type Props = {
    * own design system (e.g. musicians passes its transparent `.ic` class). The
    * default is unchanged, so metronome/scales/chords are unaffected. */
   className?: string
+  /** App Store listing key. When set AND the app is App-Store-available, the
+   * sheet shows Apple's "Download on the App Store" badge instead of the iOS
+   * PWA instructions (the header button itself is unchanged). Omit for apps with
+   * no App Store listing (e.g. musicians) — the sheet keeps PWA instructions. */
+  appStoreKey?: AppStoreKey
 }
 
 const InstallIcon = () => (
@@ -52,6 +58,7 @@ export function PwaInstallButton({
   appIconHref,
   appAccent,
   className,
+  appStoreKey,
 }: Props) {
   const { isStandalone, isNativeApp } = usePwaInstall()
   const [open, setOpen] = useState(false)
@@ -85,6 +92,7 @@ export function PwaInstallButton({
           appName={appName}
           appIconHref={appIconHref}
           appAccent={appAccent}
+          appStoreKey={appStoreKey}
           onClose={() => setOpen(false)}
         />
       )}

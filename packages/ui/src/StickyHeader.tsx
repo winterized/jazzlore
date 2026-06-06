@@ -6,7 +6,6 @@ import { usePrefersReducedMotion } from './StickyHeader.hooks'
 import ChipRow, { type ChipRowHandle } from './StickyHeader.chipRow'
 import SearchBox, { type SearchResult } from './StickyHeader.searchBox'
 import { PwaInstallButton } from './PwaInstallButton'
-import { InstallOrAppStoreButton } from './InstallOrAppStoreButton'
 import type { AppStoreKey } from './appStoreLinks'
 
 // ─── Public types ──────────────────────────────────────────────────────────────
@@ -82,11 +81,10 @@ type Props = {
   installAppName?: string
   installAppIconHref?: string
   installAppAccent?: `#${string}`
-  /** When set (alongside the install-* props), the install slot upgrades to an
-   * `<InstallOrAppStoreButton>`: on an iOS browser with the native app live it
-   * shows Apple's "Download on the App Store" badge instead of the PWA button;
-   * everywhere else the PWA button is unchanged. Omit to keep the plain
-   * `<PwaInstallButton>` (consumers that have no App Store listing). */
+  /** When set (alongside the install-* props), passed through to the install
+   * button so its sheet offers Apple's "Download on the App Store" badge instead
+   * of PWA instructions on iOS — when that app is App-Store-available. The header
+   * button itself is unchanged. Omit for apps with no App Store listing. */
   appStoreKey?: AppStoreKey
 }
 
@@ -269,27 +267,18 @@ export default function StickyHeader({
           {utilLink.label}
         </LinkComponent>
 
-        {/* Install slot — only rendered when the host app passes all three
-            install-* props. With `appStoreKey` it upgrades to the App Store
-            badge on iOS browsers (native app live); otherwise the plain PWA
-            install button. Both self-hide when standalone / in the native shell. */}
-        {installAppName &&
-          installAppIconHref &&
-          installAppAccent &&
-          (appStoreKey ? (
-            <InstallOrAppStoreButton
-              appStoreKey={appStoreKey}
-              appName={installAppName}
-              appIconHref={installAppIconHref}
-              appAccent={installAppAccent}
-            />
-          ) : (
-            <PwaInstallButton
-              appName={installAppName}
-              appIconHref={installAppIconHref}
-              appAccent={installAppAccent}
-            />
-          ))}
+        {/* Install button — only rendered when the host app passes all three
+            install-* props. Hidden internally when standalone / native. With
+            `appStoreKey`, its sheet offers the native App Store badge instead of
+            PWA instructions on iOS (when that app is App-Store-available). */}
+        {installAppName && installAppIconHref && installAppAccent && (
+          <PwaInstallButton
+            appName={installAppName}
+            appIconHref={installAppIconHref}
+            appAccent={installAppAccent}
+            appStoreKey={appStoreKey}
+          />
+        )}
 
         {/* Theme toggle */}
         <ThemeButton theme={theme} onThemeToggle={onThemeToggle} />

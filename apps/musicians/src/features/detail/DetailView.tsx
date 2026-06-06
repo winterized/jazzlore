@@ -239,9 +239,9 @@ export function DetailView({
               exclusivity is EMERGENT from two independent isNativeApp() gates,
               not enforced by a single chooser: ShareButton self-hides off-native;
               PwaInstallButton self-hides in the native shell + when standalone.
-              (Musicians has no App Store listing, so it keeps the plain PWA
-              button — the InstallOrAppStoreButton swap is metronome/chords/scales
-              only.) */}
+              (Musicians passes no appStoreKey, so its install sheet keeps the
+              PWA instructions — the App Store badge offer is metronome/chords/
+              scales only.) */}
           <ShareButton
             title={detail.name}
             text={shareTagline}

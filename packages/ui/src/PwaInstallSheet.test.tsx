@@ -129,6 +129,57 @@ describe('PwaInstallSheet — platform-specific copy', () => {
   })
 })
 
+describe('PwaInstallSheet — App Store offer (iOS + available app)', () => {
+  const METRO = {
+    ...PROPS,
+    appName: 'Metronome',
+    appStoreKey: 'metronome' as const, // available: true
+  }
+
+  it('iOS + available app → shows the App Store badge instead of PWA steps', () => {
+    setNavigator(IOS_UA)
+    render(<PwaInstallSheet {...METRO} />)
+    const link = screen.getByRole('link', {
+      name: /download metronome on the app store/i,
+    })
+    expect(link).toHaveAttribute(
+      'href',
+      'https://apps.apple.com/app/id6774656363',
+    )
+    // Same-tab → Universal Link hand-off to the App Store app.
+    expect(link).not.toHaveAttribute('target')
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: /get metronome on the app store/i,
+      }),
+    ).toBeInTheDocument()
+    // The PWA "Add to Home Screen" instructions are replaced, not shown.
+    expect(screen.queryByText(/Add to Home Screen/)).toBeNull()
+  })
+
+  it('iOS + NOT-yet-available app (chords) → keeps the PWA instructions', () => {
+    setNavigator(IOS_UA)
+    render(<PwaInstallSheet {...PROPS} appStoreKey="chords" />)
+    expect(screen.getByText(/Add to Home Screen/)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /app store/i })).toBeNull()
+  })
+
+  it('iOS + no appStoreKey (e.g. musicians) → keeps the PWA instructions', () => {
+    setNavigator(IOS_UA)
+    render(<PwaInstallSheet {...PROPS} />)
+    expect(screen.getByText(/Add to Home Screen/)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /app store/i })).toBeNull()
+  })
+
+  it('desktop + available app → PWA flow (the App Store link is iOS-only)', () => {
+    setNavigator(DESKTOP_UA)
+    render(<PwaInstallSheet {...METRO} />)
+    expect(screen.queryByRole('link', { name: /app store/i })).toBeNull()
+    expect(screen.getByText(/address bar/i)).toBeInTheDocument()
+  })
+})
+
 describe('PwaInstallSheet — interaction', () => {
   it('clicking the backdrop calls onClose', async () => {
     setNavigator(DESKTOP_UA)
