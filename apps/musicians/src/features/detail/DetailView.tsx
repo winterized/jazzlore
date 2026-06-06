@@ -14,6 +14,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import type { MusicianDetail } from '../../lib/types'
 import { isWaking } from '../../lib/types'
+import { canonicalShareUrl } from '../../lib/shareUrl'
 import {
   defaultSource,
   type DataSource,
@@ -178,6 +179,11 @@ export function DetailView({
   }
   const paras = bioParagraphs(detail, bioFull)
 
+  // Share the canonical PUBLIC url, never the current `window.location.href`:
+  // inside the Capacitor native shell that is `capacitor://localhost/…`, a dead
+  // link with no iOS preview/title. Re-base the path onto the production origin.
+  const shareUrl = canonicalShareUrl(location.pathname, location.search)
+
   // Share-sheet tagline: prefer the bio summary; fall back to instrument · era
   // (and to undefined when the musician is too sparse for either).
   const shareTagline =
@@ -216,6 +222,7 @@ export function DetailView({
           <ShareButton
             title={detail.name}
             text={shareTagline}
+            url={shareUrl}
             label={`Share ${detail.name}`}
             className="ic"
           />
