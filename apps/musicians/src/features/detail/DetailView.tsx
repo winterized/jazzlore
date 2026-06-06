@@ -235,9 +235,13 @@ export function DetailView({
             <SearchIcon />
           </button>
           {/* One slot, mutually exclusive: the native share sheet in the
-              Capacitor shell, the PWA-install affordance in the browser.
-              ShareButton self-hides off-native; PwaInstallButton self-hides
-              in the native shell + when already standalone. */}
+              Capacitor shell, the PWA-install affordance in the browser. The
+              exclusivity is EMERGENT from two independent isNativeApp() gates,
+              not enforced by a single chooser: ShareButton self-hides off-native;
+              PwaInstallButton self-hides in the native shell + when standalone.
+              (Musicians has no App Store listing, so it keeps the plain PWA
+              button — the InstallOrAppStoreButton swap is metronome/chords/scales
+              only.) */}
           <ShareButton
             title={detail.name}
             text={shareTagline}
