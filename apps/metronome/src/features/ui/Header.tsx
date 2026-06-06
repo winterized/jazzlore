@@ -24,8 +24,16 @@ export function Header({ theme, status, onToggleTheme }: HeaderProps) {
         <span className="sub">metronome</span>
       </div>
       <div className="spc" />
-      <StatusPill status={status} />
-      <div style={{ marginLeft: 8 }}>
+      {/* The transient status pill yields below 390px so the (undistorted, fixed
+          aspect-ratio) App Store badge + theme toggle always fit on smaller
+          phones (iPhone SE / mini / SE3). Status is recoverable on-screen; the
+          badge + toggle are persistent controls. Only the iOS-browser badge makes
+          the row this wide — the native shell hides the badge entirely, so the
+          status pill is unaffected in the app. */}
+      <div className="max-[389px]:hidden">
+        <StatusPill status={status} />
+      </div>
+      <div style={{ marginLeft: 8, flexShrink: 0 }}>
         <InstallOrAppStoreButton
           appStoreKey="metronome"
           appName="Metronome"

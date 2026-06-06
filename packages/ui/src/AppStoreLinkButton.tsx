@@ -11,8 +11,10 @@
 // to the App Store app as a Universal Link; target="_blank" would open a Safari
 // web view first, defeating the tap→App-Store UX.
 
-import badgeBlack from './assets/app-store-badge-black.svg'
-import badgeWhite from './assets/app-store-badge-white.svg'
+// Apple's official, UNMODIFIED "Download on the App Store" lockups, vendored
+// under their original filenames (provenance — same as the Apple Music assets).
+import badgeBlack from './assets/Download_on_the_App_Store_Badge_US-UK_RGB_blk_092917.svg'
+import badgeWhite from './assets/Download_on_the_App_Store_Badge_US-UK_RGB_wht_092917.svg'
 import { APP_STORE_LINKS, type AppStoreKey } from './appStoreLinks'
 
 type Props = {
@@ -34,7 +36,10 @@ export function AppStoreLinkButton({ appName, label, className }: Props) {
       href={link.url}
       aria-label={`Download ${label} on the App Store`}
       className={
-        className ?? 'inline-flex h-8 items-center justify-center'
+        // shrink-0: the badge sits in flex headers (metronome .hdr, StickyHeader
+        // row); without it flexbox compresses the replaced <img> on narrow
+        // phones (~320px), distorting the badge — which Apple's guidelines forbid.
+        className ?? 'inline-flex h-8 shrink-0 items-center justify-center'
       }
     >
       {/* Theme-swapped official artwork — black lockup on light, white on dark.
@@ -45,13 +50,13 @@ export function AppStoreLinkButton({ appName, label, className }: Props) {
         src={badgeBlack}
         alt=""
         aria-hidden="true"
-        className="block h-8 w-auto dark:hidden"
+        className="block h-8 w-auto max-w-none object-contain dark:hidden"
       />
       <img
         src={badgeWhite}
         alt=""
         aria-hidden="true"
-        className="hidden h-8 w-auto dark:block"
+        className="hidden h-8 w-auto max-w-none object-contain dark:block"
       />
     </a>
   )
