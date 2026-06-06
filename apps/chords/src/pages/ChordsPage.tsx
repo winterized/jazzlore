@@ -167,6 +167,7 @@ export default function ChordsPage() {
         installAppName="Chords"
         installAppIconHref="/icons/icon-192.png"
         installAppAccent="#8a72a8"
+        appStoreKey="chords"
       />
 
       <main className="min-h-screen bg-stone-100 px-[14px] pt-4 pb-[80px] text-stone-900 md:px-[20px] md:pt-6 dark:bg-stone-950 dark:text-stone-100">

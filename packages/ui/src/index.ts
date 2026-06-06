@@ -23,5 +23,12 @@ export {
 } from './usePwaInstall'
 export { PwaInstallButton } from './PwaInstallButton'
 export { PwaInstallSheet } from './PwaInstallSheet'
+export {
+  APP_STORE_LINKS,
+  chooseInstallAffordance,
+  type AppStoreKey,
+  type AppStoreLink,
+  type InstallAffordance,
+} from './appStoreLinks'
 export { ShareButton } from './ShareButton'
 export { nativeShare, type ShareData } from './nativeShare'

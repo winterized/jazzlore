@@ -26,7 +26,10 @@ export function Header({ theme, status, onToggleTheme }: HeaderProps) {
       <div className="spc" />
       <StatusPill status={status} />
       <div style={{ marginLeft: 8 }}>
+        {/* Install icon unchanged. On iOS, its sheet offers the native App Store
+            badge instead of PWA instructions (appStoreKey="metronome"). */}
         <PwaInstallButton
+          appStoreKey="metronome"
           appName="Metronome"
           appIconHref="/icons/icon-192.png"
           appAccent="#a06b6b"

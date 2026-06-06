@@ -18,12 +18,23 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useFocusTrap } from './useFocusTrap'
 import { usePwaInstall } from './usePwaInstall'
+import { AppStoreLinkButton } from './AppStoreLinkButton'
+import {
+  APP_STORE_LINKS,
+  chooseInstallAffordance,
+  type AppStoreKey,
+} from './appStoreLinks'
 
 type Props = {
   appName: string
   appIconHref: string
   /** Hex-literal accent color — see PwaInstallButton for rationale. */
   appAccent: `#${string}`
+  /** App Store listing key. When set AND the app is App-Store-available, the iOS
+   * branch shows Apple's official "Download on the App Store" badge instead of
+   * the "Add to Home Screen" PWA instructions. Omit → PWA instructions (current
+   * behavior for Android/desktop and for apps with no listing, e.g. musicians). */
+  appStoreKey?: AppStoreKey
   onClose: () => void
 }
 
@@ -212,6 +223,24 @@ function PromptCta({
   )
 }
 
+function AppStoreOffer({
+  appName,
+  appStoreKey,
+}: {
+  appName: string
+  appStoreKey: AppStoreKey
+}) {
+  return (
+    <div className="flex flex-col items-center gap-4 py-1 text-center">
+      <p className="text-sm leading-relaxed text-stone-700 dark:text-stone-300">
+        {appName} has a native iPhone app — install it free from the App Store
+        for the best experience.
+      </p>
+      <AppStoreLinkButton appName={appStoreKey} label={appName} />
+    </div>
+  )
+}
+
 function platformHeading(
   platform: ReturnType<typeof usePwaInstall>['platform'],
   appName: string,
@@ -233,13 +262,29 @@ export function PwaInstallSheet({
   appName,
   appIconHref,
   appAccent,
+  appStoreKey,
   onClose,
 }: Props) {
   const sheetRef = useRef<HTMLDivElement>(null)
   const [entered, setEntered] = useState(false)
   const titleId = 'pwa-install-title'
-  const { platform } = usePwaInstall()
+  const { platform, isStandalone, isNativeApp } = usePwaInstall()
   useFocusTrap(sheetRef, true)
+
+  // On iOS, offer the native App Store app instead of PWA "Add to Home Screen"
+  // instructions — but only when this app actually has a live listing. Reuses
+  // the same affordance rule as elsewhere ('app-store' ⇒ iOS + available).
+  const available = appStoreKey
+    ? APP_STORE_LINKS[appStoreKey].available
+    : false
+  const showAppStore =
+    appStoreKey != null &&
+    chooseInstallAffordance({
+      platform,
+      isStandalone,
+      isNativeApp,
+      available,
+    }) === 'app-store'
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setEntered(true))
@@ -305,10 +350,14 @@ export function PwaInstallSheet({
               id={titleId}
               className="text-base font-semibold text-stone-900 dark:text-stone-50"
             >
-              {platformHeading(platform, appName)}
+              {showAppStore
+                ? `Get ${appName} on the App Store`
+                : platformHeading(platform, appName)}
             </h2>
             <p className="mt-0.5 text-xs text-stone-600 dark:text-stone-300">
-              No app store · works offline · zero tracking
+              {showAppStore
+                ? 'The native iPhone app · free on the App Store'
+                : 'No app store · works offline · zero tracking'}
             </p>
           </div>
           <button
@@ -338,19 +387,26 @@ export function PwaInstallSheet({
           </button>
         </div>
         <div className="px-5 pb-6 pt-4">
-          {platform === 'ios' && <IOSInstructions appName={appName} />}
-          {platform === 'android-no-prompt' && (
-            <AndroidNoPromptInstructions appName={appName} />
-          )}
-          {platform === 'desktop-no-prompt' && (
-            <DesktopNoPromptInstructions appName={appName} />
-          )}
-          {(platform === 'android-prompt' || platform === 'desktop-prompt') && (
-            <PromptCta
-              appName={appName}
-              appAccent={appAccent}
-              onInstalled={onClose}
-            />
+          {showAppStore && appStoreKey ? (
+            <AppStoreOffer appName={appName} appStoreKey={appStoreKey} />
+          ) : (
+            <>
+              {platform === 'ios' && <IOSInstructions appName={appName} />}
+              {platform === 'android-no-prompt' && (
+                <AndroidNoPromptInstructions appName={appName} />
+              )}
+              {platform === 'desktop-no-prompt' && (
+                <DesktopNoPromptInstructions appName={appName} />
+              )}
+              {(platform === 'android-prompt' ||
+                platform === 'desktop-prompt') && (
+                <PromptCta
+                  appName={appName}
+                  appAccent={appAccent}
+                  onInstalled={onClose}
+                />
+              )}
+            </>
           )}
         </div>
       </div>

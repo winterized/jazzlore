@@ -11,9 +11,10 @@
 // sheet — both plug into the slots/props here without restructuring.
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 import type { MusicianDetail } from '../../lib/types'
 import { isWaking } from '../../lib/types'
+import { canonicalShareUrl } from '../../lib/shareUrl'
 import {
   defaultSource,
   type DataSource,
@@ -24,7 +25,7 @@ import { MosaicV4 } from '../../components/MosaicV4'
 import { EraStrip, type EraItem } from '../../components/EraStrip'
 import { RecordsStrip } from '../../components/RecordsStrip'
 import { PwaInstallButton, ShareButton } from '@jazzlore/ui'
-import { ChevronIcon, SearchIcon } from '../../components/icons'
+import { ChevronIcon, HomeIcon, SearchIcon } from '../../components/icons'
 import { ThemeToggleButton } from '../../components/ThemeToggleButton'
 import { DetailIdentity } from './DetailIdentity'
 import { CollaboratorRail, HEADLINER_CAP } from './CollaboratorRail'
@@ -178,6 +179,11 @@ export function DetailView({
   }
   const paras = bioParagraphs(detail, bioFull)
 
+  // Share the canonical PUBLIC url, never the current `window.location.href`:
+  // inside the Capacitor native shell that is `capacitor://localhost/…`, a dead
+  // link with no iOS preview/title. Re-base the path onto the production origin.
+  const shareUrl = canonicalShareUrl(location.pathname, location.search)
+
   // Share-sheet tagline: prefer the bio summary; fall back to instrument · era
   // (and to undefined when the musician is too sparse for either).
   const shareTagline =
@@ -191,6 +197,25 @@ export function DetailView({
     <Shell>
       <header className="hdr">
         <div className="hdr-row">
+          {/* Jazzlore home affordance — leftmost. Distinct from Back (history):
+              this always returns to the Musicians home. Dual-variant, swapped at
+              640px (CLAUDE.md rule 11): brand text on desktop, home icon on
+              phones. NOT gated by isNativeApp() — native users benefit equally.
+              Links to /musicians directly (the real home; / just redirects). */}
+          <Link
+            to="/musicians"
+            className="brand home-brand"
+            aria-label="Jazzlore home"
+          >
+            Jazz<b>lore</b>
+          </Link>
+          <Link
+            to="/musicians"
+            className="ic home-ic"
+            aria-label="Jazzlore home"
+          >
+            <HomeIcon />
+          </Link>
           <button
             type="button"
             className="ic ic-back"
@@ -210,12 +235,17 @@ export function DetailView({
             <SearchIcon />
           </button>
           {/* One slot, mutually exclusive: the native share sheet in the
-              Capacitor shell, the PWA-install affordance in the browser.
-              ShareButton self-hides off-native; PwaInstallButton self-hides
-              in the native shell + when already standalone. */}
+              Capacitor shell, the PWA-install affordance in the browser. The
+              exclusivity is EMERGENT from two independent isNativeApp() gates,
+              not enforced by a single chooser: ShareButton self-hides off-native;
+              PwaInstallButton self-hides in the native shell + when standalone.
+              (Musicians passes no appStoreKey, so its install sheet keeps the
+              PWA instructions — the App Store badge offer is metronome/chords/
+              scales only.) */}
           <ShareButton
             title={detail.name}
             text={shareTagline}
+            url={shareUrl}
             label={`Share ${detail.name}`}
             className="ic"
           />

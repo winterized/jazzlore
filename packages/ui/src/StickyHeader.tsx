@@ -6,6 +6,7 @@ import { usePrefersReducedMotion } from './StickyHeader.hooks'
 import ChipRow, { type ChipRowHandle } from './StickyHeader.chipRow'
 import SearchBox, { type SearchResult } from './StickyHeader.searchBox'
 import { PwaInstallButton } from './PwaInstallButton'
+import type { AppStoreKey } from './appStoreLinks'
 
 // ─── Public types ──────────────────────────────────────────────────────────────
 
@@ -80,6 +81,11 @@ type Props = {
   installAppName?: string
   installAppIconHref?: string
   installAppAccent?: `#${string}`
+  /** When set (alongside the install-* props), passed through to the install
+   * button so its sheet offers Apple's "Download on the App Store" badge instead
+   * of PWA instructions on iOS — when that app is App-Store-available. The header
+   * button itself is unchanged. Omit for apps with no App Store listing. */
+  appStoreKey?: AppStoreKey
 }
 
 export default function StickyHeader({
@@ -102,6 +108,7 @@ export default function StickyHeader({
   installAppName,
   installAppIconHref,
   installAppAccent,
+  appStoreKey,
 }: Props) {
   const [scrolled, setScrolled] = useState(false)
   const prefersReduced = usePrefersReducedMotion()
@@ -260,13 +267,16 @@ export default function StickyHeader({
           {utilLink.label}
         </LinkComponent>
 
-        {/* PWA install button — only rendered when the host app passes all
-            three install-* props. Hidden internally when standalone. */}
+        {/* Install button — only rendered when the host app passes all three
+            install-* props. Hidden internally when standalone / native. With
+            `appStoreKey`, its sheet offers the native App Store badge instead of
+            PWA instructions on iOS (when that app is App-Store-available). */}
         {installAppName && installAppIconHref && installAppAccent && (
           <PwaInstallButton
             appName={installAppName}
             appIconHref={installAppIconHref}
             appAccent={installAppAccent}
+            appStoreKey={appStoreKey}
           />
         )}
 
