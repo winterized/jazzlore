@@ -11,7 +11,7 @@
 // sheet — both plug into the slots/props here without restructuring.
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 import type { MusicianDetail } from '../../lib/types'
 import { isWaking } from '../../lib/types'
 import { canonicalShareUrl } from '../../lib/shareUrl'
@@ -25,7 +25,7 @@ import { MosaicV4 } from '../../components/MosaicV4'
 import { EraStrip, type EraItem } from '../../components/EraStrip'
 import { RecordsStrip } from '../../components/RecordsStrip'
 import { PwaInstallButton, ShareButton } from '@jazzlore/ui'
-import { ChevronIcon, SearchIcon } from '../../components/icons'
+import { ChevronIcon, HomeIcon, SearchIcon } from '../../components/icons'
 import { ThemeToggleButton } from '../../components/ThemeToggleButton'
 import { DetailIdentity } from './DetailIdentity'
 import { CollaboratorRail, HEADLINER_CAP } from './CollaboratorRail'
@@ -197,6 +197,25 @@ export function DetailView({
     <Shell>
       <header className="hdr">
         <div className="hdr-row">
+          {/* Jazzlore home affordance — leftmost. Distinct from Back (history):
+              this always returns to the Musicians home. Dual-variant, swapped at
+              640px (CLAUDE.md rule 11): brand text on desktop, home icon on
+              phones. NOT gated by isNativeApp() — native users benefit equally.
+              Links to /musicians directly (the real home; / just redirects). */}
+          <Link
+            to="/musicians"
+            className="brand home-brand"
+            aria-label="Jazzlore home"
+          >
+            Jazz<b>lore</b>
+          </Link>
+          <Link
+            to="/musicians"
+            className="ic home-ic"
+            aria-label="Jazzlore home"
+          >
+            <HomeIcon />
+          </Link>
           <button
             type="button"
             className="ic ic-back"

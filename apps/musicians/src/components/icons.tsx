@@ -26,6 +26,26 @@ export function SearchIcon({ size = 14 }: IconProps) {
 // brand-compliance work — both listen surfaces now use the official Apple
 // Music + Spotify artwork vendored at public/brand-assets.
 
+export function HomeIcon({ size = 15 }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M2.5 7.5 8 2.75l5.5 4.75" />
+      <path d="M3.75 6.75V13h8.5V6.75" />
+      <path d="M6.5 13V9.25h3V13" />
+    </svg>
+  )
+}
+
 export function ChevronIcon({ size = 10 }: IconProps) {
   return (
     <svg

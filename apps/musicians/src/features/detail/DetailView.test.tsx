@@ -821,3 +821,35 @@ describe('DetailView — tail-photo enrichment (issue #85)', () => {
     expect(screen.getByText(/Mock Collab 31/)).toBeInTheDocument()
   })
 })
+
+describe('DetailView — Jazzlore home affordance', () => {
+  it('mounts BOTH home-link variants (dual-variant), each pointing to /musicians', () => {
+    // CLAUDE.md rule 11: the header mounts BOTH the desktop brand-text link and
+    // the mobile home-icon link, CSS-hiding one per viewport. components.css IS
+    // applied in this jsdom env, so the mobile-first base hides the brand text
+    // (display:none → dropped from the a11y tree, name-less). Query the DOM
+    // directly to assert both variants exist and target home.
+    const { container } = setup()
+    const homeLinks = Array.from(
+      container.querySelectorAll<HTMLAnchorElement>('a.home-brand, a.home-ic'),
+    )
+    expect(homeLinks).toHaveLength(2)
+    for (const link of homeLinks) {
+      expect(link.getAttribute('href')).toBe('/musicians')
+      expect(link.getAttribute('aria-label')).toMatch(/jazzlore home/i)
+    }
+    // The desktop variant is the brand wordmark; the mobile variant is the icon.
+    expect(container.querySelector('a.home-brand')?.textContent).toBe('Jazzlore')
+    expect(container.querySelector('a.home-ic svg')).not.toBeNull()
+  })
+
+  it('the home affordance is distinct from the Back button', () => {
+    const { container } = setup()
+    // Back is history navigation (a <button>); home is a <Link> to /musicians.
+    const back = screen.getByRole('button', { name: /^back$/i })
+    expect(back.tagName).toBe('BUTTON')
+    const brand = container.querySelector('a.home-brand')
+    expect(brand).not.toBeNull()
+    expect(brand?.getAttribute('href')).toBe('/musicians')
+  })
+})

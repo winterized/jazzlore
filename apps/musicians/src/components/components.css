@@ -310,6 +310,31 @@
   text-overflow: ellipsis;
 }
 
+/* ── Home affordance (detail header, leftmost) ──────────────────────────────
+   Dual-variant swapped at 640px (CLAUDE.md rule 11): the brand-text wordmark on
+   ≥640px viewports, the compact home icon on phones. Both are <a href> links to
+   /musicians; only one is visible per viewport. Mobile-first base = icon shown,
+   text hidden; the 640px block reverses it. */
+.mu3 .home-brand {
+  display: none; /* shown ≥640px */
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.mu3 .home-brand:hover {
+  color: var(--text);
+}
+/* .home-ic inherits the .ic 32×32 icon-button box; shown on phones, hidden ≥640. */
+@media (min-width: 640px) {
+  .mu3 .home-brand {
+    display: inline-block;
+  }
+  .mu3 .home-ic {
+    display: none;
+  }
+}
+
 /* ─────────────────────── Identity banner (mobile) ───────────────────── */
 .mu3 .ident {
   display: grid;
