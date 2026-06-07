@@ -303,6 +303,58 @@ describe('detailCypher — collaborator ordering (ranking bug guard)', () => {
   })
 })
 
+describe('detailCypher — property trimming (issue #155 Lever 1)', () => {
+  // Lever 1 replaces the whole-node `{.*}` spreads on the per-record and
+  // per-collaborator projections with EXPLICIT property maps of exactly what
+  // the FROZEN mapper (src/lib/map.ts) reads. This shrinks the Aura→Worker
+  // payload (Miles: 1,003 nested shared records + 418 collaborator bios) that
+  // the Worker must JSON.parse + reshape + re-stringify inside the 10ms CPU
+  // budget. Output is byte-identical (guarded in src/lib/map.test.ts). These
+  // assertions lock the query SHAPE against a `{.*}` regression sneaking back.
+  const q = detailCypher()
+
+  it('drops the whole-node {.*} spreads for records + shared records + collaborators', () => {
+    expect(q).not.toContain('r{.*}')
+    expect(q).not.toContain('sr{.*}')
+    expect(q).not.toContain('c{.*}')
+  })
+
+  it('keeps the focus musician as a full m{.*} spread (page/OG/era read ~20 fields)', () => {
+    expect(q).toContain('m{.*} AS m')
+  })
+
+  it('top-level record projects exactly the 14 fields mapRecordRef reads', () => {
+    const fields = [
+      '.id', '.title', '.type', '.release_year', '.recording_year',
+      '.label', '.catalog_number', '.track_count',
+      '.cover_art_url', '.cover_art_license',
+      '.wikipedia_url', '.wikidata_id', '.musicbrainz_id', '.discogs_id',
+    ]
+    for (const f of fields) expect(q).toContain(f)
+  })
+
+  it('nested shared record projects only {id, title, release_year}', () => {
+    expect(q).toMatch(/sr\{\s*\.id,\s*\.title,\s*\.release_year\s*\}/)
+  })
+
+  it('collaborator node projects only the 6 fields mapCollaborator + mapGraphData read', () => {
+    expect(q).toMatch(
+      /c\{\.id,\s*\.name,\s*\.primary_instruments,\s*\.picture_url,\s*\.spotify_artist_url,\s*\.apple_artist_url\}/,
+    )
+    // The big Miles win: a full bio_summary must NOT ship per collaborator.
+    expect(q).not.toContain('bio_summary')
+    // Portrait license/attribution are NOT needed here (they come from the
+    // separate by-ids batch); only picture_url, for the `photo` boolean.
+    expect(q).not.toContain('picture_license')
+    expect(q).not.toContain('picture_attribution')
+  })
+
+  it('keeps full edge properties() (dedup-safe; narrowing could change the DISTINCT key)', () => {
+    expect(q).toContain('edge: properties(fe)')
+    expect(q).toContain('edge: properties(ce)')
+  })
+})
+
 describe('byIdsCypher — read-only, parameterized, $ids', () => {
   it('passes the read-only guard and is parameterized on $ids', () => {
     expect(() => byIdsCypher()).not.toThrow()

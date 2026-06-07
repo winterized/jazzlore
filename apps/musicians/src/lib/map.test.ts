@@ -6,7 +6,8 @@ import {
   mapMusicianDetail,
   mapSearchCorpus,
 } from './map'
-import type { RawCollaboratorRow } from './fixtures'
+import type { RawCollaboratorRow, RawDetailResult } from './fixtures'
+import type { RawMusician, RawRecord } from './types'
 import {
   CORPUS_ROWS,
   DUPLICATE_PAIR,
@@ -243,5 +244,77 @@ describe('mapGraphData', () => {
   it('renders duplicate collaborator nodes faithfully (no dedup)', () => {
     // graph mirrors the collaborator list 1:1; count matches.
     expect(g.nodes.length).toBe(RICH_DETAIL.collaborators.length + 1)
+  })
+})
+
+describe('issue #155 Lever 1 — mapper ignores the trimmed-away fields', () => {
+  // detailCypher (Lever 1) stopped shipping the fields below for the per-record
+  // and per-collaborator collections (the `{.*}` → explicit-projection change).
+  // This test PROVES the mapper never read them: feeding a result that carries
+  // ONLY the projected fields must produce byte-identical domain output to the
+  // full fixture. If anyone later teaches the mapper to read a trimmed-away
+  // field, this fails — flagging that the Cypher must re-add it.
+
+  // Top-level record keeps the 14 fields mapRecordRef reads; everything else
+  // (secondary_types, is_various_artists, recording_location, producer,
+  // engineer) is dropped.
+  const pickRecordTop = (r: RawRecord): RawRecord => ({
+    id: r.id,
+    title: r.title,
+    type: r.type,
+    release_year: r.release_year,
+    recording_year: r.recording_year,
+    label: r.label,
+    catalog_number: r.catalog_number,
+    track_count: r.track_count,
+    cover_art_url: r.cover_art_url,
+    cover_art_license: r.cover_art_license,
+    wikipedia_url: r.wikipedia_url,
+    wikidata_id: r.wikidata_id,
+    musicbrainz_id: r.musicbrainz_id,
+    discogs_id: r.discogs_id,
+  })
+  // Nested shared record keeps only {id, title, release_year}.
+  const pickRecordNested = (r: RawRecord): RawRecord => ({
+    id: r.id,
+    title: r.title,
+    release_year: r.release_year,
+  })
+  // Collaborator node keeps only the 6 fields mapCollaborator + mapGraphData
+  // read (drops bio_summary, aka, all_instruments, dates/places, genres,
+  // picture_license, picture_attribution, also_known_as_ids, …).
+  const pickCollab = (m: RawMusician): RawMusician => ({
+    id: m.id,
+    name: m.name,
+    primary_instruments: m.primary_instruments,
+    picture_url: m.picture_url,
+    spotify_artist_url: m.spotify_artist_url,
+    apple_artist_url: m.apple_artist_url,
+  })
+
+  // Faithful simulation of what Aura returns AFTER Lever 1. Edges keep their
+  // full property maps (properties(fe)/properties(ce) is unchanged). The focus
+  // musician keeps the full m{.*} spread.
+  const TRIMMED: RawDetailResult = {
+    musician: RICH_DETAIL.musician,
+    records: RICH_DETAIL.records.map(({ record, edge }) => ({
+      record: pickRecordTop(record),
+      edge,
+    })),
+    collaborators: RICH_DETAIL.collaborators.map(({ musician, sharedRecords }) => ({
+      musician: pickCollab(musician),
+      sharedRecords: sharedRecords.map(({ record, edge }) => ({
+        record: pickRecordNested(record),
+        edge,
+      })),
+    })),
+  }
+
+  it('mapMusicianDetail output is identical with trimmed vs full input', () => {
+    expect(mapMusicianDetail(TRIMMED)).toEqual(mapMusicianDetail(RICH_DETAIL))
+  })
+
+  it('mapGraphData output is identical with trimmed vs full input', () => {
+    expect(mapGraphData(TRIMMED)).toEqual(mapGraphData(RICH_DETAIL))
   })
 })
