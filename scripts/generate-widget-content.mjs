@@ -62,6 +62,8 @@ function capitalize(s) {
   return s.length === 0 ? s : s[0].toUpperCase() + s.slice(1)
 }
 
+// Targets the BFF only (Cloudflare/Aura) — not rate-limited Wikimedia — so a
+// plain linear backoff suffices here; 429-specific handling lives in getBuffer.
 async function getJSON(url, tries = 4) {
   let last
   for (let i = 0; i < tries; i++) {
@@ -104,8 +106,13 @@ function buildFact(detail, hook) {
     ? capitalize(detail.primaryInstruments[0])
     : undefined
   const era = typeof detail.era === 'string' && detail.era ? capitalize(detail.era) : undefined
-  const years =
-    detail.birthYear && detail.deathYear ? `${detail.birthYear}–${detail.deathYear}` : undefined
+  // Deceased → "birth–death"; living (no death year) → "b. birth". Today's
+  // pool is all-deceased, but keep the fact line sound if that ever changes.
+  const years = detail.deathYear
+    ? `${detail.birthYear}–${detail.deathYear}`
+    : detail.birthYear
+      ? `b. ${detail.birthYear}`
+      : undefined
   const fact = [instrument, era, years].filter(Boolean).join(' · ')
   return fact || capitalize(detail.name ?? '')
 }
@@ -131,9 +138,24 @@ function interleave(core, surprise) {
 }
 
 async function main() {
+  // The pool is an APPROVAL MANIFEST (which ids + their tier); the BFF stays
+  // the source of truth for names/facts/portraits so a re-run picks up any
+  // upstream data fix. (We deliberately re-fetch rather than read the pool's
+  // cached fields.)
   const pool = JSON.parse(readFileSync(POOL_FILE, 'utf8')).musicians
   if (!Array.isArray(pool) || pool.length === 0) {
     throw new Error(`empty/invalid pool at ${POOL_FILE}`)
+  }
+  for (const m of pool) {
+    if (typeof m.id !== 'string' || (m.source !== 'curated' && m.source !== 'polished')) {
+      throw new Error(`invalid pool entry (needs string id + curated|polished source): ${JSON.stringify(m)}`)
+    }
+  }
+  // assetName must be injective across the pool — a collision would silently
+  // overwrite one musician's portrait with another's. Fail fast.
+  const names = pool.map((m) => assetName(m.id))
+  if (new Set(names).size !== names.length) {
+    throw new Error('asset-name collision: two pool ids sanitize to the same asset name')
   }
 
   // Hand-written editorial hooks for the curated tier.
