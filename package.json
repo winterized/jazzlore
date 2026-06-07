@@ -27,6 +27,7 @@
     "bundle:budget": "node tests/musicians-bundle-budget.mjs",
     "icons": "node scripts/generate-icons.mjs",
     "icons:preview": "node scripts/preview-icons.mjs",
+    "widget:content": "node scripts/generate-widget-content.mjs",
     "storybook": "pnpm -F @jazzlore/ui storybook",
     "build-storybook": "pnpm -F @jazzlore/ui build-storybook",
     "lint": "eslint .",
