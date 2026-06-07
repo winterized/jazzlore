@@ -15,6 +15,7 @@
     "deploy": "wrangler deploy --config ../../wrangler.musicians.jsonc"
   },
   "dependencies": {
+    "@capacitor/app": "^8.0.0",
     "@jazzlore/music-core": "workspace:*",
     "@jazzlore/ui": "workspace:*",
     "d3-force": "^3.0.0",
