@@ -136,22 +136,62 @@ export function peersByEraCypher(): string {
  * the response carries the canonical id back automatically and every
  * downstream consumer (frontend Listen lookup, search-ranker dedup,
  * graph, era strip via `raw.musician.id`) hits the canonical id without
- * further changes. Stale URLs that previously hard-404'd now resolve. */
+ * further changes. Stale URLs that previously hard-404'd now resolve.
+ *
+ * Property trimming (issue #155, Lever 1, 2026-06-07): the per-record and
+ * per-collaborator projections are EXPLICIT property maps, not `{.*}` node
+ * spreads. For a high-degree musician (Miles: 113 records, 418 collaborators,
+ * 1,003 nested shared-record entries) the old `{.*}` spreads shipped ~17
+ * record properties + ~25 collaborator properties (incl. full `bio_summary`)
+ * for objects the FROZEN mapper (`src/lib/map.ts`) reads only a handful of
+ * fields from — blowing up the Aura→Worker payload the Worker must
+ * `JSON.parse` + reshape + re-stringify inside the 10ms free-tier CPU budget
+ * (Cloudflare 1102). Measured on live Aura: the Miles payload drops from
+ * 883,760 → 356,844 bytes (~60%). The projections below list EXACTLY the
+ * fields each consumer reads, verified against the mapper:
+ *  - record (top-level): the 14 fields `mapRecordRef` reads.
+ *  - nested shared record: `{id,title,release_year}` — all `mapCollaborator`
+ *    (`pickTopRecord` + distinct-id count) and `primaryArtistForRecord` read.
+ *  - collaborator node: `{id,name,primary_instruments,picture_url,
+ *    spotify_artist_url,apple_artist_url}` — all `mapCollaborator` +
+ *    `mapGraphData` read (portrait license/attribution come from the SEPARATE
+ *    by-ids batch, not here; collaborator `photo` needs only `picture_url`).
+ *  - focus `m{.*}` is INTENTIONALLY left as a full spread — the detail page,
+ *    `deriveEra`, and OG injection read ~20 of its fields; it is one node, not
+ *    a collection, so it is not a payload concern.
+ * EDGES keep `properties(fe)`/`properties(ce)` (not narrowed to `{role}`,
+ * the only field read) on purpose: narrowing the edge map would change the
+ * `collect(DISTINCT {record, edge})` dedup key and could alter the output for
+ * a musician with two PLAYED_ON edges to the same record. Node-prop trimming
+ * is dedup-safe (a node's props are constant across its rows); edge-prop
+ * trimming is not. Output is byte-identical to the pre-trim response. */
 export function detailCypher(): string {
   return assertReadOnly(
     `MATCH (m:Musician)
      WHERE m.id = $id OR $id IN coalesce(m.also_known_as_ids, [])
      OPTIONAL MATCH (m)-[fe:PLAYED_ON]->(r:Record)
-     WITH m, collect(DISTINCT {record: r{.*}, edge: properties(fe)}) AS records
+     WITH m, collect(DISTINCT {
+            record: r{.id, .title, .type, .release_year, .recording_year,
+                      .label, .catalog_number, .track_count,
+                      .cover_art_url, .cover_art_license,
+                      .wikipedia_url, .wikidata_id, .musicbrainz_id, .discogs_id},
+            edge: properties(fe)
+          }) AS records
      OPTIONAL MATCH (m)-[:PLAYED_ON]->(sr:Record)<-[ce:PLAYED_ON]-(c:Musician)
      WHERE c.id <> m.id
      WITH m, records, c,
-          collect(DISTINCT {record: sr{.*}, edge: properties(ce)}) AS shared,
+          collect(DISTINCT {
+            record: sr{.id, .title, .release_year},
+            edge: properties(ce)
+          }) AS shared,
           count(DISTINCT sr) AS sharedCount
      ORDER BY c IS NULL, sharedCount DESC, c.name ASC
      WITH m, records,
           collect(CASE WHEN c IS NULL THEN NULL
-                  ELSE {musician: c{.*}, sharedRecords: shared} END) AS collabs
+                  ELSE {musician: c{.id, .name, .primary_instruments,
+                                   .picture_url, .spotify_artist_url,
+                                   .apple_artist_url},
+                        sharedRecords: shared} END) AS collabs
      RETURN m{.*} AS m, records,
             [x IN collabs WHERE x IS NOT NULL] AS collaborators`,
   )
