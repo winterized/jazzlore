@@ -20,11 +20,16 @@ const SPOTIFY_SEARCH = 'https://open.spotify.com/search/'
 const APPLE_SEARCH = 'https://music.apple.com/search?term='
 
 /** Build the shared, encoded search term. Trims, then encodeURIComponent so
- * accents and `& ? # / +` are all percent-encoded identically per service. */
-function term(parts: string[]): string {
+ * accents and `& ? # / +` are all percent-encoded identically per service.
+ *
+ * Tolerates `undefined`/`null` entries: the BFF can return a degenerate record
+ * with no `title` for a sparse musician (widget v1.1 Lee Morse blank-screen
+ * regression), and `title` is typed `string` but absent at runtime. A missing
+ * part is treated as empty and dropped — never `undefined.trim()`. */
+function term(parts: Array<string | undefined | null>): string {
   return encodeURIComponent(
     parts
-      .map((p) => p.trim())
+      .map((p) => (p ?? '').trim())
       .filter((p) => p !== '')
       .join(' '),
   )
@@ -41,13 +46,16 @@ export function appleMusicMusicianUrl(name: string): string {
 /** Record search term = `"<title> <primaryArtist>"`. `primaryArtist` is
  * optional (it's a derived field — see types.ts / README reconcile note);
  * absent/blank falls back to title-only so the URL is never malformed. */
-export function spotifyRecordUrl(title: string, primaryArtist?: string): string {
-  return SPOTIFY_SEARCH + term([title, primaryArtist ?? ''])
+export function spotifyRecordUrl(
+  title: string | undefined,
+  primaryArtist?: string,
+): string {
+  return SPOTIFY_SEARCH + term([title, primaryArtist])
 }
 
 export function appleMusicRecordUrl(
-  title: string,
+  title: string | undefined,
   primaryArtist?: string,
 ): string {
-  return APPLE_SEARCH + term([title, primaryArtist ?? ''])
+  return APPLE_SEARCH + term([title, primaryArtist])
 }

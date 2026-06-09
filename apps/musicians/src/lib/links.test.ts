@@ -105,4 +105,26 @@ describe('record deep-links', () => {
       'https://open.spotify.com/search/Caf%C3%A9%20Antoine%20Herv%C3%A9',
     )
   })
+
+  // Regression (widget v1.1, Lee Morse / sparse-pool blank screen): the BFF
+  // can return a degenerate record with NO `title` for a sparse "polished"
+  // musician — `{ primaryArtist, cover:{}, links:{} }`. `title` is typed
+  // `string` but is `undefined` at runtime, and `term()` did `undefined.trim()`
+  // → uncaught TypeError → (no ErrorBoundary) → blank screen. The builders must
+  // tolerate an absent title without throwing.
+  it('tolerates an undefined title without throwing (sparse BFF record)', () => {
+    const title = undefined as unknown as string
+    expect(() => spotifyRecordUrl(title, 'Lee Morse')).not.toThrow()
+    expect(() => appleMusicRecordUrl(title, 'Lee Morse')).not.toThrow()
+    // Degrades to artist-only, exactly like an empty title.
+    expect(spotifyRecordUrl(title, 'Lee Morse')).toBe(
+      'https://open.spotify.com/search/Lee%20Morse',
+    )
+  })
+
+  it('tolerates both fields undefined without throwing', () => {
+    const u = undefined as unknown as string
+    expect(() => spotifyRecordUrl(u, u)).not.toThrow()
+    expect(spotifyRecordUrl(u, u)).toBe('https://open.spotify.com/search/')
+  })
 })
