@@ -22,9 +22,13 @@
  *                                 fact. These are lower-degree and reliable.
  *
  * Outputs (into the widget target's Resources/):
- *   musicians.json                [{ id, name, fact, deepLinkPath }] — pool
- *                                 order interleaves curated greats evenly
- *                                 among the polished surprises for cadence.
+ *   musicians.json                [{ id, name, fact }] — pool order
+ *                                 interleaves curated greats evenly among the
+ *                                 polished surprises for cadence. No deep-link
+ *                                 path: the widget emits intent
+ *                                 (`jazzlore-musicians://musician/<id>`) and
+ *                                 the web app owns the route mapping
+ *                                 (apps/musicians/src/lib/deepLink.ts).
  *   Portraits.xcassets/<asset>.imageset/portrait.jpg + Contents.json
  *                                 512x512 face-aware square crops, JPEG q80.
  *
@@ -229,7 +233,6 @@ async function main() {
           id: entry.id,
           name,
           fact,
-          deepLinkPath: `/musicians/${encodeURIComponent(entry.id)}`,
         },
       })
       process.stdout.write(`  ✓ ${name}\n`)
