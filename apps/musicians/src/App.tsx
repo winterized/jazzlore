@@ -1,8 +1,16 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
+import type { ReactNode } from 'react'
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+} from 'react-router'
 import HomePage from './pages/HomePage'
 import MusicianPage from './pages/MusicianPage'
 import { OfflineBanner } from './components/OfflineBanner'
 import { DeepLinkHandler } from './components/DeepLinkHandler'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { WakingState } from './features/status/WakingState'
 import { RandomJumpPage } from './features/journey/RandomJumpPage'
 import { JourneyIndexPage } from './features/journey/JourneyIndexPage'
@@ -22,6 +30,15 @@ const WAKING_FALLBACK = [
   { id: 'wikidata:Q160058', name: 'Thelonious Monk' },
 ]
 
+/** App-wide render safety net, mounted inside the Router so it can recover on
+ * navigation: `resetKey={pathname}` clears a caught error when the user moves
+ * to another route, so one bad page (e.g. a BFF contract violation) never
+ * strands the whole session. */
+function RoutedErrorBoundary({ children }: { children: ReactNode }) {
+  const location = useLocation()
+  return <ErrorBoundary resetKey={location.pathname}>{children}</ErrorBoundary>
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -31,7 +48,8 @@ export default function App() {
       {/* Native-only: routes widget taps (jazzlore-musicians://) to the right
           musician page. Renders nothing; no-op in the browser/PWA. */}
       <DeepLinkHandler />
-      <Routes>
+      <RoutedErrorBoundary>
+        <Routes>
         <Route path="/" element={<Navigate to="/musicians" replace />} />
         <Route path="/musicians" element={<HomePage />} />
         <Route path="/musicians/journey/random" element={<RandomJumpPage />} />
@@ -66,7 +84,8 @@ export default function App() {
           />
         )}
         <Route path="*" element={<Navigate to="/musicians" replace />} />
-      </Routes>
+        </Routes>
+      </RoutedErrorBoundary>
     </BrowserRouter>
   )
 }
