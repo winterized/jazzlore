@@ -32,10 +32,10 @@ The third sub-site of the Jazzlore portfolio: a public, polished, mobile-first j
 ## Source structure (`apps/musicians/src/`)
 
 ```
-App.tsx           Router shell (BrowserRouter + Routes)
+App.tsx           Router shell (BrowserRouter + Routes; wraps Routes in an app-wide ErrorBoundary → any uncaught render error degrades to the calm WakingState error screen, never a blank tree; resets on navigation)
 main.tsx          Entry; mounts <App/>; applies initial theme
 index.css         Frozen token layer + self-hosted fonts (Phase B)
-components/       Cross-feature presentational pieces (OverflowMenu, ConnRow, EraStrip, Duo3, MosaicV4, …)
+components/       Cross-feature presentational pieces (OverflowMenu, ConnRow, EraStrip, Duo3, MosaicV4, ErrorBoundary, DeepLinkHandler, …)
 features/         Feature-scoped views + hooks (detail/, graph/, home/, search/, status/)
 hooks/            Cross-feature hooks (useTitle, useIsDesktop, useMosaicScrollPulse, …)
 data/             curated.ts — hand-picked musician IDs + hand-written hook lines
