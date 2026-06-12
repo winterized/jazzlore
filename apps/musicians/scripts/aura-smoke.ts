@@ -112,6 +112,44 @@ async function main(): Promise<void> {
     }
   }
 
+  // ─── Records project (D2 ordering + album/cover fields) ──────────────────
+  // High-degree musician (Miles, 113 records) doubles as the #155 perf check:
+  // the new collaborator-count OPTIONAL MATCH adds an expansion per record.
+  const MILES = 'wikidata:Q93341'
+  const t0 = Date.now()
+  const milesRes = await auraQuery(creds, detailCypher(), { id: MILES })
+  const ms = Date.now() - t0
+  const milesRaw = reshapeDetail(milesRes)
+  if (milesRaw) {
+    const d = mapMusicianDetail(milesRaw)
+    const withCover = d.records.filter((r) => r.cover.url).length
+    const withApple = d.records.filter((r) => r.appleAlbumUrl).length
+    const withSpotify = d.records.filter((r) => r.spotifyAlbumUrl).length
+    console.log(
+      `  records(${d.name}): ${d.records.length} total — cover ${withCover}, apple ${withApple}, spotify ${withSpotify}  [detailCypher ${ms}ms]`,
+    )
+    console.log('  top 8 records (D2 order — studio-first, hub-ness, year asc):')
+    for (const r of d.records.slice(0, 8)) {
+      const tags = [
+        r.cover.url ? 'cover' : '—',
+        r.appleAlbumUrl ? 'apple' : '—',
+        r.spotifyAlbumUrl ? 'spotify' : '—',
+      ].join('/')
+      console.log(`    • ${r.releaseYear ?? '????'}  ${r.title}  [${tags}]`)
+    }
+    const kobIdx = d.records.findIndex((r) => /^Kind of Blue/.test(r.title))
+    console.log(
+      `  Kind of Blue rank: ${kobIdx === -1 ? 'NOT FOUND' : `#${kobIdx + 1}`} (was #28 in unordered storage order)`,
+    )
+    if (ms > 800) {
+      console.log(
+        `  ⚠ detailCypher took ${ms}ms (>800ms) — surface the #155 ordering-cost interaction in the PR`,
+      )
+    }
+  } else {
+    console.log(`  records(${MILES}): no node returned`)
+  }
+
   console.log('✓ Aura smoke OK')
 }
 

@@ -303,6 +303,41 @@ describe('detailCypher — collaborator ordering (ranking bug guard)', () => {
   })
 })
 
+describe('detailCypher — record ordering (Records project, D2)', () => {
+  // Records render in BFF order (the frozen mapper never re-sorts), so the
+  // cypher is the source of truth. D2: studio-first, then collaborator-overlap
+  // DESC, then release_year ASC (originals first), then title. The ORDER BY
+  // must sit BEFORE the collect that builds `records`, else the order is lost.
+  const q = detailCypher()
+
+  it('counts distinct collaborators per record, excluding the focus', () => {
+    expect(q).toMatch(
+      /OPTIONAL MATCH \(r\)<-\[:PLAYED_ON\]-\(co:Musician\)\s+WHERE co\.id <> m\.id/,
+    )
+    expect(q).toMatch(/count\(DISTINCT co\)\s+AS\s+collabCount/)
+  })
+
+  it('orders studio-first, collab-overlap DESC, year ASC, title ASC', () => {
+    expect(q).toMatch(
+      /ORDER BY coalesce\(r\.is_various_artists, false\) ASC,\s*collabCount DESC,\s*coalesce\(r\.release_year, 99999\) ASC,\s*r\.title ASC/,
+    )
+  })
+
+  it('the record ORDER BY sits BEFORE the collect that builds records', () => {
+    const order = q.indexOf('collabCount DESC')
+    const collect = q.indexOf('}) AS records')
+    expect(order).toBeGreaterThan(-1)
+    expect(collect).toBeGreaterThan(-1)
+    expect(order).toBeLessThan(collect)
+  })
+
+  it('projects the three new streaming/attribution fields', () => {
+    expect(q).toContain('.cover_art_attribution')
+    expect(q).toContain('.apple_album_url')
+    expect(q).toContain('.spotify_album_url')
+  })
+})
+
 describe('detailCypher — property trimming (issue #155 Lever 1)', () => {
   // Lever 1 replaces the whole-node `{.*}` spreads on the per-record and
   // per-collaborator projections with EXPLICIT property maps of exactly what
@@ -323,11 +358,12 @@ describe('detailCypher — property trimming (issue #155 Lever 1)', () => {
     expect(q).toContain('m{.*} AS m')
   })
 
-  it('top-level record projects exactly the 14 fields mapRecordRef reads', () => {
+  it('top-level record projects the 17 fields mapRecordRef reads', () => {
     const fields = [
       '.id', '.title', '.type', '.release_year', '.recording_year',
       '.label', '.catalog_number', '.track_count',
-      '.cover_art_url', '.cover_art_license',
+      '.cover_art_url', '.cover_art_license', '.cover_art_attribution',
+      '.apple_album_url', '.spotify_album_url',
       '.wikipedia_url', '.wikidata_id', '.musicbrainz_id', '.discogs_id',
     ]
     for (const f of fields) expect(q).toContain(f)

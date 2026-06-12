@@ -149,7 +149,21 @@ export function peersByEraCypher(): string {
  * (Cloudflare 1102). Measured on live Aura: the Miles payload drops from
  * 883,760 → 356,844 bytes (~60%). The projections below list EXACTLY the
  * fields each consumer reads, verified against the mapper:
- *  - record (top-level): the 14 fields `mapRecordRef` reads.
+ *  - record (top-level): the 17 fields `mapRecordRef` reads (the original 14
+ *    + `cover_art_attribution`, `apple_album_url`, `spotify_album_url` added by
+ *    the Records project, 2026-06-12 — cover attribution + album streaming links).
+ *
+ * Record ordering (Records project, D2, 2026-06-12): records are returned in a
+ * deterministic, graph-derived "importance" order — studio albums first
+ * (`is_various_artists` ASC sinks compilations), then by collaborator-overlap
+ * DESC (a record connecting many distinct graph musicians is a hub — the second
+ * `OPTIONAL MATCH (r)<-[:PLAYED_ON]-(co)` excludes the focus and counts the
+ * rest), then `release_year` ASC (originals first — an intentional divergence
+ * from the shared-records sheet's year DESC), then title for determinism. The
+ * `ORDER BY` sits BEFORE the `collect`, so the collected list preserves it; the
+ * frozen mapper never re-sorts (`src/lib/map.ts`), so the Cypher is the single
+ * source of truth for record order. No populator/data expansion — every signal
+ * is already in the graph.
  *  - nested shared record: `{id,title,release_year}` — all `mapCollaborator`
  *    (`pickTopRecord` + distinct-id count) and `primaryArtistForRecord` read.
  *  - collaborator node: `{id,name,primary_instruments,picture_url,
@@ -170,10 +184,17 @@ export function detailCypher(): string {
     `MATCH (m:Musician)
      WHERE m.id = $id OR $id IN coalesce(m.also_known_as_ids, [])
      OPTIONAL MATCH (m)-[fe:PLAYED_ON]->(r:Record)
+     OPTIONAL MATCH (r)<-[:PLAYED_ON]-(co:Musician) WHERE co.id <> m.id
+     WITH m, r, fe, count(DISTINCT co) AS collabCount
+     ORDER BY coalesce(r.is_various_artists, false) ASC,
+              collabCount DESC,
+              coalesce(r.release_year, 99999) ASC,
+              r.title ASC
      WITH m, collect(DISTINCT {
             record: r{.id, .title, .type, .release_year, .recording_year,
                       .label, .catalog_number, .track_count,
-                      .cover_art_url, .cover_art_license,
+                      .cover_art_url, .cover_art_license, .cover_art_attribution,
+                      .apple_album_url, .spotify_album_url,
                       .wikipedia_url, .wikidata_id, .musicbrainz_id, .discogs_id},
             edge: properties(fe)
           }) AS records

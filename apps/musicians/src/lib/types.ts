@@ -86,6 +86,16 @@ export interface RawRecord {
   track_count?: number
   cover_art_url?: string
   cover_art_license?: string
+  /** Named attribution for the cover image (e.g. CC-BY author). Populated by
+   * the populator's Cover Art Archive job; nests into `RecordRef.cover`. */
+  cover_art_attribution?: string
+  /** Album-level streaming deep-links (populator-resolved). Apple: UPC-exact or
+   * name-search corroboration. Spotify: MusicBrainz release url-rels only (rare
+   * for jazz) — absent → the frontend drops to a search URL. NOT cover-art
+   * properties, so they map to top-level `RecordRef.{appleAlbumUrl,
+   * spotifyAlbumUrl}`, not under `cover`. */
+  apple_album_url?: string
+  spotify_album_url?: string
   wikipedia_url?: string
   wikidata_id?: string
   musicbrainz_id?: string
@@ -134,6 +144,10 @@ export interface RecordRef {
   catalogNumber?: string
   trackCount?: number
   cover: ImageAttribution
+  /** Album-level streaming deep-links (populator-resolved). Absent → the record
+   * card's listen icons fall back to a `<title> <artist>` search URL (D6). */
+  appleAlbumUrl?: string
+  spotifyAlbumUrl?: string
   links: {
     wikipediaUrl?: string
     wikidataId?: string

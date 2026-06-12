@@ -4,6 +4,7 @@ import {
   mapCuratedCard,
   mapGraphData,
   mapMusicianDetail,
+  mapRecordRef,
   mapSearchCorpus,
 } from './map'
 import type { RawCollaboratorRow, RawDetailResult } from './fixtures'
@@ -247,6 +248,47 @@ describe('mapGraphData', () => {
   })
 })
 
+describe('mapRecordRef — Records project fields (cover attribution + album URLs)', () => {
+  const base: RawRecord = { id: 'musicbrainz:rg-1', title: 'Kind of Blue' }
+
+  it('nests cover_art_attribution under cover.attribution', () => {
+    const ref = mapRecordRef({
+      ...base,
+      cover_art_url: 'https://coverartarchive.org/release-group/rg-1/front-500',
+      cover_art_license: 'CC BY-SA 4.0',
+      cover_art_attribution: 'Jane Doe',
+    })
+    expect(ref.cover).toEqual({
+      url: 'https://coverartarchive.org/release-group/rg-1/front-500',
+      license: 'CC BY-SA 4.0',
+      attribution: 'Jane Doe',
+    })
+  })
+
+  it('maps apple_album_url + spotify_album_url to top-level fields (not under cover)', () => {
+    const ref = mapRecordRef({
+      ...base,
+      apple_album_url: 'https://music.apple.com/us/album/kind-of-blue/268443092',
+      spotify_album_url: 'https://open.spotify.com/album/1weenld61qoidwYuZ1GjK1',
+    })
+    expect(ref.appleAlbumUrl).toBe(
+      'https://music.apple.com/us/album/kind-of-blue/268443092',
+    )
+    expect(ref.spotifyAlbumUrl).toBe(
+      'https://open.spotify.com/album/1weenld61qoidwYuZ1GjK1',
+    )
+    // They are NOT cover-art props.
+    expect('appleAlbumUrl' in ref.cover).toBe(false)
+  })
+
+  it('leaves the new fields undefined when absent (graceful fallback, D7)', () => {
+    const ref = mapRecordRef(base)
+    expect(ref.appleAlbumUrl).toBeUndefined()
+    expect(ref.spotifyAlbumUrl).toBeUndefined()
+    expect(ref.cover.attribution).toBeUndefined()
+  })
+})
+
 describe('issue #155 Lever 1 — mapper ignores the trimmed-away fields', () => {
   // detailCypher (Lever 1) stopped shipping the fields below for the per-record
   // and per-collaborator collections (the `{.*}` → explicit-projection change).
@@ -255,9 +297,10 @@ describe('issue #155 Lever 1 — mapper ignores the trimmed-away fields', () => 
   // full fixture. If anyone later teaches the mapper to read a trimmed-away
   // field, this fails — flagging that the Cypher must re-add it.
 
-  // Top-level record keeps the 14 fields mapRecordRef reads; everything else
+  // Top-level record keeps the 17 fields mapRecordRef reads; everything else
   // (secondary_types, is_various_artists, recording_location, producer,
-  // engineer) is dropped.
+  // engineer) is dropped. is_various_artists is read by the cypher ORDER BY
+  // (Records project D2) but NOT by the mapper, so it stays trimmed here.
   const pickRecordTop = (r: RawRecord): RawRecord => ({
     id: r.id,
     title: r.title,
@@ -269,6 +312,9 @@ describe('issue #155 Lever 1 — mapper ignores the trimmed-away fields', () => 
     track_count: r.track_count,
     cover_art_url: r.cover_art_url,
     cover_art_license: r.cover_art_license,
+    cover_art_attribution: r.cover_art_attribution,
+    apple_album_url: r.apple_album_url,
+    spotify_album_url: r.spotify_album_url,
     wikipedia_url: r.wikipedia_url,
     wikidata_id: r.wikidata_id,
     musicbrainz_id: r.musicbrainz_id,
