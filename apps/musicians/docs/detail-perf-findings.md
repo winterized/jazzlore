@@ -1,6 +1,6 @@
 # Musicians detail-page performance — live production findings (issue #164)
 
-**Status:** 🛠️ FIRST PASS IMPLEMENTED (A+B1+C) — awaiting edge re-measure as the acceptance gate.
+**Status:** ✅ FIRST PASS SHIPPED & VERIFIED (A+B1+C, PR #165). Mobile **72 → 84.5**, LCP **11.5 s → 4.0 s**, desktop **88 → 94**. Mobile not yet at the ≥90 bar — option **E (edge preload)** reserved as the next lever (decision pending).
 **Measured:** 2026-06-12, against **live production** (`https://musicians.jazzlore.com`),
 Lighthouse 13.3 driving system Chrome, slow-4G mobile preset + desktop preset.
 **Test page:** Miles Davis (`/musicians/wikidata:Q93341`) — a heavy page (113 records).
@@ -130,6 +130,24 @@ URLs hit the redirect; nothing to change.
 
 Tests: new `primitives.test.tsx` cases assert `fetchpriority=high` on the priority hero and its
 absence on plain eager portraits. 532 unit green, tsc 0, lint 0.
+
+## 3d. Edge re-measure (acceptance gate) — PASSED, 2026-06-12
+
+Re-ran against live prod after PR #165 deployed (CSS bundle carries `content-visibility:auto`).
+
+| | Before | After (median) | Δ |
+|---|---|---|---|
+| Mobile perf | ~72 | **84.5** (82–91) | +12.5 |
+| Mobile LCP | ~11.5 s | **4.0 s** (3.4–4.5) | −7.5 s |
+| **Covers loaded before LCP** | **45** | **0** | the fix's mechanism, confirmed |
+| Desktop perf | 88 | **94** | +6 |
+| Desktop LCP | 2.0 s | 1.6 s | −0.4 s |
+
+`content-visibility` drove cover-requests-in-the-LCP-window from 45 → **0** — the strip no longer
+contends. Desktop now clears ≥90. **Mobile sits at 84.5 median (one run hit 91) — short of the ≥90
+bar.** The remaining gap is the SPA resource-discovery delay (the portrait URL is only known after the
+BFF resolves, so it can't be preloaded from static HTML). Closing it is exactly **option E (edge
+preload)** — deferred pending a scope decision; the cheap, high-value first pass is banked.
 
 ## 4. Process fix — add a detail-page perf gate
 

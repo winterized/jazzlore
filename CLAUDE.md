@@ -75,7 +75,7 @@ All scripts delegate to workspaces via `pnpm -F`:
 
 ## Quality bars (per app)
 
-- Lighthouse: performance ≥ 90, accessibility ≥ 95.
+- Lighthouse: performance ≥ 90, accessibility ≥ 95. **Gate a DETAIL/content-heavy route, not just the home/collection page** — the canonical `pnpm lighthouse:audit` only ever measured list pages, so a content-heavy detail route (musicians `/musicians/:id`, ~113 records) silently sat at mobile perf ~72 for weeks (#164). Measure detail-route perf on the **real edge** (live prod URL via the `lighthouse` CLI + system Chrome), not local node-serve, and take the **median of 3–5 runs** — mobile LCP on these pages is noisy (observed 5–12 s swings). Watch the **LCP element** and **how many image requests start before the LCP timestamp**: a long off-screen image list (record covers, search results) floods the connection pool under slow-4G and starves the hero LCP even when each image is `loading=lazy` (Chrome's lazy threshold is connection-aware and balloons on slow links) — fix with `content-visibility:auto` + `contain-intrinsic-size` on the off-screen tiles, `fetchpriority="high"` on the true LCP image, and `preconnect` to its origin. See `apps/musicians/docs/detail-perf-findings.md` (#164: mobile 72→84.5, LCP 11.5 s→4.0 s).
 - axe-core: 0 violations on every public page in both light and dark themes.
 - Bundle: initial JS ≤ 100 KB gz where reasonable; dynamic-import heavy chunks (notation, audio).
 
