@@ -18,7 +18,10 @@ import { dirname, resolve, join } from 'node:path'
 
 const PREVIEW_BASE = 'http://localhost:5185'
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const OUT = resolve(__dirname, '../../test-results/records-redesign')
+// Durable output dir — NOT under test-results/ (Playwright clears that at the
+// start of every run, which would wipe these gate screenshots). Lives beside
+// the committed visual baselines.
+const OUT = resolve(__dirname, '../../apps/musicians/docs/records-redesign')
 const FIX = '/tmp/records-fixtures'
 
 const SUBJECTS = [
