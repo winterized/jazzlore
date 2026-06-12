@@ -303,28 +303,28 @@ describe('detailCypher — collaborator ordering (ranking bug guard)', () => {
   })
 })
 
-describe('detailCypher — record ordering (Records project, D2)', () => {
+describe('detailCypher — record ordering (Records project, Option 1)', () => {
   // Records render in BFF order (the frozen mapper never re-sorts), so the
-  // cypher is the source of truth. D2: studio-first, then collaborator-overlap
-  // DESC, then release_year ASC (originals first), then title. The ORDER BY
-  // must sit BEFORE the collect that builds `records`, else the order is lost.
+  // cypher is the source of truth. Option 1 (retired the collabCount D2 signal
+  // — see docs/records-ordering-findings.md): a discography timeline — studio
+  // first (is_various_artists), then non-(compilation/live), then release_year
+  // ASC, then title. The ORDER BY must sit BEFORE the collect that builds
+  // `records`, else the order is lost.
   const q = detailCypher()
 
-  it('counts distinct collaborators per record, excluding the focus', () => {
-    expect(q).toMatch(
-      /OPTIONAL MATCH \(r\)<-\[:PLAYED_ON\]-\(co:Musician\)\s+WHERE co\.id <> m\.id/,
-    )
-    expect(q).toMatch(/count\(DISTINCT co\)\s+AS\s+collabCount/)
+  it('does NOT use the retired collaborator-count (D2) signal', () => {
+    expect(q).not.toContain('collabCount')
+    expect(q).not.toMatch(/OPTIONAL MATCH \(r\)<-\[:PLAYED_ON\]-\(co:Musician\)/)
   })
 
-  it('orders studio-first, collab-overlap DESC, year ASC, title ASC', () => {
+  it('orders studio-first, non-comp/live, year ASC, title ASC', () => {
     expect(q).toMatch(
-      /ORDER BY coalesce\(r\.is_various_artists, false\) ASC,\s*collabCount DESC,\s*coalesce\(r\.release_year, 99999\) ASC,\s*r\.title ASC/,
+      /ORDER BY coalesce\(r\.is_various_artists, false\) ASC,\s*CASE WHEN r\.type IN \['compilation', 'live'\] THEN 1 ELSE 0 END ASC,\s*coalesce\(r\.release_year, 99999\) ASC,\s*r\.title ASC/,
     )
   })
 
   it('the record ORDER BY sits BEFORE the collect that builds records', () => {
-    const order = q.indexOf('collabCount DESC')
+    const order = q.indexOf('coalesce(r.is_various_artists, false) ASC')
     const collect = q.indexOf('}) AS records')
     expect(order).toBeGreaterThan(-1)
     expect(collect).toBeGreaterThan(-1)

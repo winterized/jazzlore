@@ -1,6 +1,6 @@
 # Records ordering — P6 taste-gate findings
 
-**Status:** Awaiting Aurélien's taste call · **Date:** 2026-06-12 · **Owner decision required (D2).**
+**Status:** ✅ RESOLVED — Aurélien chose **Option 1** (chronological, comps demoted); applied in `detailCypher` 2026-06-12, retiring the D2 `collabCount` signal. The analysis below is retained as the rationale. · **Date:** 2026-06-12.
 
 The redesigned record strip makes the **first 3 tiles** the dominant visual on the
 detail page. D2 (approved) ordered them by *collaborator-overlap* as an

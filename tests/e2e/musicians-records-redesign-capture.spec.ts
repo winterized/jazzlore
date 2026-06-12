@@ -18,10 +18,10 @@ import { dirname, resolve, join } from 'node:path'
 
 const PREVIEW_BASE = 'http://localhost:5185'
 const __dirname = dirname(fileURLToPath(import.meta.url))
-// Durable output dir — NOT under test-results/ (Playwright clears that at the
-// start of every run, which would wipe these gate screenshots). Lives beside
-// the committed visual baselines.
-const OUT = resolve(__dirname, '../../apps/musicians/docs/records-redesign')
+// Ephemeral output dir (gate screenshots are reviewed then discarded — not
+// committed). NOTE: Playwright clears test-results/ at the START of every run,
+// so re-run THIS spec last / in isolation if you need the shots to persist.
+const OUT = resolve(__dirname, '../../test-results/records-redesign')
 const FIX = '/tmp/records-fixtures'
 
 const SUBJECTS = [
