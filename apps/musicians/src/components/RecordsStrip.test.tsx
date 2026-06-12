@@ -36,7 +36,10 @@ describe('RecordsStrip — sparse/malformed record hardening', () => {
 
   it('shows only usable records and counts them, dropping title-less ones', () => {
     render(<RecordsStrip records={[good, malformed]} />)
-    expect(screen.getByText('Kind of Blue')).toBeInTheDocument()
+    // `good` has no cover → the title appears both on the typographic sleeve
+    // (aria-hidden "art") and in the visible label row, so assert presence
+    // with getAllByText rather than getByText (which throws on >1 match).
+    expect(screen.getAllByText('Kind of Blue').length).toBeGreaterThan(0)
     // "Lee Morse" only appeared as the primaryArtist of the dropped record.
     expect(screen.queryByText('Lee Morse')).not.toBeInTheDocument()
     // The "N key" count reflects the displayed (usable) records, not the raw list.

@@ -434,13 +434,28 @@ describe('RecordsStrip', () => {
     render(<RecordsStrip records={[]} />)
     expect(screen.queryByText(/records they shaped/i)).toBeNull()
   })
-  it('renders each record title + label + short year and a deep-link', () => {
+  it('renders each record title + label + short year, Apple-first primary link + dual icons', () => {
     render(<RecordsStrip records={[record()]} />)
     expect(screen.getByText('Kind of Blue')).toBeInTheDocument()
     expect(screen.getByText(/Columbia/)).toBeInTheDocument()
     expect(screen.getByText("'59")).toBeInTheDocument()
-    const link = screen.getByRole('link', { name: /Kind of Blue/i })
-    expect(link).toHaveAttribute('href', expect.stringContaining('open.spotify.com'))
+    // The cover is the primary listen action (Apple-first §1.3); its accessible
+    // name includes the artist, distinguishing it from the icon button.
+    const cover = screen.getByRole('link', {
+      name: 'Listen to Kind of Blue by Miles Davis on Apple Music',
+    })
+    expect(cover).toHaveAttribute(
+      'href',
+      expect.stringContaining('music.apple.com'),
+    )
+    // Dual service icons; Spotify falls back to a search URL (D6).
+    const spotify = screen.getByRole('link', {
+      name: 'Listen to Kind of Blue on Spotify',
+    })
+    expect(spotify).toHaveAttribute(
+      'href',
+      expect.stringContaining('open.spotify.com'),
+    )
   })
   it('renders an album attribution caption when license/attribution present', () => {
     render(<RecordsStrip records={[record()]} />)
@@ -516,6 +531,86 @@ describe('AttribPhoto / AttribAlbum', () => {
     render(<AttribAlbum rec={record()} />)
     expect(screen.getByText('Kind of Blue')).toBeInTheDocument()
     expect(screen.getByText(/F\. Wolff/)).toBeInTheDocument()
+  })
+})
+
+describe('AttribAlbum — Records project (covers + dual listen, D4/D5/D6)', () => {
+  it('renders a real lazy cover <img> with a 250px CAA srcset (perf, D8)', () => {
+    const { container } = render(
+      <AttribAlbum
+        rec={record({
+          cover: {
+            url: 'https://coverartarchive.org/release-group/rg-1/front-500',
+          },
+        })}
+      />,
+    )
+    const img = container.querySelector('img.rec-cover')
+    expect(img).not.toBeNull()
+    expect(img?.getAttribute('loading')).toBe('lazy')
+    expect(img?.getAttribute('src')).toBe(
+      'https://coverartarchive.org/release-group/rg-1/front-250',
+    )
+    expect(img?.getAttribute('srcset')).toContain('front-250 250w')
+    // Decorative alt — the visible title + the link aria-label carry the name.
+    expect(img?.getAttribute('alt')).toBe('')
+    expect(container.querySelector('.typo-cover')).toBeNull()
+  })
+
+  it('falls back to a typographic sleeve when the record has no cover (D5)', () => {
+    const { container } = render(<AttribAlbum rec={record({ cover: {} })} />)
+    expect(container.querySelector('img.rec-cover')).toBeNull()
+    const sleeve = container.querySelector('.typo-cover')
+    expect(sleeve).not.toBeNull()
+    // The sleeve shows the title as its "art" (aria-hidden — not double-announced).
+    expect(sleeve?.textContent).toContain('Kind of Blue')
+    expect(sleeve?.getAttribute('aria-hidden')).toBe('true')
+  })
+
+  it('prefers populator-resolved album URLs over the search fallback (D6 cascade)', () => {
+    render(
+      <AttribAlbum
+        rec={record({
+          appleAlbumUrl:
+            'https://music.apple.com/us/album/kind-of-blue/268443092',
+          spotifyAlbumUrl:
+            'https://open.spotify.com/album/1weenld61qoidwYuZ1GjK1',
+        })}
+      />,
+    )
+    expect(
+      screen.getByRole('link', { name: 'Listen to Kind of Blue on Apple Music' }),
+    ).toHaveAttribute(
+      'href',
+      'https://music.apple.com/us/album/kind-of-blue/268443092',
+    )
+    expect(
+      screen.getByRole('link', { name: 'Listen to Kind of Blue on Spotify' }),
+    ).toHaveAttribute(
+      'href',
+      'https://open.spotify.com/album/1weenld61qoidwYuZ1GjK1',
+    )
+  })
+
+  it('orders the service icons Apple-first per Identity Guidelines §1.3', () => {
+    const { container } = render(<AttribAlbum rec={record()} />)
+    const act = container.querySelector('.rec-act') as HTMLElement
+    const icons = within(act).getAllByRole('link')
+    expect(icons[0]).toHaveAccessibleName('Listen to Kind of Blue on Apple Music')
+    expect(icons[1]).toHaveAccessibleName('Listen to Kind of Blue on Spotify')
+    expect(act.querySelector('.ic-apple')).not.toBeNull()
+    expect(act.querySelector('.ic-spotify')).not.toBeNull()
+  })
+
+  it('renders the cover-art caption from attribution alone (no license)', () => {
+    render(
+      <AttribAlbum
+        rec={record({
+          cover: { url: 'x', license: '', attribution: 'Francis Wolff' },
+        })}
+      />,
+    )
+    expect(screen.getByText(/Francis Wolff/)).toBeInTheDocument()
   })
 })
 
