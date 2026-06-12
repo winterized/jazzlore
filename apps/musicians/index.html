@@ -5,6 +5,13 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="description" content="Tap through jazz musicians to discover who they played with, hear what defined them, and find new artists worth listening to on Spotify and Apple Music." />
+    <!-- The detail-hero portrait (the detail-route LCP image, issue #164) is
+         hotlinked from Wikimedia Commons. It can't be preloaded (SPA — the URL
+         is only known after the BFF resolves), so warm the TLS connection
+         early. No `crossorigin`: the portrait <img> loads anonymously (no
+         crossOrigin attr), so a crossorigin preconnect would open a second,
+         unused socket. -->
+    <link rel="preconnect" href="https://upload.wikimedia.org" />
     <!-- Preload only the above-the-fold woff2 (Phase-G perf pass): Geist 400
          (body/UI base), Geist 600 (headings/labels), Newsreader 500 (the
          serif hero h1 — LCP text). The remaining 8 weights stay lazy under
