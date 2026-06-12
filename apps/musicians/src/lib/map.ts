@@ -95,7 +95,13 @@ export function mapRecordRef(
     cover: {
       url: str(record.cover_art_url),
       license: str(record.cover_art_license),
+      attribution: str(record.cover_art_attribution),
     },
+    // Album-level streaming links (top-level, not cover-art props). Absent →
+    // the card falls back to a search URL (D6). The Cypher's ORDER BY is
+    // authoritative for record order; the mapper never re-sorts (frozen invariant).
+    appleAlbumUrl: str(record.apple_album_url),
+    spotifyAlbumUrl: str(record.spotify_album_url),
     links: {
       wikipediaUrl: str(record.wikipedia_url),
       wikidataId: str(record.wikidata_id),

@@ -149,7 +149,26 @@ export function peersByEraCypher(): string {
  * (Cloudflare 1102). Measured on live Aura: the Miles payload drops from
  * 883,760 → 356,844 bytes (~60%). The projections below list EXACTLY the
  * fields each consumer reads, verified against the mapper:
- *  - record (top-level): the 14 fields `mapRecordRef` reads.
+ *  - record (top-level): the 17 fields `mapRecordRef` reads (the original 14
+ *    + `cover_art_attribution`, `apple_album_url`, `spotify_album_url` added by
+ *    the Records project, 2026-06-12 — cover attribution + album streaming links).
+ *
+ * Record ordering (Records project, D2 → Option 1, 2026-06-12): a deterministic
+ * discography timeline. The approved D2 ordering (collaborator-overlap DESC as
+ * an "importance" proxy) was retired after live verification: it rewarded
+ * ensemble size, so a big-band session date (Legrand Jazz) topped Miles,
+ * Coltrane AND Bill Evans while Kind of Blue sank to #49. The bake-off
+ * (`scripts/analyze-ordering.ts`) proved NO graph signal encodes importance —
+ * leader-role data is too sparse and `:Record` nodes carry zero Wikipedia/
+ * Wikidata links (see `docs/records-ordering-findings.md`). Option 1 (the
+ * owner's call) is the honest alternative: studio albums first
+ * (`is_various_artists` ASC), then non-(compilation/live) first, then
+ * `release_year` ASC (early → late), then title for determinism. It never
+ * claims a false "importance" hierarchy and is CHEAPER than D2 (no
+ * collaborator-count expansion). The `ORDER BY` sits BEFORE the `collect`, so
+ * the collected list preserves it; the frozen mapper never re-sorts
+ * (`src/lib/map.ts`), so the Cypher is the single source of truth for record
+ * order. No populator/data expansion — every signal is already in the graph.
  *  - nested shared record: `{id,title,release_year}` — all `mapCollaborator`
  *    (`pickTopRecord` + distinct-id count) and `primaryArtistForRecord` read.
  *  - collaborator node: `{id,name,primary_instruments,picture_url,
@@ -170,10 +189,16 @@ export function detailCypher(): string {
     `MATCH (m:Musician)
      WHERE m.id = $id OR $id IN coalesce(m.also_known_as_ids, [])
      OPTIONAL MATCH (m)-[fe:PLAYED_ON]->(r:Record)
+     WITH m, r, fe
+     ORDER BY coalesce(r.is_various_artists, false) ASC,
+              CASE WHEN r.type IN ['compilation', 'live'] THEN 1 ELSE 0 END ASC,
+              coalesce(r.release_year, 99999) ASC,
+              r.title ASC
      WITH m, collect(DISTINCT {
             record: r{.id, .title, .type, .release_year, .recording_year,
                       .label, .catalog_number, .track_count,
-                      .cover_art_url, .cover_art_license,
+                      .cover_art_url, .cover_art_license, .cover_art_attribution,
+                      .apple_album_url, .spotify_album_url,
                       .wikipedia_url, .wikidata_id, .musicbrainz_id, .discogs_id},
             edge: properties(fe)
           }) AS records

@@ -7,10 +7,14 @@
 // italic placeholder, never silent (design "Missing-photo gets an italic
 // placeholder").
 
+import type { MouseEvent } from 'react'
+import { useState } from 'react'
 import type { ImageAttribution, RecordRef } from '../lib/types'
 import { attributionCaption } from '../lib/attribution'
-import { spotifyRecordUrl } from '../lib/links'
+import { appleMusicRecordUrl, spotifyRecordUrl } from '../lib/links'
+import { coverArtSources } from '../lib/cover'
 import { Duo3 } from './Duo3'
+import { TypographicCover } from './TypographicCover'
 
 export function AttribPhoto({
   name,
@@ -52,26 +56,94 @@ export function AttribPhoto({
   )
 }
 
+/** The cover image, with a graceful onError → typographic-sleeve fallback (a
+ * hotlinked CAA cover that 404s / blocks degrades to the deterministic
+ * typographic cover, never a broken-image icon). Decorative `alt=""` — the
+ * title text + the link's aria-label carry the accessible name, so the cover
+ * doesn't triple-announce. 250px served into the 124px tile (perf, D8). */
+function RecordCover({ rec }: { rec: RecordRef }) {
+  const [failed, setFailed] = useState(false)
+  const url = rec.cover.url
+  if (!url || failed) {
+    return <TypographicCover title={rec.title} seed={rec.id ?? rec.title} />
+  }
+  const { src, srcSet } = coverArtSources(url)
+  return (
+    <img
+      className="rec-cover"
+      src={src}
+      srcSet={srcSet}
+      sizes="124px"
+      alt=""
+      width={124}
+      height={124}
+      loading="lazy"
+      decoding="async"
+      referrerPolicy="no-referrer"
+      onError={() => setFailed(true)}
+    />
+  )
+}
+
 export function AttribAlbum({ rec }: { rec: RecordRef }) {
   const caption = attributionCaption(rec.cover, 'Cover art')
+  const artist = rec.primaryArtist
+  const meta = [artist, rec.label].filter(Boolean).join(' · ')
+  // Listen cascade (D6): album-level resolved URL when the populator found one,
+  // else the `<title> <artist>` search builder. Apple-first per §1.3.
+  const appleHref = rec.appleAlbumUrl ?? appleMusicRecordUrl(rec.title, artist)
+  const spotifyHref = rec.spotifyAlbumUrl ?? spotifyRecordUrl(rec.title, artist)
+  // Icon taps open in a new tab and MUST NOT bubble to the cover's primary
+  // link (mirrors ConnRow's listen icons). They are siblings of `.rec-link`
+  // (not nested anchors), so this is belt-and-suspenders.
+  const stop = (e: MouseEvent): void => e.stopPropagation()
   return (
-    <a
-      className="rec-tile"
-      href={spotifyRecordUrl(rec.title, rec.primaryArtist)}
-      target="_blank"
-      rel="noreferrer"
-    >
-      <figure className="fig">
-        <Duo3 name={rec.title} initials={false} photo={Boolean(rec.cover.url)} />
-        <div className="rt">{rec.title}</div>
-        <div className="rm">
-          {[rec.primaryArtist, rec.label].filter(Boolean).join(' · ')}
-        </div>
-        {rec.releaseYear && (
-          <div className="ry">&apos;{String(rec.releaseYear).slice(-2)}</div>
-        )}
-        {caption && <figcaption>{caption}</figcaption>}
-      </figure>
-    </a>
+    <div className="rec-tile">
+      <a
+        className="rec-link"
+        href={appleHref}
+        target="_blank"
+        rel="noreferrer"
+        aria-label={`Listen to ${rec.title}${artist ? ` by ${artist}` : ''} on Apple Music`}
+      >
+        <figure className="fig">
+          <RecordCover rec={rec} />
+          <div className="rt">{rec.title}</div>
+          {meta && <div className="rm">{meta}</div>}
+          {rec.releaseYear && (
+            <div className="ry">&apos;{String(rec.releaseYear).slice(-2)}</div>
+          )}
+          {caption && <figcaption>{caption}</figcaption>}
+        </figure>
+      </a>
+      {/* Apple Music FIRST per Apple's Identity Guidelines §1.3 (when Apple's
+          mark sits alongside other music-service marks it must lead). `.rec-act`
+          is a flex ROW, so DOM order = visual left→right: Apple left, Spotify
+          right. Official marks vendored unmodified + theme-swapped in CSS
+          (Apple never recoloured). Decorative glyphs — the anchor carries the
+          accessible name. */}
+      <div className="rec-act">
+        <a
+          className="ic"
+          href={appleHref}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={`Listen to ${rec.title} on Apple Music`}
+          onClick={stop}
+        >
+          <span className="ic-glyph ic-apple" aria-hidden="true" />
+        </a>
+        <a
+          className="ic"
+          href={spotifyHref}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={`Listen to ${rec.title} on Spotify`}
+          onClick={stop}
+        >
+          <span className="ic-glyph ic-spotify" aria-hidden="true" />
+        </a>
+      </div>
+    </div>
   )
 }
