@@ -27,8 +27,10 @@ export function AttribPhoto({
   missing?: boolean
 }) {
   const caption = attributionCaption(attribution, 'Photo')
-  // Phase H — the detail hero renders the REAL duotone portrait (eager:
-  // it is the LCP image on the detail route). The figure is presentational
+  // Phase H — the detail hero renders the REAL duotone portrait (eager +
+  // priority: it is the LCP image on the detail route, so it loads eagerly
+  // AND with fetchpriority=high to win connection priority over the record
+  // strip's cover requests under slow-4G — issue #164). The figure is presentational
   // (no interactive role → NOT made tabbable: a focusable non-interactive
   // element is an a11y anti-pattern). The duotone→colour reveal therefore
   // fires on `:hover` here; on the home page the curated card IS a focusable
@@ -42,6 +44,7 @@ export function AttribPhoto({
         photo={!missing}
         portrait={missing ? undefined : attribution}
         eager
+        priority
       />
       <figcaption>
         {missing ? (

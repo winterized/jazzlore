@@ -1051,6 +1051,24 @@
   flex: 0 0 124px;
   display: flex;
   flex-direction: column;
+  /* Perf (issue #164): a heavy discography (Miles ≈ 113 records) lays out the
+     whole strip in one flex row, and the browser still pulls ~45 hotlinked
+     Cover Art Archive images during initial load (each a 302 redirect to an
+     archive.org CDN node) despite `loading="lazy"`. Under slow-4G that
+     saturates the connection pool and starves the hero-portrait LCP paint
+     (live A/B: blocking archive.org halved LCP, ~11.5 s → ~5.5 s).
+     `content-visibility: auto` skips rendering AND the lazy-load trigger for
+     off-screen tiles (both below-fold and off the horizontal scroll), so only
+     the visible covers load up front; the rest load as the strip is scrolled.
+     `contain-intrinsic-size` reserves the tile box so the scroll metrics stay
+     stable and CLS is unaffected: 124 px wide (the fixed `flex` basis) and
+     309 px tall — the strip is `align-items: stretch`, so every tile renders at
+     the uniform row height (measured 309 px; reserving the exact value means an
+     off-screen tile doesn't grow when it renders → no scroll jank). The `auto`
+     keyword lets the browser remember each tile's real size once rendered.
+     No-op (graceful) on engines without content-visibility. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 124px auto 309px;
 }
 /* The cover + text is ONE link (the primary listen action, Apple-first); the
    per-service icons sit OUTSIDE it in `.rec-act` so they are siblings, not

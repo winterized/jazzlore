@@ -86,6 +86,30 @@ describe('Duo3', () => {
     )
   })
 
+  it('marks the portrait fetchpriority=high when priority (the detail-hero LCP image)', () => {
+    render(
+      <Duo3
+        name="Miles Davis"
+        portrait={{ url: 'https://x/m.jpg' }}
+        eager
+        priority
+      />,
+    )
+    expect(screen.getByRole('img', { name: 'Miles Davis' })).toHaveAttribute(
+      'fetchpriority',
+      'high',
+    )
+  })
+
+  it('does NOT set fetchpriority on an eager-but-not-priority portrait (home rows stay unchanged)', () => {
+    render(
+      <Duo3 name="Miles Davis" portrait={{ url: 'https://x/m.jpg' }} eager />,
+    )
+    expect(
+      screen.getByRole('img', { name: 'Miles Davis' }),
+    ).not.toHaveAttribute('fetchpriority')
+  })
+
   it('renders the monogram (no <img>) when no portrait url is supplied — non-hero call-sites unchanged', () => {
     render(<Duo3 name="Bobby Timmons" data-testid="duo" />)
     expect(screen.queryByRole('img')).toBeNull()

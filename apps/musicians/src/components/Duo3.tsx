@@ -37,6 +37,12 @@ type Props = {
   /** Eager-load the <img> (first home row / the detail hero, so LCP is not
    * harmed by lazy-loading the above-the-fold portrait). Default lazy. */
   eager?: boolean
+  /** Mark this portrait `fetchpriority="high"` — reserved for the single
+   * detail-hero LCP image (issue #164: the hero competes with the record
+   * strip's cover requests under slow-4G, so it must win connection
+   * priority). NOT set for the home eager rows (4 cards would dilute the
+   * hint), so their render stays byte-identical. */
+  priority?: boolean
   /** Wave 2a — when supplied AND `photo === false`, render the editorial
    * `<NoPhotoMark>` (instrument figure + corner monogram) inside the tile
    * instead of the corner-initials fallback. Pass the musician's primary
@@ -74,6 +80,7 @@ export function Duo3({
   photo = true,
   portrait,
   eager = false,
+  priority = false,
   inst,
   className = '',
   style,
@@ -125,6 +132,7 @@ export function Duo3({
           alt={name}
           decoding="async"
           loading={eager ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : undefined}
           referrerPolicy="no-referrer"
           onError={() => setImgFailed(true)}
           /* Issue #85 — start at opacity 0, flip on load. `data-loaded`
