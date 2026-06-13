@@ -14,6 +14,11 @@ export { useFocusTrap } from './useFocusTrap'
 export { useBodyScrollLock } from './useBodyScrollLock'
 export { useSheetTransition } from './useSheetTransition'
 export {
+  useSheetDrag,
+  type SheetDragHandlers,
+  type SheetDragOptions,
+} from './useSheetDrag'
+export {
   useSwipeDownDismiss,
   type SwipeDownDismissHandlers,
   type SwipeDownDismissOptions,

@@ -83,20 +83,21 @@ describe('MoreAboutSheet', () => {
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1))
   })
 
-  it('closes on a downward swipe ≥80px on the sheet', async () => {
+  it('closes on a downward drag past the threshold', async () => {
     const { onClose } = renderSheet()
     const sheet = screen.getByTestId('sheet-panel')
     fireEvent.touchStart(sheet, { touches: [{ clientY: 100 }] })
-    fireEvent.touchMove(sheet, { touches: [{ clientY: 150 }] })
-    fireEvent.touchEnd(sheet, { changedTouches: [{ clientY: 200 }] })
+    fireEvent.touchMove(sheet, { touches: [{ clientY: 250 }] }) // 150px down
+    fireEvent.touchEnd(sheet, { changedTouches: [{ clientY: 250 }] })
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1))
   })
 
-  it('does NOT close on a short (<80px) swipe', () => {
+  it('springs back (no close) on a short drag', () => {
     const { onClose } = renderSheet()
     const sheet = screen.getByTestId('sheet-panel')
     fireEvent.touchStart(sheet, { touches: [{ clientY: 100 }] })
-    fireEvent.touchEnd(sheet, { changedTouches: [{ clientY: 130 }] })
+    fireEvent.touchMove(sheet, { touches: [{ clientY: 120 }] }) // 20px — sub-threshold
+    fireEvent.touchEnd(sheet, { changedTouches: [{ clientY: 120 }] })
     expect(onClose).not.toHaveBeenCalled()
   })
 

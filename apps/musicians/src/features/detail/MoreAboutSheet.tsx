@@ -14,7 +14,7 @@ import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import {
   useFocusTrap,
-  useSwipeDownDismiss,
+  useSheetDrag,
   useBodyScrollLock,
   useSheetTransition,
 } from '@jazzlore/ui'
@@ -44,15 +44,12 @@ export function MoreAboutSheet({
   // view can't scroll (or scroll-chain) behind it. `.more-body` stays free to
   // scroll. Sheet is conditionally mounted, so `true` = "open".
   useBodyScrollLock(true)
-  // Gate the swipe-dismiss to chrome touches (#115). `.more-body` is
-  // `overflow-y: auto`, so without this gate a downward scroll of a long bio
-  // past the 80px threshold dismisses the sheet — the latent accidental-
-  // dismiss bug #115 flagged. (The old "the bio body doesn't scroll" comment
-  // was wrong: max-height:78vh + overflow-y:auto means long bios DO scroll.)
-  // Mirrors SharedRecordsSheet's `.records-body` gate — both sheets now gate
-  // their scrollable body identically; the swipe still dismisses from the
-  // drag-handle / header chrome.
-  const swipe = useSwipeDownDismiss(requestClose, {
+  // Interactive drag-to-dismiss: the sheet follows the finger and dismisses
+  // past the threshold (else springs back). Gated to chrome touches via
+  // `ignoreClosest` (#115) — `.more-body` is `overflow-y: auto`, so a scroll
+  // that begins in the bio must scroll the list, not drag the sheet.
+  const drag = useSheetDrag(sheetRef, {
+    onDismiss: requestClose,
     ignoreClosest: '.more-body',
   })
 
@@ -86,7 +83,7 @@ export function MoreAboutSheet({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        {...swipe}
+        {...drag}
       >
         <div className="more-handle" aria-hidden="true" />
         <div className="more-head">
