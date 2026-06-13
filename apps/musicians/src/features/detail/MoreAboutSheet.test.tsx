@@ -98,6 +98,19 @@ describe('MoreAboutSheet', () => {
     expect(onClose).not.toHaveBeenCalled()
   })
 
+  it('scrolling inside the bio body does NOT dismiss (touch started in .more-body) — #115 gate', () => {
+    const { onClose } = renderSheet()
+    // `.more-body` is overflow-y:auto, so a long-bio scroll that travels past
+    // the 80px threshold must NOT dismiss. The gate bails when the touch
+    // begins inside `.more-body` — same contract as SharedRecordsSheet's
+    // `.records-body` gate (the harmonization in #115).
+    const para = screen.getByText(PARAS[0]!)
+    expect(para.closest('.more-body')).not.toBeNull()
+    fireEvent.touchStart(para, { touches: [{ clientY: 100 }] })
+    fireEvent.touchEnd(para, { changedTouches: [{ clientY: 300 }] })
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
   it('traps focus: focus moves to the first focusable (close) on open', () => {
     renderSheet()
     // The close button is the only focusable in the sheet → it receives
