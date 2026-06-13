@@ -1767,6 +1767,10 @@
 .mu3-sheet .more-body {
   padding: 14px 18px;
   overflow-y: auto;
+  /* Stop a scroll that reaches the list's top/bottom edge from chaining into
+     the page behind the sheet (belt-and-suspenders with useBodyScrollLock,
+     which also freezes the document scroller while a sheet is open). */
+  overscroll-behavior: contain;
 }
 .mu3-sheet .more-body p {
   font-family: var(--font-serif);

@@ -12,7 +12,11 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useFocusTrap, useSwipeDownDismiss } from '@jazzlore/ui'
+import {
+  useFocusTrap,
+  useSwipeDownDismiss,
+  useBodyScrollLock,
+} from '@jazzlore/ui'
 
 type Props = {
   name: string
@@ -34,6 +38,10 @@ export function MoreAboutSheet({
   const [open, setOpen] = useState(false)
 
   useFocusTrap(sheetRef, true)
+  // Lock the background page while the sheet is open so the underlying detail
+  // view can't scroll (or scroll-chain) behind it. `.more-body` stays free to
+  // scroll. Sheet is conditionally mounted, so `true` = "open".
+  useBodyScrollLock(true)
   // Gate the swipe-dismiss to chrome touches (#115). `.more-body` is
   // `overflow-y: auto`, so without this gate a downward scroll of a long bio
   // past the 80px threshold dismisses the sheet — the latent accidental-
