@@ -106,6 +106,25 @@ test.describe('musicians +N more sheet', () => {
       .getByRole('button', { name: /view all 2 records with john coltrane/i })
       .click()
     await expect(page.getByRole('dialog')).toBeVisible()
+    // Settle the open transition before auditing (#163). The desktop modal
+    // fades `opacity: 0 → 1`; while it's mid-fade, axe composites the muted
+    // row-sub text against the half-opaque panel and reports a *transient*
+    // sub-AA frame (~4.3:1). That is an artifact of the animation, not a real
+    // barrier: an opacity fade-in can NEVER satisfy contrast at every frame
+    // (at opacity≈0 every pair is ≈1:1), and the SETTLED text users actually
+    // read is `--dim` #6a6258 on the opaque panel = 5.8:1 (comfortably AA).
+    // So assert the settled, user-perceived state — which still fails loudly
+    // if the at-rest token ever regresses. Keying on computed opacity (not a
+    // fixed sleep) keeps it deterministic. Verified flaky→green: --repeat-each
+    // 5 green after this wait, vs an immediate-audit probe that reproduces the
+    // 4.3:1 frame every run.
+    await expect
+      .poll(() =>
+        page
+          .locator('.mu3-records-sheet')
+          .evaluate((el) => getComputedStyle(el).opacity),
+      )
+      .toBe('1')
     const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze()
     expect(
       results.violations,
