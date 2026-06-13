@@ -341,8 +341,9 @@ describe('DetailView — "More about" #about sheet', () => {
     await userEvent.setup().click(
       screen.getByRole('button', { name: /close — more about/i }),
     )
-    // Sheet closed (hash dropped) and we are STILL on the detail route.
-    expect(screen.queryByRole('dialog')).toBeNull()
+    // Sheet closed (hash dropped, after the slide-out transition) and we are
+    // STILL on the detail route.
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(screen.queryByText('OFF THE DETAIL PAGE')).toBeNull()
     expect(
       screen.getByRole('heading', { level: 1, name: /bobby timmons/i }),
@@ -373,8 +374,9 @@ describe('DetailView — "More about" #about sheet', () => {
     await userEvent.setup().click(
       screen.getByRole('button', { name: /close — more about/i }),
     )
-    // Popped back to the hash-less detail entry: sheet gone, still on detail.
-    expect(screen.queryByRole('dialog')).toBeNull()
+    // Popped back to the hash-less detail entry (after the slide-out): sheet
+    // gone, still on detail.
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(screen.queryByText('OFF THE DETAIL PAGE')).toBeNull()
     expect(
       screen.getByRole('heading', { level: 1, name: /bobby timmons/i }),

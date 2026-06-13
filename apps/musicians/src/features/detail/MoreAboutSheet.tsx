@@ -10,12 +10,13 @@
 // the transition). The `#about` hash ↔ Back wiring lives in the parent
 // (DetailView) so the open state is link-addressable and Back closes it.
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import {
   useFocusTrap,
   useSwipeDownDismiss,
   useBodyScrollLock,
+  useSheetTransition,
 } from '@jazzlore/ui'
 
 type Props = {
@@ -33,9 +34,10 @@ export function MoreAboutSheet({
 }: Props) {
   const sheetRef = useRef<HTMLDivElement>(null)
   const titleId = 'more-about-title'
-  // `open` drives the enter transition: false on first paint → true next
-  // frame so the sheet slides up from translateY(100%).
-  const [open, setOpen] = useState(false)
+  // Enter/exit transition: `open` slides the sheet up on mount; `requestClose`
+  // slides it back DOWN and only then unmounts (calls onClose), so dismissing
+  // animates out instead of vanishing. Every dismiss path routes through it.
+  const { open, requestClose } = useSheetTransition(onClose)
 
   useFocusTrap(sheetRef, true)
   // Lock the background page while the sheet is open so the underlying detail
@@ -50,23 +52,20 @@ export function MoreAboutSheet({
   // Mirrors SharedRecordsSheet's `.records-body` gate — both sheets now gate
   // their scrollable body identically; the swipe still dismisses from the
   // drag-handle / header chrome.
-  const swipe = useSwipeDownDismiss(onClose, { ignoreClosest: '.more-body' })
-
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setOpen(true))
-    return () => cancelAnimationFrame(id)
-  }, [])
+  const swipe = useSwipeDownDismiss(requestClose, {
+    ignoreClosest: '.more-body',
+  })
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') {
         e.preventDefault()
-        onClose()
+        requestClose()
       }
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [onClose])
+  }, [requestClose])
 
   return createPortal(
     <>
@@ -77,7 +76,7 @@ export function MoreAboutSheet({
         className={`mu3-sheet-backdrop${open ? ' open' : ''}`}
         data-testid="sheet-backdrop"
         aria-hidden="true"
-        onClick={onClose}
+        onClick={requestClose}
       />
       <div
         ref={sheetRef}
@@ -98,7 +97,7 @@ export function MoreAboutSheet({
             type="button"
             className="close"
             aria-label={`Close — more about ${name}`}
-            onClick={onClose}
+            onClick={requestClose}
           >
             close ×
           </button>

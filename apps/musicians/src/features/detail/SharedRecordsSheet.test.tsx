@@ -161,7 +161,7 @@ describe('SharedRecordsSheet — dismiss paths', () => {
         new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
       )
     })
-    expect(onClose).toHaveBeenCalled()
+    await waitFor(() => expect(onClose).toHaveBeenCalled())
   })
 
   it('backdrop click calls onClose', async () => {
@@ -176,7 +176,7 @@ describe('SharedRecordsSheet — dismiss paths', () => {
       />,
     )
     await user.click(screen.getByTestId('shared-records-backdrop'))
-    expect(onClose).toHaveBeenCalled()
+    await waitFor(() => expect(onClose).toHaveBeenCalled())
   })
 
   it('close button calls onClose', async () => {
@@ -193,10 +193,10 @@ describe('SharedRecordsSheet — dismiss paths', () => {
     await user.click(
       screen.getByRole('button', { name: /close — records with john coltrane/i }),
     )
-    expect(onClose).toHaveBeenCalled()
+    await waitFor(() => expect(onClose).toHaveBeenCalled())
   })
 
-  it('swipe down ≥80px calls onClose (mobile drawer dismiss gesture)', () => {
+  it('swipe down ≥80px calls onClose (mobile drawer dismiss gesture)', async () => {
     const onClose = vi.fn()
     const source = makeSource({ records: [], totalCount: 0 })
     render(
@@ -213,7 +213,8 @@ describe('SharedRecordsSheet — dismiss paths', () => {
     fireEvent.touchEnd(sheet, {
       changedTouches: [{ clientY: 200 }], // 100px down — exceeds the 80px threshold
     })
-    expect(onClose).toHaveBeenCalled()
+    // Dismiss is deferred until the slide-out transition completes.
+    await waitFor(() => expect(onClose).toHaveBeenCalled())
   })
 
   it('swipe down <80px does NOT call onClose (the threshold prevents accidental dismiss)', () => {
