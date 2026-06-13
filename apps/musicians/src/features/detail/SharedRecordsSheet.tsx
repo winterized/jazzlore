@@ -15,7 +15,7 @@ import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import {
   useFocusTrap,
-  useSwipeDownDismiss,
+  useSheetDrag,
   useBodyScrollLock,
   useSheetTransition,
 } from '@jazzlore/ui'
@@ -101,14 +101,12 @@ export function SharedRecordsSheet({
   )
   useFocusTrap(sheetRef, true)
 
-  // Swipe-down dismiss for mobile, gated to gestures that begin on the
-  // sheet's chrome (handle + heading), NOT inside the scrollable list.
-  // Without the gate, scrolling a 100-record list past 80px would
-  // accidentally call onClose — `.records-body` is `overflow-y: auto` and
-  // touches inside it bubble to this handler. iOS does not consume touch
-  // events before they bubble. The standard mobile-drawer affordance is
-  // "drag the handle" anyway, so excluding the list isn't a UX cost.
-  const swipe = useSwipeDownDismiss(requestClose, {
+  // Interactive drag-to-dismiss: the drawer follows the finger and dismisses
+  // past the threshold (else springs back). Gated to chrome touches (handle +
+  // heading) via `ignoreClosest` — `.records-body` is `overflow-y: auto`, so a
+  // drag that begins in the list must scroll the list, not drag the drawer.
+  const drag = useSheetDrag(sheetRef, {
+    onDismiss: requestClose,
     ignoreClosest: '.records-body',
   })
 
@@ -145,7 +143,7 @@ export function SharedRecordsSheet({
         aria-labelledby={titleId}
         tabIndex={-1}
         className={`mu3-sheet mu3-records-sheet${entered ? ' open' : ''}`}
-        {...swipe}
+        {...drag}
       >
         <div className="more-handle" aria-hidden="true" />
         <div className="more-head">

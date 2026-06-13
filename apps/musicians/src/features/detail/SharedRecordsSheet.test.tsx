@@ -207,12 +207,11 @@ describe('SharedRecordsSheet — dismiss paths', () => {
       />,
     )
     const sheet = screen.getByTestId('shared-records-sheet')
-    fireEvent.touchStart(sheet, {
-      touches: [{ clientY: 100 }],
-    })
-    fireEvent.touchEnd(sheet, {
-      changedTouches: [{ clientY: 200 }], // 100px down — exceeds the 80px threshold
-    })
+    // Drag the drawer down past the threshold (the sheet follows the finger via
+    // touchmove, then dismisses on release).
+    fireEvent.touchStart(sheet, { touches: [{ clientY: 100 }] })
+    fireEvent.touchMove(sheet, { touches: [{ clientY: 250 }] }) // 150px down
+    fireEvent.touchEnd(sheet, { changedTouches: [{ clientY: 250 }] })
     // Dismiss is deferred until the slide-out transition completes.
     await waitFor(() => expect(onClose).toHaveBeenCalled())
   })
@@ -229,7 +228,8 @@ describe('SharedRecordsSheet — dismiss paths', () => {
     )
     const sheet = screen.getByTestId('shared-records-sheet')
     fireEvent.touchStart(sheet, { touches: [{ clientY: 100 }] })
-    fireEvent.touchEnd(sheet, { changedTouches: [{ clientY: 140 }] }) // 40px
+    fireEvent.touchMove(sheet, { touches: [{ clientY: 130 }] }) // 30px — sub-threshold
+    fireEvent.touchEnd(sheet, { changedTouches: [{ clientY: 130 }] })
     expect(onClose).not.toHaveBeenCalled()
   })
 
