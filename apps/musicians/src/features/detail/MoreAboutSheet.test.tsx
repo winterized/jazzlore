@@ -57,16 +57,18 @@ describe('MoreAboutSheet', () => {
     expect(screen.getByText(/jazzlore staff/i)).toBeInTheDocument()
   })
 
+  // Dismiss is deferred until the slide-out transition finishes (the sheet
+  // animates closed before unmounting), so onClose lands asynchronously.
   it('closes on the × button', async () => {
     const { onClose } = renderSheet()
     await userEvent.setup().click(screen.getByRole('button', { name: /close/i }))
-    expect(onClose).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1))
   })
 
-  it('closes on backdrop tap', () => {
+  it('closes on backdrop tap', async () => {
     const { onClose } = renderSheet()
     fireEvent.click(screen.getByTestId('sheet-backdrop'))
-    expect(onClose).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1))
   })
 
   it('does NOT close when tapping inside the sheet', () => {
@@ -75,19 +77,19 @@ describe('MoreAboutSheet', () => {
     expect(onClose).not.toHaveBeenCalled()
   })
 
-  it('closes on Escape', () => {
+  it('closes on Escape', async () => {
     const { onClose } = renderSheet()
     fireEvent.keyDown(document, { key: 'Escape' })
-    expect(onClose).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1))
   })
 
-  it('closes on a downward swipe ≥80px on the sheet', () => {
+  it('closes on a downward swipe ≥80px on the sheet', async () => {
     const { onClose } = renderSheet()
     const sheet = screen.getByTestId('sheet-panel')
     fireEvent.touchStart(sheet, { touches: [{ clientY: 100 }] })
     fireEvent.touchMove(sheet, { touches: [{ clientY: 150 }] })
     fireEvent.touchEnd(sheet, { changedTouches: [{ clientY: 200 }] })
-    expect(onClose).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1))
   })
 
   it('does NOT close on a short (<80px) swipe', () => {

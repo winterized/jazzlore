@@ -11,12 +11,13 @@
 // "N of M records · most recent first" so the user knows the slice is
 // partial (densest pairs are intentionally capped at 100 server-side, R1).
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import {
   useFocusTrap,
   useSwipeDownDismiss,
   useBodyScrollLock,
+  useSheetTransition,
 } from '@jazzlore/ui'
 import type { RecordRef } from '../../lib/types'
 import {
@@ -90,7 +91,10 @@ export function SharedRecordsSheet({
 }: Props) {
   const sheetRef = useRef<HTMLDivElement>(null)
   const titleId = 'shared-records-title'
-  const [entered, setEntered] = useState(false)
+  // Enter/exit transition (`entered` = the `open` flag): slides up on mount,
+  // and `requestClose` slides back down before unmounting so dismissing
+  // animates out instead of vanishing. Every dismiss path routes through it.
+  const { open: entered, requestClose } = useSheetTransition(onClose)
   const state = useBffResource<SharedRecordsResponse>(
     () => source.sharedRecords(focusId, collabId),
     [source, focusId, collabId],
@@ -104,7 +108,9 @@ export function SharedRecordsSheet({
   // touches inside it bubble to this handler. iOS does not consume touch
   // events before they bubble. The standard mobile-drawer affordance is
   // "drag the handle" anyway, so excluding the list isn't a UX cost.
-  const swipe = useSwipeDownDismiss(onClose, { ignoreClosest: '.records-body' })
+  const swipe = useSwipeDownDismiss(requestClose, {
+    ignoreClosest: '.records-body',
+  })
 
   // Lock the background page while the drawer is open so the underlying detail
   // view can't scroll (or scroll-chain) behind it. The `.records-body` list
@@ -112,23 +118,16 @@ export function SharedRecordsSheet({
   // scroll. Sheet is conditionally mounted, so `true` = "open".
   useBodyScrollLock(true)
 
-  // Mount-time slide-in: rAF flip from `translateY(100%)` to `0` so the
-  // mobile-drawer enter transition runs even on first paint.
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setEntered(true))
-    return () => cancelAnimationFrame(id)
-  }, [])
-
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') {
         e.preventDefault()
-        onClose()
+        requestClose()
       }
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [onClose])
+  }, [requestClose])
 
   return createPortal(
     <>
@@ -136,7 +135,7 @@ export function SharedRecordsSheet({
         className={`mu3-sheet-backdrop${entered ? ' open' : ''}`}
         data-testid="shared-records-backdrop"
         aria-hidden="true"
-        onClick={onClose}
+        onClick={requestClose}
       />
       <div
         ref={sheetRef}
@@ -157,7 +156,7 @@ export function SharedRecordsSheet({
             type="button"
             className="close"
             aria-label={`Close — records with ${collabName}`}
-            onClick={onClose}
+            onClick={requestClose}
           >
             close ×
           </button>

@@ -12,6 +12,7 @@ export { isNativeApp, type CapacitorGlobal } from './isNativeApp'
 export { hideNativeSplashAfterMount } from './hideNativeSplash'
 export { useFocusTrap } from './useFocusTrap'
 export { useBodyScrollLock } from './useBodyScrollLock'
+export { useSheetTransition } from './useSheetTransition'
 export {
   useSwipeDownDismiss,
   type SwipeDownDismissHandlers,
