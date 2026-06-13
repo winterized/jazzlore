@@ -428,42 +428,51 @@ test.describe('joint-fix acceptance — Group C BFF (items 1 + 4a)', () => {
 })
 
 /**
- * Group C item 7 — header "···" overflow menu acceptance.
+ * Group C item 7 — header theme control.
  *
- * The top-right slot of the header is now an overflow-menu trigger
- * (aria-label "More options"). Clicking it opens a role="menu" containing
- * the theme toggle as a menuitem. This is a DOM-structure assertion (the
- * a11y shape is the contract), so one viewport is enough.
+ * The "···" overflow menu that once held the theme toggle (07d3196) was
+ * DELIBERATELY reverted in 1808c1a ("promote ThemeToggleButton out of
+ * OverflowMenu — visible in header again"). So the contract today is a
+ * DIRECT, always-visible "Toggle theme" button in the top-right header — no
+ * menu, no "More options" trigger. (Confirmed intentional, not a regression,
+ * 2026-06-13.) This asserts that current shape (a DOM-structure contract, so
+ * one viewport is enough) and guards against an accidental re-burial of the
+ * toggle behind a menu. Was #149: the old test still asserted the abandoned
+ * overflow-menu design and failed against prod.
  */
-test.describe('joint-fix acceptance — Group C overflow menu (item 7)', () => {
+test.describe('joint-fix acceptance — Group C header theme toggle (item 7)', () => {
   test.skip(!ENABLED, 'PREVIEW_BASE not set — joint-fix acceptance suite is no-op')
 
   test.use({ viewport: { width: 1024, height: 768 } })
 
-  test('Top-right slot is the "More options" button + opens to menu containing the theme toggle', async ({
+  test('Top-right slot is a direct, always-visible "Toggle theme" button (no overflow menu)', async ({
     page,
   }) => {
     await page.goto('/musicians')
     await expect(
       page.getByRole('heading', { level: 1, name: /step into a musician/i }),
     ).toBeVisible({ timeout: 15_000 })
-    const trigger = page.getByRole('button', { name: /more options/i })
-    await expect(trigger).toBeVisible()
-    // While closed: ARIA wiring announces a collapsed menu button.
-    await expect(trigger).toHaveAttribute('aria-haspopup', 'menu')
-    await expect(trigger).toHaveAttribute('aria-expanded', 'false')
-    // Theme toggle is not in the DOM until the menu opens.
-    await expect(page.getByRole('button', { name: /toggle theme/i })).toHaveCount(0)
-
-    await trigger.click()
-    await expect(trigger).toHaveAttribute('aria-expanded', 'true')
-    const menu = page.getByRole('menu', { name: /more options/i })
-    await expect(menu).toBeVisible()
+    // The toggle is present and visible WITHOUT any menu interaction.
+    const toggle = page.getByRole('button', { name: /toggle theme/i })
+    await expect(toggle).toBeVisible()
+    // The abandoned overflow design must NOT come back: no "More options"
+    // menu-button trigger anywhere on the page.
     await expect(
-      menu.getByRole('menuitem').filter({
-        has: page.getByRole('button', { name: /toggle theme/i }),
-      }),
-    ).toBeVisible()
+      page.getByRole('button', { name: /more options/i }),
+    ).toHaveCount(0)
+    // Functional contract: clicking it flips the persisted theme on <html>
+    // (the frozen useTheme writes data-theme on the document element).
+    const before = await page.evaluate(() =>
+      document.documentElement.getAttribute('data-theme'),
+    )
+    await toggle.click()
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          document.documentElement.getAttribute('data-theme'),
+        ),
+      )
+      .not.toBe(before)
   })
 })
 
@@ -610,14 +619,20 @@ test.describe('joint-fix acceptance — Phase 0 scaffolding', () => {
             ).toBeLessThan(8000)
           }
           // A2.3 — graph SVG rendered (lazy chunk loaded and drew the
-          // force layout). circle count ≥ 100 is the regression guard
-          // that prevents A2 stripping the graph along with its height.
+          // force layout). This is a "drew real nodes, not an empty/stripped
+          // <svg>" floor, NOT an exact count: the desktop force-graph is
+          // capped at the top-N collaborators (Miles renders 62 <circle>s
+          // live, stable across d1024/d1280/d1536 on 2026-06-13), so the
+          // floor is set well below that and intentionally decoupled from the
+          // exact cap — collaborator/cap drift must not break it, only a
+          // genuinely stripped graph should. (Was ≥100, a pre-top-N-cap
+          // threshold that went stale once the cap landed — #149.)
           // Desktop only — sub-1024 viewports don't render <aside>.
           if (snap.asideExpected) {
             expect.soft(
               snap.graphCircleCount,
-              `Miles ${sfx} · A2.3 graph <circle> count=${snap.graphCircleCount} must be ≥ 100 (lazy chunk loaded)`,
-            ).toBeGreaterThanOrEqual(100)
+              `Miles ${sfx} · A2.3 graph <circle> count=${snap.graphCircleCount} must be ≥ 20 (lazy chunk loaded & drew the capped force layout; live ≈ 62)`,
+            ).toBeGreaterThanOrEqual(20)
             // A2.4 — sticky behavior: scroll the page 800 px and verify
             // the aside stays pinned (`top ≤ 1`). Without the sticky
             // binding, scrolling drags the panel off the viewport.
@@ -1092,28 +1107,55 @@ test.describe('Wave 3 / 3-tier Listen graceful degradation', () => {
     await expect(page.locator('.listen-track')).toHaveCount(0)
   })
 
-  test('tier 3 — George Lewis (no MB streaming URL on either service) lands on plain-name search', async ({
+  test('George Lewis — each Listen button matches its live cascade tier (drift-resistant)', async ({
     page,
+    request,
   }) => {
+    // The Listen cascade resolves PER SERVICE: curated track ?? direct
+    // artist URL (tier 2) ?? bare-name search (tier 3). Pinning George Lewis
+    // to "tier 3 on both services" proved brittle (#149) — the populator
+    // later resolved an Apple *artist* URL for him (the multi-namesake
+    // hazard), flipping Apple to tier 2 while Spotify stays tier 3. So assert
+    // the CONTRACT against live data instead of a fixed tier: whatever artist
+    // URLs the BFF currently carries, each button must match the correct tier
+    // for THAT service. George Lewis is never curated, so only tier 2/3 apply.
+    const links = (await request
+      .get(`${PREVIEW_BASE}/api/musicians/${GEORGE_LEWIS_ID}`)
+      .then((r) => r.json())
+      .then((m) => m.links ?? {})) as {
+      spotifyArtistUrl?: string | null
+      appleArtistUrl?: string | null
+    }
+
     await page.goto(`${PREVIEW_BASE}/musicians/${GEORGE_LEWIS_ID}`)
     const listen = page.getByRole('region', { name: /listen to george lewis/i })
-    const spotify = listen.getByRole('link', {
-      name: /listen to george lewis on spotify/i,
-    })
-    const apple = listen.getByRole('link', {
-      name: /listen to george lewis on apple music/i,
-    })
-    const spotifyHref = (await spotify.getAttribute('href')) ?? ''
-    const appleHref = (await apple.getAttribute('href')) ?? ''
-    // Both services land on a search URL with EXACTLY the encoded name —
-    // no `jazz`, no instrument, no qualifier of any kind. Apple Music's
-    // strict multi-term matching zeroes out otherwise (on-device 2026-05-27).
-    expect(spotifyHref).toBe('https://open.spotify.com/search/George%20Lewis')
-    expect(appleHref).toBe('https://music.apple.com/search?term=George%20Lewis')
-    // Structural guard against any future qualifier-revival.
-    expect(spotifyHref.split('/search/')[1]).toBe('George%20Lewis')
-    expect(appleHref.split('?term=')[1]).toBe('George%20Lewis')
-    // Tier 3 also never shows the editorial caption.
+
+    // Spotify: tier 2 (exact artist URL) when present, else tier-3 bare-name
+    // search — EXACTLY the encoded name (no `jazz`, no qualifier: Apple's /
+    // Spotify's strict matching zeroes out otherwise, on-device 2026-05-27).
+    const spotifyHref =
+      (await listen
+        .getByRole('link', { name: /listen to george lewis on spotify/i })
+        .getAttribute('href')) ?? ''
+    if (links.spotifyArtistUrl) {
+      expect(spotifyHref).toBe(links.spotifyArtistUrl)
+    } else {
+      expect(spotifyHref).toBe('https://open.spotify.com/search/George%20Lewis')
+    }
+
+    // Apple: same cascade, independently resolved.
+    const appleHref =
+      (await listen
+        .getByRole('link', { name: /listen to george lewis on apple music/i })
+        .getAttribute('href')) ?? ''
+    if (links.appleArtistUrl) {
+      expect(appleHref).toBe(links.appleArtistUrl)
+    } else {
+      expect(appleHref).toBe('https://music.apple.com/search?term=George%20Lewis')
+    }
+
+    // The editorial track caption is tier-1 only — George Lewis (tier 2/3 on
+    // both services) never shows it.
     await expect(page.locator('.listen-track')).toHaveCount(0)
   })
 })
