@@ -33,11 +33,22 @@ describe('useBodyScrollLock', () => {
     expect(fireScroll(bg, 'touchmove')).toBe(true)
   })
 
-  it('leaves the sheet body free to scroll', () => {
+  it('leaves a SCROLLABLE sheet body free to scroll', () => {
     render(<Harness active />)
+    const body = document.querySelector('.more-body') as HTMLElement
+    // jsdom has no layout, so fake an overflowing scroll container.
+    Object.defineProperty(body, 'scrollHeight', { value: 500, configurable: true })
+    Object.defineProperty(body, 'clientHeight', { value: 200, configurable: true })
     const inside = screen.getByTestId('inside')
     expect(fireScroll(inside, 'wheel')).toBe(false)
     expect(fireScroll(inside, 'touchmove')).toBe(false)
+  })
+
+  it('cancels scroll inside a body whose content FITS (would otherwise chain to the page)', () => {
+    render(<Harness active />)
+    // Default jsdom: scrollHeight === clientHeight === 0 → not scrollable.
+    const inside = screen.getByTestId('inside')
+    expect(fireScroll(inside, 'touchmove')).toBe(true)
   })
 
   it('does nothing while inactive', () => {

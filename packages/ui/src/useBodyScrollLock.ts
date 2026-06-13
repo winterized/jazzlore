@@ -37,9 +37,14 @@ export function useBodyScrollLock(
 
     const prevent = (e: Event): void => {
       const target = e.target as HTMLElement | null
-      // Leave the sheet's own scrollable body free; cancel everything else
-      // (backdrop, sheet chrome, the page behind).
-      if (target && target.closest(allowScrollSelector)) return
+      const scroller = target?.closest(allowScrollSelector) as HTMLElement | null
+      // Leave the sheet's own body free ONLY when it can actually scroll.
+      // When its content fits (e.g. a short bio), it is NOT a scroll container,
+      // so an allowed gesture would chain straight to the page behind — exactly
+      // the bug that let the detail page scroll under the "More about" sheet.
+      // In that case fall through and cancel. (A scrollable body keeps its
+      // freedom; `overscroll-behavior: contain` on it stops the edge-chain.)
+      if (scroller && scroller.scrollHeight > scroller.clientHeight) return
       e.preventDefault()
     }
 
