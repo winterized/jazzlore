@@ -34,10 +34,15 @@ export function MoreAboutSheet({
   const [open, setOpen] = useState(false)
 
   useFocusTrap(sheetRef, true)
-  // No `ignoreClosest` gate: the bio body doesn't scroll past the dismiss
-  // threshold today, so the whole sheet stays swipe-to-dismiss (preserved
-  // exactly from before the #115 extraction).
-  const swipe = useSwipeDownDismiss(onClose)
+  // Gate the swipe-dismiss to chrome touches (#115). `.more-body` is
+  // `overflow-y: auto`, so without this gate a downward scroll of a long bio
+  // past the 80px threshold dismisses the sheet — the latent accidental-
+  // dismiss bug #115 flagged. (The old "the bio body doesn't scroll" comment
+  // was wrong: max-height:78vh + overflow-y:auto means long bios DO scroll.)
+  // Mirrors SharedRecordsSheet's `.records-body` gate — both sheets now gate
+  // their scrollable body identically; the swipe still dismisses from the
+  // drag-handle / header chrome.
+  const swipe = useSwipeDownDismiss(onClose, { ignoreClosest: '.more-body' })
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setOpen(true))
@@ -54,10 +59,6 @@ export function MoreAboutSheet({
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
-
-  const onTouchMove = (): void => {
-    /* tracked on end; move kept so the gesture is recognised */
-  }
 
   return createPortal(
     <>
@@ -79,7 +80,6 @@ export function MoreAboutSheet({
         aria-labelledby={titleId}
         tabIndex={-1}
         {...swipe}
-        onTouchMove={onTouchMove}
       >
         <div className="more-handle" aria-hidden="true" />
         <div className="more-head">
