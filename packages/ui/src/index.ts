@@ -11,6 +11,7 @@ export { default as ThemeToggle } from './ThemeToggle'
 export { isNativeApp, type CapacitorGlobal } from './isNativeApp'
 export { hideNativeSplashAfterMount } from './hideNativeSplash'
 export { useFocusTrap } from './useFocusTrap'
+export { useBodyScrollLock } from './useBodyScrollLock'
 export {
   useSwipeDownDismiss,
   type SwipeDownDismissHandlers,

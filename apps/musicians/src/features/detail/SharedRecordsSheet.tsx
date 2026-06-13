@@ -13,7 +13,11 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useFocusTrap, useSwipeDownDismiss } from '@jazzlore/ui'
+import {
+  useFocusTrap,
+  useSwipeDownDismiss,
+  useBodyScrollLock,
+} from '@jazzlore/ui'
 import type { RecordRef } from '../../lib/types'
 import {
   useBffResource,
@@ -101,6 +105,12 @@ export function SharedRecordsSheet({
   // events before they bubble. The standard mobile-drawer affordance is
   // "drag the handle" anyway, so excluding the list isn't a UX cost.
   const swipe = useSwipeDownDismiss(onClose, { ignoreClosest: '.records-body' })
+
+  // Lock the background page while the drawer is open so the underlying detail
+  // view can't scroll (or scroll-chain) behind it. The `.records-body` list
+  // also carries `.more-body`, so the default allow-selector leaves it free to
+  // scroll. Sheet is conditionally mounted, so `true` = "open".
+  useBodyScrollLock(true)
 
   // Mount-time slide-in: rAF flip from `translateY(100%)` to `0` so the
   // mobile-drawer enter transition runs even on first paint.
