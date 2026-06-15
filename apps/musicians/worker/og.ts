@@ -50,9 +50,13 @@ function esc(s: string): string {
     .replace(/>/g, '&gt;')
 }
 
-/** The `<meta>` block (no <title> — that's rewritten in place). */
+/** The `<head>` injection block (no <title> — that's rewritten in place). */
 export function ogMetaTags(meta: OgMeta): string {
   const tags = [
+    // Canonical points at the encoded canonical-id URL (meta.url is built from
+    // the resolved canonical id), so alias / unencoded-colon variants of a
+    // musician collapse to one indexable URL.
+    `<link rel="canonical" href="${esc(meta.url)}" />`,
     `<meta name="description" content="${esc(meta.description)}" />`,
     `<meta property="og:type" content="profile" />`,
     `<meta property="og:title" content="${esc(meta.title)}" />`,

@@ -70,6 +70,17 @@ describe('ogMetaTags', () => {
     expect(tags).toContain('twitter:card" content="summary"')
     expect(tags).not.toContain('og:image')
   })
+
+  it('emits a rel=canonical link to the (encoded) musician URL', () => {
+    const tags = ogMetaTags({
+      title: 't',
+      description: 'd',
+      url: 'https://musicians.jazzlore.com/musicians/wikidata%3AQ1',
+    })
+    expect(tags).toContain(
+      '<link rel="canonical" href="https://musicians.jazzlore.com/musicians/wikidata%3AQ1" />',
+    )
+  })
 })
 
 describe('buildSitemap', () => {
