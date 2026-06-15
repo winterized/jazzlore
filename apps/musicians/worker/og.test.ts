@@ -202,6 +202,18 @@ describe('musicianJsonLd', () => {
     ])
   })
 
+  it('drops empty/whitespace genres and nationality', () => {
+    const o = JSON.parse(
+      musicianJsonLd({
+        ...miles,
+        genres: ['jazz', '', '  ', 'bebop'],
+        nationality: '   ',
+      }),
+    )
+    expect(o.genre).toEqual(['jazz', 'bebop'])
+    expect('nationality' in o).toBe(false)
+  })
+
   it('is <script>-safe and round-trips names with special characters', () => {
     const raw = musicianJsonLd({
       id: 'x',

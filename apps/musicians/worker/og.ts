@@ -87,6 +87,10 @@ const GROUP_NAME_RE =
   /\b(orchestra|ensemble|quartet|quintet|trio|sextet|septet|octet|big ?band|band)\b/i
 
 function isMusicGroup(m: RawMusician): boolean {
+  // Residual false-positive (accepted): a date-less *person* whose name carries
+  // a keyword (e.g. a surname "Band", or a stage name with "Trio") is misread
+  // as a MusicGroup and loses jobTitle/dates/nationality. Rare, and sameAs lets
+  // Google self-correct. `\b` already prevents substring hits ("Bandera").
   const hasDate =
     typeof m.birth_date === 'string' ||
     typeof m.birth_year === 'number' ||
