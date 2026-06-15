@@ -158,11 +158,17 @@ describe('PwaInstallSheet — App Store offer (iOS + available app)', () => {
     expect(screen.queryByText(/Add to Home Screen/)).toBeNull()
   })
 
-  it('iOS + NOT-yet-available app (chords) → keeps the PWA instructions', () => {
+  it('iOS + available app (chords) → shows the App Store badge instead of PWA steps', () => {
     setNavigator(IOS_UA)
-    render(<PwaInstallSheet {...PROPS} appStoreKey="chords" />)
-    expect(screen.getByText(/Add to Home Screen/)).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /app store/i })).toBeNull()
+    render(<PwaInstallSheet {...PROPS} appName="Chords" appStoreKey="chords" />)
+    const link = screen.getByRole('link', {
+      name: /download chords on the app store/i,
+    })
+    expect(link).toHaveAttribute(
+      'href',
+      'https://apps.apple.com/app/id6776941235',
+    )
+    expect(screen.queryByText(/Add to Home Screen/)).toBeNull()
   })
 
   it('iOS + no appStoreKey (e.g. musicians) → keeps the PWA instructions', () => {

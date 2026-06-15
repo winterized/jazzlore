@@ -59,10 +59,10 @@ describe('chooseInstallAffordance', () => {
 })
 
 describe('APP_STORE_LINKS config', () => {
-  it('metronome is live; chords + scales await review', () => {
+  it('metronome, chords + scales are all live on the App Store', () => {
     expect(APP_STORE_LINKS.metronome.available).toBe(true)
-    expect(APP_STORE_LINKS.chords.available).toBe(false)
-    expect(APP_STORE_LINKS.scales.available).toBe(false)
+    expect(APP_STORE_LINKS.chords.available).toBe(true)
+    expect(APP_STORE_LINKS.scales.available).toBe(true)
   })
 
   it('every url is a canonical apps.apple.com listing', () => {

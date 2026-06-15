@@ -25,8 +25,8 @@ export interface AppStoreLink {
 
 export const APP_STORE_LINKS: Record<AppStoreKey, AppStoreLink> = {
   metronome: { url: 'https://apps.apple.com/app/id6774656363', available: true },
-  chords: { url: 'https://apps.apple.com/app/id6776941235', available: false }, // TODO: flip to true when Chords clears App Review
-  scales: { url: 'https://apps.apple.com/app/id6776942064', available: false }, // TODO: flip to true when Scales clears App Review
+  chords: { url: 'https://apps.apple.com/app/id6776941235', available: true },
+  scales: { url: 'https://apps.apple.com/app/id6776942064', available: true },
 }
 
 export type InstallAffordance = 'app-store' | 'pwa' | 'none'
