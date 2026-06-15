@@ -121,7 +121,9 @@ describe('musicianJsonLd', () => {
     expect(o.birthDate).toBe('1926-05-26')
     expect(o.deathDate).toBe('1991-09-28')
     expect(o.nationality).toBe('United States')
-    expect(o.genre).toEqual(['jazz', 'bebop', 'cool jazz'])
+    // genre is NOT a valid schema.org Person property (only MusicGroup /
+    // CreativeWork) — emitting it on a Person triggers validator warnings.
+    expect('genre' in o).toBe(false)
   })
 
   it('emits every available external id in sameAs', () => {
@@ -202,15 +204,26 @@ describe('musicianJsonLd', () => {
     ])
   })
 
-  it('drops empty/whitespace genres and nationality', () => {
+  it('never emits genre on a Person, even when genres are present', () => {
+    const o = JSON.parse(musicianJsonLd({ ...miles, genres: ['jazz', 'bebop'] }))
+    expect(o['@type']).toBe('Person')
+    expect('genre' in o).toBe(false)
+  })
+
+  it('emits genre only on MusicGroup, filtering empty values', () => {
     const o = JSON.parse(
       musicianJsonLd({
-        ...miles,
+        id: 'musicbrainz:x',
+        name: 'The Empty Quartet',
         genres: ['jazz', '', '  ', 'bebop'],
-        nationality: '   ',
       }),
     )
+    expect(o['@type']).toBe('MusicGroup')
     expect(o.genre).toEqual(['jazz', 'bebop'])
+  })
+
+  it('drops empty/whitespace nationality on a Person', () => {
+    const o = JSON.parse(musicianJsonLd({ ...miles, nationality: '   ' }))
     expect('nationality' in o).toBe(false)
   })
 
