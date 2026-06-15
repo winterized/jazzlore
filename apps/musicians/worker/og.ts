@@ -150,9 +150,13 @@ export function musicianJsonLd(m: RawMusician): string {
   if (bio) data.description = bio
   if (typeof m.picture_url === 'string' && m.picture_url.trim() !== '')
     data.image = m.picture_url.trim()
-  if (genres.length > 0) data.genre = genres
 
-  if (!group) {
+  if (group) {
+    // `genre` is valid on MusicGroup (and CreativeWork) but NOT on Person —
+    // schema.org flags genre-on-Person as an unrecognised-property warning, so
+    // it's emitted only for groups.
+    if (genres.length > 0) data.genre = genres
+  } else {
     // Person-only fields. MusicGroup gets none of these — the heuristic only
     // fires when dates are absent, and jobTitle/nationality aren't valid on a
     // MusicGroup.
