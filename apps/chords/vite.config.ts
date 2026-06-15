@@ -29,10 +29,17 @@ export default defineConfig({
         // so React Router's /chords/:root + /collection/chords routes load
         // offline with the same fallback shape they have online.
         navigateFallback: '/index.html',
+        // /sitemap.xml + /robots.txt are real files served by Cloudflare Static
+        // Assets — keep them OFF the index.html navigation fallback so an
+        // installed PWA returns the file, not the cached app shell (§13 of the
+        // SEO audit). Googlebot runs no SW, so this only fixes manual/browser
+        // checks; it does not affect crawling.
         navigateFallbackDenylist: [
           /^\/icons\//,
           /^\/audio\//,
           /\.webmanifest$/,
+          /^\/sitemap\.xml$/,
+          /^\/robots\.txt$/,
         ],
         // 6 MiB covers the largest Salamander piano sample (~370 KB) with
         // headroom for the abcjs (~500 KB raw) and Tone.js (~340 KB raw)

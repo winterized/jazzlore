@@ -50,9 +50,13 @@ function esc(s: string): string {
     .replace(/>/g, '&gt;')
 }
 
-/** The `<meta>` block (no <title> — that's rewritten in place). */
+/** The `<head>` injection block (no <title> — that's rewritten in place). */
 export function ogMetaTags(meta: OgMeta): string {
   const tags = [
+    // Canonical points at the encoded canonical-id URL (meta.url is built from
+    // the resolved canonical id), so alias / unencoded-colon variants of a
+    // musician collapse to one indexable URL.
+    `<link rel="canonical" href="${esc(meta.url)}" />`,
     `<meta name="description" content="${esc(meta.description)}" />`,
     `<meta property="og:type" content="profile" />`,
     `<meta property="og:title" content="${esc(meta.title)}" />`,
@@ -70,15 +74,25 @@ export function ogMetaTags(meta: OgMeta): string {
 }
 
 /**
- * Transform the SPA shell `Response`, replacing <title> and appending OG/
- * Twitter <meta> into <head>. `HTMLRewriter` is a Workers runtime global
- * (typed via @cloudflare/workers-types).
+ * Transform the SPA shell `Response`: replace <title> in place, REMOVE the
+ * static default <meta name="description"> baked into index.html, then append
+ * the per-musician OG/Twitter <meta> + canonical into <head>. Removing the
+ * static description avoids emitting two description tags (the generic shell one
+ * + the per-musician one), which let Google pick the wrong one (§13 SEO audit).
+ * `HTMLRewriter` is a Workers runtime global (typed via @cloudflare/workers-types).
  */
 export function injectOg(shell: Response, meta: OgMeta): Response {
   return new HTMLRewriter()
     .on('title', {
       element(el) {
         el.setInnerContent(meta.title)
+      },
+    })
+    .on('meta[name="description"]', {
+      element(el) {
+        // Drop the generic shell description; ogMetaTags() appends the
+        // per-musician one below, leaving exactly one description tag.
+        el.remove()
       },
     })
     .on('head', {

@@ -28,7 +28,19 @@ export default defineConfig({
         globIgnores: ['**/*.map', 'sw.js', 'workbox-*.js'],
         // Mirror Cloudflare's not_found_handling: "single-page-application".
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/icons\//, /\.webmanifest$/],
+        // Keep navigations to non-SPA resources OFF the index.html fallback:
+        // an installed PWA must not serve the cached app shell for /sitemap.xml
+        // or /robots.txt (that masked the real files in-browser — §13 of the
+        // SEO audit) nor for /api/* BFF endpoints. Googlebot runs no service
+        // worker so this never affected crawling; it stops manual/browser
+        // checks from being lied to.
+        navigateFallbackDenylist: [
+          /^\/icons\//,
+          /\.webmanifest$/,
+          /^\/sitemap\.xml$/,
+          /^\/robots\.txt$/,
+          /^\/api\//,
+        ],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         cleanupOutdatedCaches: true,
         // Take control of all clients on activation so a single reload after
