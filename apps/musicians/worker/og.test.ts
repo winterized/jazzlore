@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildSitemap,
+  musicianJsonLd,
   musicianOgMeta,
   ogMetaTags,
 } from './og'
-import type { SearchCorpusEntry } from '../src/lib/types'
+import type { RawMusician, SearchCorpusEntry } from '../src/lib/types'
 
 describe('musicianOgMeta', () => {
   it('builds a titled, described, canonical-URL meta from a musician', () => {
@@ -80,6 +81,139 @@ describe('ogMetaTags', () => {
     expect(tags).toContain(
       '<link rel="canonical" href="https://musicians.jazzlore.com/musicians/wikidata%3AQ1" />',
     )
+  })
+})
+
+describe('musicianJsonLd', () => {
+  const miles: RawMusician = {
+    id: 'wikidata:Q93341',
+    name: 'Miles Davis',
+    birth_date: '1926-05-26',
+    birth_year: 1926,
+    death_date: '1991-09-28',
+    death_year: 1991,
+    nationality: 'United States',
+    genres: ['jazz', 'bebop', 'cool jazz'],
+    bio_summary: 'American trumpeter and bandleader.',
+    picture_url: 'https://commons.example/miles.jpg',
+    wikipedia_url: 'https://en.wikipedia.org/wiki/Miles_Davis',
+    wikidata_id: 'Q93341',
+    musicbrainz_id: '561d854a-6a28-4aa7-8c99-323e6ce46c2a',
+    discogs_id: '23755',
+    spotify_artist_url: 'https://open.spotify.com/artist/0kbYTNQb4Pb1rPbbaF0pT4',
+    apple_artist_url: 'https://music.apple.com/us/artist/44984',
+  }
+
+  it('builds a complete Person for a fully-populated musician', () => {
+    const o = JSON.parse(musicianJsonLd(miles))
+    expect(o['@context']).toBe('https://schema.org')
+    expect(o['@type']).toBe('Person')
+    expect(o['@id']).toBe(
+      'https://musicians.jazzlore.com/musicians/wikidata%3AQ93341#person',
+    )
+    expect(o.url).toBe(
+      'https://musicians.jazzlore.com/musicians/wikidata%3AQ93341',
+    )
+    expect(o.name).toBe('Miles Davis')
+    expect(o.description).toBe('American trumpeter and bandleader.')
+    expect(o.image).toBe('https://commons.example/miles.jpg')
+    expect(o.jobTitle).toBe('Musician')
+    expect(o.birthDate).toBe('1926-05-26')
+    expect(o.deathDate).toBe('1991-09-28')
+    expect(o.nationality).toBe('United States')
+    expect(o.genre).toEqual(['jazz', 'bebop', 'cool jazz'])
+  })
+
+  it('emits every available external id in sameAs', () => {
+    const o = JSON.parse(musicianJsonLd(miles))
+    expect(o.sameAs).toEqual([
+      'https://www.wikidata.org/wiki/Q93341',
+      'https://musicbrainz.org/artist/561d854a-6a28-4aa7-8c99-323e6ce46c2a',
+      'https://www.discogs.com/artist/23755',
+      'https://en.wikipedia.org/wiki/Miles_Davis',
+      'https://open.spotify.com/artist/0kbYTNQb4Pb1rPbbaF0pT4',
+      'https://music.apple.com/us/artist/44984',
+    ])
+  })
+
+  it('omits deathDate for a living musician', () => {
+    const o = JSON.parse(
+      musicianJsonLd({ ...miles, death_date: undefined, death_year: undefined }),
+    )
+    expect(o.birthDate).toBe('1926-05-26')
+    expect('deathDate' in o).toBe(false)
+  })
+
+  it('falls back to year-only dates when no full date is present', () => {
+    const o = JSON.parse(
+      musicianJsonLd({ ...miles, birth_date: undefined, death_date: undefined }),
+    )
+    expect(o.birthDate).toBe('1926')
+    expect(o.deathDate).toBe('1991')
+  })
+
+  it('classifies a date-less named ensemble as MusicGroup', () => {
+    const o = JSON.parse(
+      musicianJsonLd({
+        id: 'musicbrainz:019a2ddd',
+        name: 'Delta Piano Trio',
+        nationality: 'Netherlands',
+        musicbrainz_id: '019a2ddd',
+      }),
+    )
+    expect(o['@type']).toBe('MusicGroup')
+    expect(o['@id']).toBe(
+      'https://musicians.jazzlore.com/musicians/musicbrainz%3A019a2ddd#group',
+    )
+    expect(o.name).toBe('Delta Piano Trio')
+    expect(o.sameAs).toEqual(['https://musicbrainz.org/artist/019a2ddd'])
+    // MusicGroup must NOT carry Person-only properties.
+    expect('jobTitle' in o).toBe(false)
+    expect('birthDate' in o).toBe(false)
+    expect('nationality' in o).toBe(false)
+  })
+
+  it('keeps a dated entity as Person even if its name has a group keyword', () => {
+    // Date presence overrides the keyword — a real person who happens to have
+    // "Trio" in their name stays a Person.
+    const o = JSON.parse(
+      musicianJsonLd({ id: 'x', name: 'Tito Trio', birth_year: 1940 }),
+    )
+    expect(o['@type']).toBe('Person')
+  })
+
+  it('keeps a date-less individual (no keyword) as Person — the safe default', () => {
+    const o = JSON.parse(
+      musicianJsonLd({ id: 'x', name: 'Obscure Sideman' }),
+    )
+    expect(o['@type']).toBe('Person')
+    expect(o.jobTitle).toBe('Musician')
+  })
+
+  it('omits absent fields entirely (no empty/null values)', () => {
+    const o = JSON.parse(musicianJsonLd({ id: 'x', name: 'Sparse' }))
+    expect(Object.keys(o).sort()).toEqual([
+      '@context',
+      '@id',
+      '@type',
+      'jobTitle',
+      'name',
+      'url',
+    ])
+  })
+
+  it('is <script>-safe and round-trips names with special characters', () => {
+    const raw = musicianJsonLd({
+      id: 'x',
+      name: 'A & "B" </script> <Q>',
+      bio_summary: 'plays <sax>',
+    })
+    expect(raw).not.toContain('</script>')
+    expect(raw).not.toContain('<')
+    expect(raw).toContain('\\u003c')
+    const o = JSON.parse(raw)
+    expect(o.name).toBe('A & "B" </script> <Q>')
+    expect(o.description).toBe('plays <sax>')
   })
 })
 

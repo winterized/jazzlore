@@ -29,6 +29,7 @@ import { mapSearchCorpus } from '../src/lib/map'
 import {
   buildSitemap,
   injectOg,
+  musicianJsonLd,
   musicianOgMeta,
 } from './og'
 import { deriveEra } from './era'
@@ -110,7 +111,7 @@ async function handleMusicianDocument(
       bio: typeof m.bio_summary === 'string' ? m.bio_summary : undefined,
       image: typeof m.picture_url === 'string' ? m.picture_url : undefined,
     })
-    return injectOg(shell, meta)
+    return injectOg(shell, meta, musicianJsonLd(m))
   } catch {
     // OG is additive (decision 7): any Aura failure incl. cold/`waking`
     // falls back to the untouched SPA shell so the page still renders.
