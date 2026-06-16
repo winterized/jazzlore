@@ -54,6 +54,16 @@ apps/musicians/worker/   unified Cloudflare Worker (index, cypher, endpoints, er
 - Endpoints: `/api/musicians/curated` (12h), `/api/musicians/:id` (1–2h, sibling `sameEra` shipped via `peersByEraCypher`), `/api/musicians/:id/graph` (1–2h, reuses `detailCypher`), `/api/musicians/by-ids?ids=…` (1–2h, caps at 20 ids), `/api/musicians/search-index` (6h), `/api/musicians/polished-ids` (6h, Random Jump pool), `/api/musicians/:focusId/collaborators/:collabId/records` (2h, lazy "+N more" — 100-row slice + true `totalCount`), `/api/health` (no-store).
 - Credentials (`NEO4J_URI/USERNAME/PASSWORD`) live only in Cloudflare env + local `.dev.vars` (gitignored) — never in the bundle or repo.
 
+### Detail read-through cache — 12h, READ THIS BEFORE DEBUGGING THE BFF (PR #180)
+
+`/api/musicians/:id` GETs go through a manual `caches.default` read-through (`worker/cache.ts`) — the fix for the intermittent "graph unreachable" failure (Cloudflare Error 1102 / CPU exhaustion on high-degree nodes; see `docs/graph-unreachable-findings.md`). **This silently caches the detail response for 12h and WILL bite you while debugging/fixing the BFF, Cypher, mappers, OR the underlying Aura/populator data:**
+
+- **TTL = 12h** (`DETAIL_CACHE_TTL` in `worker/env.ts`), key = **synthetic** (`jazzlore-cache.internal/musician/<normalized-id>`), per-edge-colo, **independent of the request URL**. So `?cb=`/any query string does **NOT** bust it (that only busts the edge CDN, not `caches.default`).
+- **A new deploy does NOT clear `caches.default`.** After you deploy a BFF/Cypher/mapper/data fix, the OLD response can still be served for up to 12h per colo — you'll think the fix didn't ship. **A populator data update lags up to 12h too** (was effectively live before, since the automatic edge cache never populated).
+- **How to tell what you got:** the `x-jazzlore-cache: hit | miss | bypass` response header — **GET only** (`curl -I`/HEAD never shows it; use `curl -D - -o /dev/null` on a GET). `hit` = the 12h cache (possibly stale); `miss` = ran origin + just (re)populated; `bypass` = no Cache API (local/tests).
+- **How to force fresh origin while debugging:** (a) **bump the cache-key version** — change `CACHE_KEY_ORIGIN` in `worker/cache.ts` (deterministic, in-repo, orphans every old entry instantly — the reliable dev move), or temporarily drop `DETAIL_CACHE_TTL` / gate the read-through; **or** (b) Cloudflare dashboard → Caching → **Purge Everything** (clears `caches.default`). A query-string cache-buster is NOT one of the options.
+- The cache stores **JSON only, never the OG-injected HTML**, and **never a non-200** (so it can't pin a 503/1102). `/api/musicians/:id/graph` is intentionally **uncached** (separate path; lower traffic).
+
 ### Live-Aura-smoke rule (evergreen)
 
 > Before any commit that changes Cypher or Aura-response parsing, run the Aura smoke against live Aura locally and record the result in the PR. Not CI, not every commit — a mandatory manual gate for any BFF / data-shape change. (Originally scoped to Phase C; now evergreen post-shipping.)
