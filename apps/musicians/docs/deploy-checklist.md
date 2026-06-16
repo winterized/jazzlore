@@ -315,7 +315,7 @@ DOM/computed/paint-sample, never an eyeball):
   on Miles Davis".
 - Waking/error path **reachable end-to-end**: a real BFF non-200 (a
   bogus id → live Aura `404`) flows through `httpSource` reject →
-  `useBffResource` → the calm "The graph is napping." screen with
+  `useBffResource` → the calm "We missed a beat." screen with
   `role="alert"`, a retry control and navigable cached fallback links —
   the same wiring the real cold-Aura `503 {status:"waking"}` triggers via
   the FROZEN `isWaking` branch.

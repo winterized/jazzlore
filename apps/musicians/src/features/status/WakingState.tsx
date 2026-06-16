@@ -1,4 +1,4 @@
-// WakingState — the calm "the graph is napping / waking up" screen (design
+// WakingState — the calm "we missed a beat / waking up" screen (design
 // `ErrorState`, pass-4/5 "Error tone calm, fallback names cached locally so
 // the user is never stranded").
 //
@@ -7,7 +7,7 @@
 //                 isWaking already mapped it upstream). A polite role=status,
 //                 a live retry countdown that auto-re-fires `onRetry` at zero.
 //   - `error`   → a hard failure (rejection). A role=alert, no countdown,
-//                 a "report" affordance.
+//                 a single full-width "Try again" as the one intentional action.
 //   - `offline` → a navigation that failed because the browser is offline
 //                 (navigator.onLine === false at fetch-reject time). A calm
 //                 role=status, no countdown, a "Back" affordance (`onBack`)
@@ -51,10 +51,10 @@ const COPY = {
     mark: '∿',
     title: (
       <>
-        The graph is <em>napping.</em>
+        We <em>missed a beat.</em>
       </>
     ),
-    body: "We couldn't reach the database just now. Nobody's gone anywhere — try again in a moment.",
+    body: "We couldn't load this just now. Nobody's gone anywhere — try again in a moment.",
   },
   offline: {
     mark: '∿',
@@ -149,16 +149,6 @@ export function WakingState({
             >
               Try again
             </button>
-            {variant === 'error' && (
-              <a
-                className="btn alt"
-                href="https://github.com/winterized/jazzlore/issues/new"
-                target="_blank"
-                rel="noreferrer noopener"
-              >
-                Report this
-              </a>
-            )}
           </div>
 
           <div className="meta">

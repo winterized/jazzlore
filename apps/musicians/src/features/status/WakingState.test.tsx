@@ -89,12 +89,19 @@ describe('WakingState', () => {
     expect(screen.queryByText(/read offline/i)).toBeNull()
   })
 
-  it('error variant is a true alert with a "report" affordance', () => {
+  it('error variant is a true alert with a single "Try again" action, no report affordance', () => {
     setup({ variant: 'error', retryAfter: undefined })
     expect(screen.getByRole('alert')).toBeInTheDocument()
     expect(
-      screen.getByRole('heading', { level: 1, name: /napping/i }),
+      screen.getByRole('heading', { level: 1, name: /missed a beat/i }),
     ).toBeInTheDocument()
+    // "Try again" is the one intentional primary action.
+    expect(
+      screen.getByRole('button', { name: /try again/i }),
+    ).toBeInTheDocument()
+    // The "Report this" link was removed — end users shouldn't be funnelled
+    // into filing GitHub issues from the error screen.
+    expect(screen.queryByRole('link', { name: /report/i })).toBeNull()
     // No countdown when there is no retryAfter (a hard error, not a cold DB).
     expect(screen.queryByText(/retry in/i)).toBeNull()
   })
