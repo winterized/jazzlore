@@ -1,4 +1,4 @@
-// WakingState — the calm "the graph is napping / waking up" screen (design
+// WakingState — the calm "we missed a beat / waking up" screen (design
 // `ErrorState`, pass-4/5 "Error tone calm, fallback names cached locally so
 // the user is never stranded").
 //
@@ -7,7 +7,7 @@
 //                 isWaking already mapped it upstream). A polite role=status,
 //                 a live retry countdown that auto-re-fires `onRetry` at zero.
 //   - `error`   → a hard failure (rejection). A role=alert, no countdown,
-//                 a "report" affordance.
+//                 a single full-width "Try again" as the one intentional action.
 //   - `offline` → a navigation that failed because the browser is offline
 //                 (navigator.onLine === false at fetch-reject time). A calm
 //                 role=status, no countdown, a "Back" affordance (`onBack`)
@@ -22,6 +22,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { Shell } from '../../components/Shell'
 import { ThemeToggleButton } from '../../components/ThemeToggleButton'
+import { retryCooldownSeconds } from './retryBackoff'
 
 export type FallbackName = { id: string; name: string }
 
@@ -35,6 +36,13 @@ type Props = {
   onRetry: () => void
   /** Return the reader to where they were (offline variant only). */
   onBack?: () => void
+  /**
+   * Manual retries already fired in the current error episode (`error`
+   * variant only). Drives the escalating Try-again cooldown so a struggling
+   * backend isn't hammered — 0 = retry immediately, then 1s/2s/4s, capped 5s.
+   * The page resets this to 0 on a successful load. See `retryBackoff.ts`.
+   */
+  retryCount?: number
 }
 
 const COPY = {
@@ -51,10 +59,13 @@ const COPY = {
     mark: '∿',
     title: (
       <>
-        The graph is <em>napping.</em>
+        We <em>missed a beat.</em>
       </>
     ),
-    body: "We couldn't reach the database just now. Nobody's gone anywhere — try again in a moment.",
+    body: "We couldn't load this just now. Nobody's gone anywhere — try again in a moment.",
+    // Small print: name the failure plainly so the reader knows it's on us, not
+    // something they did. (Only the hard-error variant carries this.)
+    tech: 'Technical error on our end — the server didn’t respond just now.',
   },
   offline: {
     mark: '∿',
@@ -77,10 +88,16 @@ export function WakingState({
   fallback,
   onRetry,
   onBack,
+  retryCount = 0,
 }: Props) {
   const c = COPY[variant]
   const showCountdown = variant === 'waking' && typeof retryAfter === 'number'
   const [remaining, setRemaining] = useState(retryAfter ?? 0)
+  // Escalating cooldown on the hard-error Try-again button (other variants are
+  // never throttled). Fixed for this mount — the screen remounts fresh per
+  // retry with the next retryCount — so it's a one-shot countdown to zero.
+  const cooldown = variant === 'error' ? retryCooldownSeconds(retryCount) : 0
+  const [cooldownLeft, setCooldownLeft] = useState(cooldown)
   // Lazy state, not a ref: computed once at mount, stable across renders, and
   // safe to read during render (a ref's `.current` is not — react-hooks/refs).
   const [checkedAt] = useState(nowUtc)
@@ -112,6 +129,24 @@ export function WakingState({
     return () => clearInterval(id)
   }, [showCountdown, retryAfter])
 
+  // Tick the manual-retry cooldown down to zero, then re-enable the button.
+  // Unlike the waking countdown this NEVER auto-fires — it only gates how soon
+  // the reader may click again. `cooldown` is fixed for this mount, so the
+  // effect runs once and self-clears.
+  useEffect(() => {
+    if (cooldown <= 0) return
+    const id = setInterval(() => {
+      setCooldownLeft((s) => {
+        if (s <= 1) {
+          clearInterval(id)
+          return 0
+        }
+        return s - 1
+      })
+    }, 1000)
+    return () => clearInterval(id)
+  }, [cooldown])
+
   return (
     <Shell>
       <header className="hdr">
@@ -135,6 +170,7 @@ export function WakingState({
           </div>
           <h1>{c.title}</h1>
           <p>{c.body}</p>
+          {'tech' in c && <p className="err-tech">{c.tech}</p>}
 
           <div className="actions">
             {variant === 'offline' && onBack && (
@@ -146,19 +182,19 @@ export function WakingState({
               type="button"
               className={variant === 'offline' ? 'btn alt' : 'btn'}
               onClick={onRetry}
+              disabled={cooldownLeft > 0}
             >
+              {/* Accessible name stays "Try again"; the live "· Ns" suffix is
+                  aria-hidden so the role=alert region doesn't re-announce it
+                  every second. The `disabled` state conveys the wait to AT. */}
               Try again
+              {cooldownLeft > 0 && (
+                <span className="btn-cd" aria-hidden="true">
+                  {' '}
+                  · {cooldownLeft}s
+                </span>
+              )}
             </button>
-            {variant === 'error' && (
-              <a
-                className="btn alt"
-                href="https://github.com/winterized/jazzlore/issues/new"
-                target="_blank"
-                rel="noreferrer noopener"
-              >
-                Report this
-              </a>
-            )}
           </div>
 
           <div className="meta">

@@ -30,10 +30,23 @@ export default function MusicianPage({
   const navigate = useNavigate()
   const [attempt, setAttempt] = useState(0)
   const retry = useCallback(() => setAttempt((a) => a + 1), [])
+  // Manual retries fired from the hard-error screen, driving its escalating
+  // cooldown. Kept OUT of the resource deps so resetting it never refetches;
+  // bumped only by the error retry, reset to 0 the moment a load succeeds.
+  const [retryCount, setRetryCount] = useState(0)
+  const retryFromError = useCallback(() => {
+    setRetryCount((c) => c + 1)
+    setAttempt((a) => a + 1)
+  }, [])
   const state = useBffResource(
     () => source.detail(id),
     [source, id, attempt],
   )
+  // Reset the retry backoff the moment a load succeeds. A guarded render-time
+  // setState (fires once — React re-renders synchronously) is the sanctioned
+  // alternative to a setState-in-effect; `retryCount` is out of the resource
+  // deps, so this never refetches. Mirrors the in-render reset in useBffResource.
+  if (state.kind === 'ready' && retryCount !== 0) setRetryCount(0)
   // Reflect the loaded musician in the tab title. Called before any early
   // return so the hook order is stable across all render paths (waking /
   // error / loading / ready). Passing `null` while we don't yet have a name
@@ -83,7 +96,12 @@ export default function MusicianPage({
   }
   if (state.kind === 'error') {
     return (
-      <WakingState variant="error" fallback={FALLBACK} onRetry={retry} />
+      <WakingState
+        variant="error"
+        fallback={FALLBACK}
+        onRetry={retryFromError}
+        retryCount={retryCount}
+      />
     )
   }
   if (state.kind === 'loading') {

@@ -89,14 +89,71 @@ describe('WakingState', () => {
     expect(screen.queryByText(/read offline/i)).toBeNull()
   })
 
-  it('error variant is a true alert with a "report" affordance', () => {
+  it('error variant is a true alert with a single "Try again" action, no report affordance', () => {
     setup({ variant: 'error', retryAfter: undefined })
     expect(screen.getByRole('alert')).toBeInTheDocument()
     expect(
-      screen.getByRole('heading', { level: 1, name: /napping/i }),
+      screen.getByRole('heading', { level: 1, name: /missed a beat/i }),
     ).toBeInTheDocument()
+    // "Try again" is the one intentional primary action.
+    expect(
+      screen.getByRole('button', { name: /try again/i }),
+    ).toBeInTheDocument()
+    // The "Report this" link was removed — end users shouldn't be funnelled
+    // into filing GitHub issues from the error screen.
+    expect(screen.queryByRole('link', { name: /report/i })).toBeNull()
     // No countdown when there is no retryAfter (a hard error, not a cold DB).
     expect(screen.queryByText(/retry in/i)).toBeNull()
+  })
+
+  it('error variant shows the technical small-print under the body', () => {
+    setup({ variant: 'error', retryAfter: undefined })
+    expect(screen.getByText(/technical error on our end/i)).toBeInTheDocument()
+  })
+
+  it('error variant: the first retry is available immediately (no cooldown)', () => {
+    const { onRetry } = setup({
+      variant: 'error',
+      retryAfter: undefined,
+      retryCount: 0,
+    })
+    const btn = screen.getByRole('button', { name: /try again/i })
+    expect(btn).toBeEnabled()
+    expect(btn).not.toHaveTextContent(/\ds/)
+    fireEvent.click(btn)
+    expect(onRetry).toHaveBeenCalledTimes(1)
+  })
+
+  it('error variant: throttles the button on a cooldown that ticks to zero', () => {
+    const { onRetry } = setup({
+      variant: 'error',
+      retryAfter: undefined,
+      retryCount: 1, // → 1s cooldown
+    })
+    const btn = screen.getByRole('button', { name: /try again/i })
+    expect(btn).toBeDisabled()
+    expect(btn).toHaveTextContent('1s')
+    // A click while disabled does nothing.
+    fireEvent.click(btn)
+    expect(onRetry).not.toHaveBeenCalled()
+    // After the second elapses the button re-enables and fires.
+    act(() => void vi.advanceTimersByTime(1000))
+    expect(btn).toBeEnabled()
+    expect(btn).not.toHaveTextContent(/\ds/)
+    fireEvent.click(btn)
+    expect(onRetry).toHaveBeenCalledTimes(1)
+  })
+
+  it('error variant: cooldown escalates with the retry count (1→2→4, capped 5)', () => {
+    setup({ variant: 'error', retryAfter: undefined, retryCount: 3 })
+    expect(
+      screen.getByRole('button', { name: /try again/i }),
+    ).toHaveTextContent('4s')
+  })
+
+  it('waking variant ignores retryCount — its manual button is never throttled', () => {
+    setup({ variant: 'waking', retryAfter: 8, retryCount: 4 })
+    expect(screen.getByRole('button', { name: /try again/i })).toBeEnabled()
   })
 
   it('offline variant is a calm status with a Back affordance, no report/countdown', () => {

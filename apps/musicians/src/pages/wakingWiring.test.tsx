@@ -85,7 +85,7 @@ describe('D7 page wiring', () => {
       </MemoryRouter>,
     )
     expect(
-      await screen.findByRole('heading', { level: 1, name: /napping/i }),
+      await screen.findByRole('heading', { level: 1, name: /missed a beat/i }),
     ).toBeInTheDocument()
     expect(screen.getByRole('alert')).toBeInTheDocument()
   })
@@ -118,10 +118,12 @@ describe('D7 page wiring', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: /offline/i }),
     ).toBeInTheDocument()
-    // Calm status + a Back affordance, NOT the hard-error "napping" alert.
+    // Calm status + a Back affordance, NOT the hard-error "missed a beat" alert.
     expect(screen.getByRole('status')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /back/i })).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: /napping/i })).toBeNull()
+    expect(
+      screen.queryByRole('heading', { name: /missed a beat/i }),
+    ).toBeNull()
   })
 
   it('MusicianPage shows the ERROR (not offline) screen when the server fails while online', async () => {
@@ -135,7 +137,7 @@ describe('D7 page wiring', () => {
       </MemoryRouter>,
     )
     expect(
-      await screen.findByRole('heading', { level: 1, name: /napping/i }),
+      await screen.findByRole('heading', { level: 1, name: /missed a beat/i }),
     ).toBeInTheDocument()
     expect(screen.getByRole('alert')).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /offline/i })).toBeNull()
