@@ -25,7 +25,7 @@ describe('ErrorBoundary', () => {
     // The calm "error" screen (WakingState variant="error") rendered — the
     // tree is NOT blank.
     expect(container).not.toBeEmptyDOMElement()
-    expect(screen.getByText(/couldn't reach the database/i)).toBeInTheDocument()
+    expect(screen.getByText(/couldn't load this/i)).toBeInTheDocument()
   })
 
   it('renders children untouched when they do not throw', () => {
