@@ -10,7 +10,11 @@
 // AbortController fires at ~9s and the BFF surfaces the frozen
 // `WakingResponse` 503 (review N1: NOT the A-stub `{status:"not-implemented"}`).
 
-import { AURA_TIMEOUT_MS } from './env'
+import {
+  AURA_FETCH_RETRIES,
+  AURA_RETRY_BACKOFF_MS,
+  AURA_TIMEOUT_MS,
+} from './env'
 
 /** A single Aura Query API result: column names + row tuples. */
 export interface AuraResult {
@@ -58,6 +62,21 @@ function basicAuth(username: string, password: string): string {
   return 'Basic ' + btoa(`${username}:${password}`)
 }
 
+/** Default backoff sleep — overridable in tests via `AuraQueryOptions.sleep`. */
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+/** Tunables for `auraQuery` — defaulted from `env`, injectable for tests. */
+export interface AuraQueryOptions {
+  /** Transient-fetch-failure retries (see `AURA_FETCH_RETRIES`). */
+  retries?: number
+  /** Backoff between retries, ms (see `AURA_RETRY_BACKOFF_MS`). */
+  backoffMs?: number
+  /** Injectable sleep so tests don't wait real time. */
+  sleep?: (ms: number) => Promise<void>
+}
+
 /**
  * Normalise an Aura connection URI to the HTTP Query API base.
  *
@@ -97,26 +116,44 @@ export async function auraQuery(
   statement: string,
   parameters: Record<string, unknown> = {},
   fetchImpl: typeof fetch = fetch,
+  opts: AuraQueryOptions = {},
 ): Promise<AuraResult> {
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), AURA_TIMEOUT_MS)
+  const retries = opts.retries ?? AURA_FETCH_RETRIES
+  const backoffMs = opts.backoffMs ?? AURA_RETRY_BACKOFF_MS
+  const sleep = opts.sleep ?? delay
+
+  // Retry ONLY a transient subrequest failure (fetch threw before any HTTP
+  // response). Each attempt gets a fresh 9s abort budget. An abort (cold Aura)
+  // throws AuraWakingError immediately — never retried. An HTTP response (ok or
+  // not) breaks out and is handled below — never retried. Retrying here is
+  // cheap + safe: it happens BEFORE the body parse/reshape, so it adds no
+  // CPU to the heavy path and cannot worsen the Error-1102 budget (#155).
   let res: Response
-  try {
-    res = await fetchImpl(queryEndpoint(creds.uri, creds.database), {
-      method: 'POST',
-      signal: controller.signal,
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        Authorization: basicAuth(creds.username, creds.password),
-      },
-      body: JSON.stringify({ statement, parameters }),
-    })
-  } catch (err) {
-    if (controller.signal.aborted) throw new AuraWakingError()
-    throw new AuraQueryError('aura-fetch-failed', err)
-  } finally {
-    clearTimeout(timer)
+  for (let attempt = 0; ; attempt++) {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), AURA_TIMEOUT_MS)
+    try {
+      res = await fetchImpl(queryEndpoint(creds.uri, creds.database), {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          Authorization: basicAuth(creds.username, creds.password),
+        },
+        body: JSON.stringify({ statement, parameters }),
+      })
+      break
+    } catch (err) {
+      if (controller.signal.aborted) throw new AuraWakingError()
+      if (attempt < retries) {
+        await sleep(backoffMs)
+        continue
+      }
+      throw new AuraQueryError('aura-fetch-failed', err)
+    } finally {
+      clearTimeout(timer)
+    }
   }
 
   if (!res.ok) {

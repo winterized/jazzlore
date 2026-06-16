@@ -26,5 +26,15 @@
     "directory": "./apps/musicians/dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application"
+  },
+  // Workers Logs — enabled to diagnose the intermittent "graph unreachable"
+  // failures (fix/musicians-graph-unreachable). Lets the owner read live
+  // invocation status (incl. Error 1102 `worker_exceeded_resources` / CPU-time
+  // exceeded) + exceptions in the Cloudflare dashboard, which can't be pulled
+  // from outside the account. Within the free-tier logs allocation;
+  // head_sampling_rate:1 = 100% (traffic is low). Reversible: flip enabled→false.
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
   }
 }

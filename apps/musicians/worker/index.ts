@@ -33,7 +33,13 @@ import {
   musicianOgMeta,
 } from './og'
 import { deriveEra } from './era'
-import { CACHE, type Env } from './env'
+import {
+  musicianCacheKey,
+  readThroughCache,
+  runtimeCacheDeps,
+  type CacheDeps,
+} from './cache'
+import { CACHE, DETAIL_CACHE_TTL, type Env } from './env'
 
 const MUSICIAN_PATH = /^\/musicians\/([^/]+)\/?$/
 
@@ -55,7 +61,13 @@ function isDocumentNavigation(request: Request): boolean {
   return (request.headers.get('Accept') ?? '').includes('text/html')
 }
 
-async function handleApi(env: Env, pathname: string, url: URL): Promise<Response> {
+async function handleApi(
+  request: Request,
+  env: Env,
+  url: URL,
+  cache: CacheDeps,
+): Promise<Response> {
+  const { pathname } = url
   if (pathname === '/api/health') return handleHealth(env)
   if (pathname === '/api/musicians/curated') return handleCurated(env)
   if (pathname === '/api/musicians/search-index') return handleSearchIndex(env)
@@ -77,7 +89,20 @@ async function handleApi(env: Env, pathname: string, url: URL): Promise<Response
   }
   const detail = pathname.match(/^\/api\/musicians\/([^/]+)$/)
   if (detail && detail[1]) {
-    return handleDetail(env, decodeURIComponent(detail[1]))
+    const id = decodeURIComponent(detail[1])
+    // The heavy `detailCypher` + reshape is what trips Error 1102. Serve repeat
+    // GETs from a manual `caches.default` read-through so they skip the
+    // pipeline (the automatic edge cache never populates — `cf-cache-status`
+    // is absent on every response). GET only; a non-200 is never cached.
+    if (request.method === 'GET') {
+      return readThroughCache(
+        cache,
+        musicianCacheKey(id),
+        { ttl: DETAIL_CACHE_TTL },
+        () => handleDetail(env, id),
+      )
+    }
+    return handleDetail(env, id)
   }
   return new Response(JSON.stringify({ status: 'error', error: 'unknown-endpoint' }), {
     status: 404,
@@ -139,12 +164,16 @@ async function handleSitemap(env: Env): Promise<Response> {
 }
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(
+    request: Request,
+    env: Env,
+    ctx: ExecutionContext,
+  ): Promise<Response> {
     const url = new URL(request.url)
     const { pathname } = url
 
     if (pathname.startsWith('/api/')) {
-      return handleApi(env, pathname, url)
+      return handleApi(request, env, url, runtimeCacheDeps(ctx))
     }
 
     if (pathname === '/sitemap.xml') {
