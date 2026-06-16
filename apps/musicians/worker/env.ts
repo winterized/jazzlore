@@ -42,3 +42,24 @@ export const AURA_TIMEOUT_MS = 9000
 
 /** Seconds the client should wait before retrying a cold/`waking` Aura. */
 export const WAKING_RETRY_AFTER = 10
+
+/** Server-side retries for a TRANSIENT Worker→Aura subrequest network failure
+ * — `fetch` itself threw BEFORE any HTTP response (TLS reset, connection
+ * refused, DNS blip). 1 retry = 2 attempts total. This recovers a flaky
+ * connection server-side so it never reaches the user.
+ *
+ * Deliberately NARROW (see `fix/musicians-graph-unreachable` findings):
+ *  - NOT retried on the 9s abort (cold Aura → the `waking` screen owns that
+ *    with its own client countdown/auto-retry).
+ *  - NOT retried on an HTTP error response (4xx/5xx came back — a retry of a
+ *    Cypher/auth error is pointless).
+ *  - Does NOT and CANNOT address the dominant reproduced failure, Cloudflare
+ *    Error 1102 (`worker_exceeded_resources`): that is the runtime killing the
+ *    isolate for CPU, surfaced as Cloudflare's own 503 page — uncatchable here,
+ *    and a retry would only burn more of the rolling CPU budget. That needs the
+ *    gated edge-cache / Cypher-cap / paid-tier levers, not a retry. */
+export const AURA_FETCH_RETRIES = 1
+
+/** Backoff between transient-fetch retries (ms). Short — a connection blip
+ * fails fast, so this only adds a brief pause, never near the 9s abort. */
+export const AURA_RETRY_BACKOFF_MS = 250

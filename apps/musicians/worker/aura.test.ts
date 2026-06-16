@@ -167,3 +167,65 @@ describe('auraQuery — cold-Aura waking path', () => {
     ).rejects.toBeInstanceOf(AuraWakingError)
   })
 })
+
+describe('auraQuery — transient-fetch retry (graph-unreachable mitigation)', () => {
+  const NO_WAIT = { backoffMs: 0, sleep: async () => {} }
+
+  it('retries a transient subrequest network failure and recovers', async () => {
+    let calls = 0
+    const flaky = (async () => {
+      calls += 1
+      if (calls === 1) throw new TypeError('network error') // not an abort
+      return new Response(JSON.stringify(HEALTH_OK), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }) as unknown as typeof fetch
+    const result = await auraQuery(CREDS, 'RETURN 1', {}, flaky, NO_WAIT)
+    expect(calls).toBe(2) // first attempt threw, retry succeeded
+    expect(result.fields).toEqual(['n'])
+  })
+
+  it('gives up after the retry budget and throws AuraQueryError', async () => {
+    let calls = 0
+    const alwaysDown = (async () => {
+      calls += 1
+      throw new TypeError('connection refused')
+    }) as unknown as typeof fetch
+    await expect(
+      auraQuery(CREDS, 'RETURN 1', {}, alwaysDown, NO_WAIT),
+    ).rejects.toBeInstanceOf(AuraQueryError)
+    expect(calls).toBe(2) // 1 initial + AURA_FETCH_RETRIES(1)
+  })
+
+  it('does NOT retry the 9s abort (cold Aura stays a single waking signal)', async () => {
+    vi.useFakeTimers()
+    let calls = 0
+    const hang = ((_url: string, init?: RequestInit) => {
+      calls += 1
+      return new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () =>
+          reject(Object.assign(new Error('aborted'), { name: 'AbortError' })),
+        )
+      })
+    }) as unknown as typeof fetch
+    const p = auraQuery(CREDS, 'RETURN 1', {}, hang, NO_WAIT)
+    const assertion = expect(p).rejects.toBeInstanceOf(AuraWakingError)
+    await vi.advanceTimersByTimeAsync(9001)
+    await assertion
+    expect(calls).toBe(1) // aborted once, never retried
+    vi.useRealTimers()
+  })
+
+  it('does NOT retry an HTTP error response (a returned 4xx is final)', async () => {
+    let calls = 0
+    const four0four = (async () => {
+      calls += 1
+      return new Response('nope', { status: 404 })
+    }) as unknown as typeof fetch
+    await expect(
+      auraQuery(CREDS, 'RETURN 1', {}, four0four, NO_WAIT),
+    ).rejects.toBeInstanceOf(AuraQueryError)
+    expect(calls).toBe(1) // got a response → no retry
+  })
+})
