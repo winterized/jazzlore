@@ -29,6 +29,17 @@ function assetsStub(): Fetcher {
   } as unknown as Fetcher
 }
 
+/** Minimal ExecutionContext — `waitUntil` runs the promise inline so a cache
+ * put completes deterministically within the test. */
+function ctxStub(): ExecutionContext {
+  return {
+    waitUntil: (p: Promise<unknown>) => {
+      void p
+    },
+    passThroughOnException: () => {},
+  } as unknown as ExecutionContext
+}
+
 afterEach(() => vi.restoreAllMocks())
 
 describe('worker router — /api/*', () => {
@@ -39,6 +50,7 @@ describe('worker router — /api/*', () => {
     const res = await worker.fetch(
       new Request('https://m.jazzlore.com/api/health'),
       envWith(assetsStub()),
+      ctxStub(),
     )
     expect(res.status).toBe(200)
     expect(await res.json()).toMatchObject({ status: 'ok' })
@@ -51,6 +63,7 @@ describe('worker router — /api/*', () => {
     const res = await worker.fetch(
       new Request('https://m.jazzlore.com/api/musicians/wikidata%3AQ93341'),
       envWith(assetsStub()),
+      ctxStub(),
     )
     expect(res.status).toBe(200)
     expect(await res.json()).toMatchObject({ name: 'Miles Davis' })
@@ -65,6 +78,7 @@ describe('worker router — /api/*', () => {
         'https://m.jazzlore.com/api/musicians/wikidata%3AQ93341/graph',
       ),
       envWith(assetsStub()),
+      ctxStub(),
     )
     const body = (await res.json()) as { graph?: unknown }
     expect(body.graph).toBeDefined()
@@ -74,6 +88,7 @@ describe('worker router — /api/*', () => {
     const res = await worker.fetch(
       new Request('https://m.jazzlore.com/api/nope'),
       envWith(assetsStub()),
+      ctxStub(),
     )
     expect(res.status).toBe(404)
   })
@@ -87,6 +102,7 @@ describe('worker router — sitemap', () => {
     const res = await worker.fetch(
       new Request('https://m.jazzlore.com/sitemap.xml'),
       envWith(assetsStub()),
+      ctxStub(),
     )
     expect(res.headers.get('Content-Type')).toContain('application/xml')
     const xml = await res.text()
@@ -102,6 +118,7 @@ describe('worker router — static assets + OG fallback', () => {
     const res = await worker.fetch(
       new Request('https://m.jazzlore.com/assets/app.js'),
       envWith(assets),
+      ctxStub(),
     )
     expect(spy).toHaveBeenCalled()
     expect(res.status).toBe(200)
@@ -118,8 +135,93 @@ describe('worker router — static assets + OG fallback', () => {
         headers: { 'Sec-Fetch-Dest': 'document' },
       }),
       envWith(assetsStub()),
+      ctxStub(),
     )
     expect(res.status).toBe(200)
     expect(await res.text()).toContain('<html>')
+  })
+})
+
+describe('worker router — detail Cache API read-through', () => {
+  /** Stub `globalThis.caches.default` with an in-memory store (Node/vitest has
+   * no Cache API). `put` stores synchronously so a follow-up `match` in the
+   * same run sees the entry. Returns a restore fn. */
+  function stubCaches(): { store: Map<string, Response>; restore: () => void } {
+    const store = new Map<string, Response>()
+    const fake = {
+      match: async (k: Request) => {
+        const hit = store.get(k.url)
+        return hit ? hit.clone() : undefined
+      },
+      put: (k: Request, r: Response) => {
+        store.set(k.url, r.clone())
+        return Promise.resolve()
+      },
+    } as unknown as Cache
+    const g = globalThis as unknown as { caches?: CacheStorage }
+    const prev = g.caches
+    g.caches = { default: fake } as unknown as CacheStorage
+    return { store, restore: () => void (g.caches = prev) }
+  }
+
+  it('serves a 2nd GET for the same musician from cache, skipping the Aura pipeline', async () => {
+    const { restore } = stubCaches()
+    try {
+      const spy = vi
+        .spyOn(auraMod, 'auraQuery')
+        .mockResolvedValue(DETAIL_MILES.data as auraMod.AuraResult)
+      const url = 'https://m.jazzlore.com/api/musicians/wikidata%3AQ93341'
+
+      const r1 = await worker.fetch(
+        new Request(url),
+        envWith(assetsStub()),
+        ctxStub(),
+      )
+      expect(r1.headers.get('x-jazzlore-cache')).toBe('miss')
+      expect(await r1.json()).toMatchObject({ name: 'Miles Davis' })
+      const callsAfterMiss = spy.mock.calls.length
+
+      const r2 = await worker.fetch(
+        new Request(url),
+        envWith(assetsStub()),
+        ctxStub(),
+      )
+      expect(r2.headers.get('x-jazzlore-cache')).toBe('hit')
+      expect(await r2.json()).toMatchObject({ name: 'Miles Davis' })
+      // The cache hit ran NO further Aura queries — the heavy pipeline skipped.
+      expect(spy.mock.calls.length).toBe(callsAfterMiss)
+    } finally {
+      restore()
+    }
+  })
+
+  it('does NOT cache a 503 waking response — the error is never pinned', async () => {
+    const { store, restore } = stubCaches()
+    try {
+      const spy = vi
+        .spyOn(auraMod, 'auraQuery')
+        .mockRejectedValue(new auraMod.AuraWakingError())
+      const url = 'https://m.jazzlore.com/api/musicians/wikidata%3AQ93341'
+
+      const r1 = await worker.fetch(
+        new Request(url),
+        envWith(assetsStub()),
+        ctxStub(),
+      )
+      expect(r1.status).toBe(503)
+      expect(store.size).toBe(0)
+
+      // A second request re-runs the pipeline (not served a pinned 503).
+      const r2 = await worker.fetch(
+        new Request(url),
+        envWith(assetsStub()),
+        ctxStub(),
+      )
+      expect(r2.status).toBe(503)
+      expect(r2.headers.get('x-jazzlore-cache')).toBe('miss')
+      expect(spy.mock.calls.length).toBeGreaterThanOrEqual(2)
+    } finally {
+      restore()
+    }
   })
 })

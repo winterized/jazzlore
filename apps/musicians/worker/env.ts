@@ -35,6 +35,23 @@ export const CACHE = {
   sitemap: 'public, max-age=1800, s-maxage=21600', // 6h edge
 } as const
 
+/**
+ * TTL stamped on the manual `caches.default` read-through entry for the heavy
+ * `/api/musicians/:id` detail response (option A, fix/musicians-graph-unreachable).
+ *
+ * Musician data is near-static (Aura republishes ~every 4h; bios/records/
+ * collaborators rarely change), so a long TTL minimises cold-miss re-runs of
+ * the CPU-heavy reshape that trips Cloudflare Error 1102 on high-degree nodes.
+ * 12h is the chosen middle of the task's 6–24h band.
+ *
+ * TRADEOFF — flagged for Aurélien to adjust: longer = fewer cold misses (fewer
+ * marquee-page 1102s) but staler data; shorter = fresher but more cold-pipeline
+ * exposure. 6h would roughly track the Aura publish cadence; 24h minimises cold
+ * misses most. `s-maxage` drives the shared/edge + Cache API entry; `max-age`
+ * the browser. Only ever stamped on a 200 (non-200s keep their `no-store`).
+ */
+export const DETAIL_CACHE_TTL = 'public, max-age=900, s-maxage=43200' // 12h
+
 /** Abort the Aura request at ~9s → `503 {status:"waking"}` (Aura Free
  * auto-pauses after 3 days idle; cold start is 20–40s; technical note
  * "Aura wake-up handling"). */
