@@ -140,3 +140,8 @@ Source: implementation choice, workflow setup (owner's decision).
 Decision: the quality bar stays 100 KB gzipped of initial JS. The musicians initial chunk is already 110.6 KB, and production serves the same bundle, so the gate's budget check (`tests/musicians-bundle-budget.mjs`) holds a temporary 112 KB ceiling that stops further growth. The task that brings the chunk under 100 KB also sets the limit back to 100.
 Why: at 100 KB the gate would have refused every task. Dropping the check would let the bundle keep growing.
 Source: implementation choice, workflow setup (owner's decision).
+
+## 2026-10-09: Review policy for tasks
+Decision: a task gets at most two reviews. Nothing lands while a blocker or major finding is open or disputed; only the owner can override that, by hand. Every finding that was not fixed is listed in the session's final message, minor ones included. Review reports are kept in `.claude/reviews/` in the main checkout, git-ignored, and deleted after 30 days.
+Why: runs are unattended, so the check before a merge must not depend on the implementing session's own account of its work, and an unresolved finding has to reach the owner.
+Source: docs/briefs/2026-10-09-record-review-policy.md.
