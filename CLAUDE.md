@@ -6,10 +6,10 @@ A small public portfolio of jazz tools for musicians and learners at jazzlore.co
 
 - Build and run every test: `scripts/test.sh`
 - Narrower run: `scripts/test.sh musicians ui` lints, typechecks, builds and unit-tests only those packages (folder names under `apps/` and `packages/`).
-- End-to-end tests, not part of the gate: `scripts/test.sh e2e`, or `scripts/test.sh e2e <spec file> --project=chromium`. It holds a machine-wide lock, so it waits while another checkout runs e2e. Stop any `pnpm dev` server first: it needs ports 5173–5177 and 5183–5186.
+- End-to-end tests, not part of the gate: `scripts/test.sh e2e`, or `scripts/test.sh e2e <spec file> --project=chromium`. It holds a machine-wide lock, so it waits while another checkout runs e2e. Stop any `pnpm dev` server first: it needs ports 5173–5177 and 5183–5186. The run rewrites tracked screenshots in `apps/musicians/docs/baseline/` and `tests/e2e/screenshots/`; unless the task is about those screenshots, restore them afterwards with `git checkout -- apps/musicians/docs/baseline tests/e2e/screenshots`.
 - A fresh worktree needs no setup: `scripts/test.sh` runs `pnpm install --frozen-lockfile` itself. Toolchain: pnpm 11 and Node ≥ 22.13 (from nvm on this machine).
 - Dev servers: `pnpm dev:<app>` (scales 5173, chords 5174, musicians 5175, metronome 5176, landing 5177). The musicians Worker with its API: `pnpm -F @jazzlore/musicians dev:worker`. It reads Neo4j credentials from `.dev.vars` at the root (git-ignored; `.worktreeinclude` copies it into new worktrees).
-- Live-Aura smoke for musicians: `node --experimental-strip-types apps/musicians/scripts/aura-smoke.ts` (read-only queries against production Aura, using `.dev.vars`).
+- Live-Aura smoke for musicians: `pnpm dlx tsx apps/musicians/scripts/aura-smoke.ts` (read-only queries against production Aura, using `.dev.vars`; `tsx` is not a repo dependency, `pnpm dlx` fetches it into pnpm's cache).
 - Lighthouse on local production previews: `pnpm build && pnpm lighthouse:audit`.
 
 ## Project memory
