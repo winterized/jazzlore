@@ -9,7 +9,7 @@ import prettier from 'eslint-config-prettier'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', '**/dist/**', '**/storybook-static/**', 'node_modules', 'playwright-report', 'test-results']),
+  globalIgnores(['dist', '**/dist/**', '**/storybook-static/**', 'node_modules', 'playwright-report', 'test-results', '.claude/**', '.test-logs/**']),
   // Stale `eslint-disable` directives must not silently accumulate — a red gate
   // hides new violations behind old noise (GH #134). Reported as errors so they
   // surface and get trimmed.

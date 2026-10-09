@@ -48,8 +48,10 @@ jazzlore/
 └── wrangler.*.jsonc      one per deployable app
 ```
 
-Per-app `CLAUDE.md` files document app-specific conventions; the root
-[`CLAUDE.md`](./CLAUDE.md) captures workspace-wide rules.
+[`CLAUDE.md`](./CLAUDE.md) holds the working rules;
+[`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) and
+[`docs/DECISIONS.md`](./docs/DECISIONS.md) describe how the codebase is built
+and why.
 
 ## Local development
 
@@ -100,7 +102,7 @@ backends — without inventing requirements I didn't actually need.
 The implementation work was paired with Anthropic's Claude (via Claude Code).
 Commits carry a `Co-Authored-By` trailer where Claude contributed substantively;
 the architecture, design decisions, scope calls, and the personal voice are
-mine. The `CLAUDE.md` files at the root and per-app are essentially the
+mine. `CLAUDE.md` and the files under `docs/` are essentially the
 project's playbook — written for Claude, but readable as plain documentation
 of how the codebase wants to be touched.
 

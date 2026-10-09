@@ -1,6 +1,6 @@
 // Parameterized, READ-ONLY Cypher builders + Aura-row reshapers (Phase C).
 //
-// Conventions (apps/musicians/CLAUDE.md "BFF / Cypher conventions"):
+// Conventions (root CLAUDE.md, "Musicians BFF"):
 //  - Every query is PARAMETERIZED ($id, $ids) — never string-interpolated.
 //  - Every query is READ-ONLY: MATCH … RETURN only. No CREATE/MERGE/SET/
 //    DELETE/REMOVE/CALL{…write}. `assertReadOnly` enforces this at the seam.

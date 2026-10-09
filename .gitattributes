@@ -1,0 +1,2 @@
+# Parallel task branches both append here; keep both sides instead of conflicting.
+docs/DECISIONS.md merge=union

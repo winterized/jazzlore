@@ -6,7 +6,7 @@
  * placeholder preserves the row height so every chord row in the page aligns
  * vertically.
  *
- * Design conventions (from apps/chords/CLAUDE.md):
+ * Design conventions (docs/DECISIONS.md, 2026-05-14):
  * - Primary: modern lead-sheet style (Cmaj7, Cm7♭5).
  * - Alternate: traditional jazz style (CΔ7, Cø7). No parentheses.
  * - Empty alternate slot holds its height to preserve vertical rhythm.

@@ -1,5 +1,5 @@
 // Unified Cloudflare Worker for the musicians app (locked Phase A runtime
-// decision — see apps/musicians/CLAUDE.md). Unlike its siblings
+// decision — see docs/ARCHITECTURE.md). Unlike its siblings
 // wrangler.jsonc / wrangler.chords.jsonc (assets-ONLY: scales + chords are
 // static SPAs deployed to Workers Static Assets), this app is the first with
 // a backend, so it carries BOTH a Worker `main` entry (the `/api/*` BFF +

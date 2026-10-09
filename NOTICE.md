@@ -37,7 +37,7 @@ their own licenses — typically [CC BY](https://creativecommons.org/licenses/by
 The musicians app renders an attribution caption next to every image whose
 upstream license requires one — author, license, and source link are shown
 inline. This is a non-negotiable spec requirement, not a polish item; see
-`apps/musicians/CLAUDE.md` for the rule and `apps/musicians/worker/cypher.ts`
+`docs/DECISIONS.md` ("Image attribution is a legal requirement") for the rule and `apps/musicians/worker/cypher.ts`
 for the fields driving it.
 
 ### Discogs

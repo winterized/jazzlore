@@ -71,8 +71,8 @@ describe('ChordSymbolDisplay', () => {
     const primary = screen.getByText('Cm')
     const alternate = screen.getByText('C-')
 
-    // Size contrast is the whole point (apps/chords/CLAUDE.md: "the size
-    // difference does the work") — primary text-lg, alternate text-xs.
+    // Size contrast is the whole point (docs/DECISIONS.md, 2026-05-14: the
+    // size difference does the work) — primary text-lg, alternate text-xs.
     expect(primary).toHaveClass('text-lg', 'font-semibold')
     expect(alternate).toHaveClass('text-xs')
 
